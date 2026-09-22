@@ -47,9 +47,16 @@ trap 'rm -f "$PACKET" "$GATE_OUT" "$THREAD"' EXIT
   # branch line rather than leaving a reviewer to find out by pressing Try it and
   # reading a transcript they did not expect. The worker put that sentence on the card
   # because it had read the branch; it belongs where the reviewing starts.
+  #
+  # The command goes in the line, not just a mention of it, so a reviewer knows what
+  # they are about to be shown before they press anything. And it says what will not
+  # happen: try.sh will not open a screen design/README.md maps this card's IDs to. A
+  # card that built no screen can still inherit one from the default branch, and a
+  # screen that works while proving nothing this card did looks exactly like proof.
   if printf '%s' "$TRY_LINE" | grep -q '^command '; then
-    printf '**No screen serves this promise yet.** Try it runs the commands on the '
-    printf 'card'"'"'s `try:` line and shows the transcript.\n\n'
+    printf '**No screen; try: `%s`**\n\n' "${TRY_LINE#command }"
+    printf 'This card built no screen. Try it runs that command line and shows the '
+    printf 'transcript. It does not open a mapped screen instead.\n\n'
   fi
 
   if [ -z "$BRANCH" ] || ! git rev-parse --verify --quiet "$BRANCH^{commit}" >/dev/null; then

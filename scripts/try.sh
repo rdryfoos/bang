@@ -272,8 +272,11 @@ case "$TRY_LINE" in
     WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
     export WHMS_DATA_FILE="$WORK/items.json"
     export PYTHONPATH="$ROOT/src"
-    echo "No screen serves this card's promise, so this is what it does at the command"
-    echo "line, against a temporary file. Nobody's real records are read or written."
+    printf 'No screen; try: %s\n' "${TRY_LINE#command }"
+    echo
+    echo "This card built no screen, so this is what it does at the command line,"
+    echo "against a temporary file. Nobody's real records are read or written. No"
+    echo "screen from design/README.md is opened in its place."
     echo
     printf '$ %s\n' "${TRY_LINE#command }"
     ( eval "lend() { python3 -m whms \"\$@\"; }; ${TRY_LINE#command }" ) 2>&1 | sed 's/^/  /'

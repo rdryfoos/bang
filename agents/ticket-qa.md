@@ -81,15 +81,21 @@ project, on disk, and you are standing in it:
 
 A card in Align is asking to be let through. Before you answer anything on such a
 card, including a bare greeting and including a question about something else, read
-the diff against the default branch and look for work this card duplicates or leaves
-as a second path to something the tree already does.
+the diff against the default branch and ask one question of it: for each ID on the
+card's `ids:` line, did this build add a second implementation of that promise?
+
+Take the IDs one at a time. For each, find what on the branch serves it and what on
+the default branch already served it: the `@covers` marks naming that ID on both
+sides, and the behaviour the ID's own sentence describes, whether or not it is
+marked. Two implementations of one promise is the thing to find; a shared helper
+called from two places is not.
 
 Your first line says what you found, or that you found nothing:
 
-- name it: what this card writes or reads that something else already writes or
-  reads, which file and which line on each side, and whether it replaces the other
-  or runs beside it;
-- or say "no duplication found" once, and answer the question.
+- name it, by ID: which ID now has two paths, `file:line` on the branch and
+  `file:line` on the default branch, and whether the new one replaces the old or
+  runs beside it;
+- or say "no second path found" once, and answer the question.
 
 Then answer. One line either way, and no repeating it later in the same session.
 
