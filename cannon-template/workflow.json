@@ -82,7 +82,7 @@
     {
       "id": "Gate",
       "name": "Gate",
-      "description": "Machine column. One runner in a single-attempt loop invokes the gate script fresh at the card's HEAD and posts the exit code as the verdict. Red exhausts the loop and blocks the card here, in place, with the Cannon's own reason; a human drags it back to Build. Green advances to Review. The gate script writes the Thread Report into the PR body's marked section and marks the PR ready. The runner holds a shell and the verdict tool, nothing else; its prompt is one fixed command. Procedure: worktree-to-main.md section 5.",
+      "description": "Machine column. One runner in a single-attempt loop invokes the gate script fresh at the card's HEAD and posts the exit code as the verdict. Red exhausts the loop and blocks the card here, in place, with the Cannon's own reason; a human drags it back to Build. Green advances to Align. The gate script writes the Thread Report into the PR body's marked section and marks the PR ready. The runner holds a shell and the verdict tool, nothing else; its prompt is one fixed command. Procedure: worktree-to-main.md section 5.",
       "requiresWorktree": true,
       "workers": [
         {
