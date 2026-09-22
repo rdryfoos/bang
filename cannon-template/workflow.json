@@ -1,0 +1,184 @@
+{
+  "name": "bang",
+  "description": "Bang v1. The board holds work only; CASE.md, PRD.md and SURFACE.md are standing documents in the repository, changed by a person and not by a card.",
+  "version": "1.0.6",
+  "phases": [
+    {
+      "id": "Spec",
+      "name": "Spec",
+      "description": "Elaboration of promise IDs that already exist in PRD.md at a pinned SHA. Nothing is born here. The card cites one user story ID and its AC IDs in its ids: line. The spec may refine those IDs and may never invent one or contradict the PRD. One worker writes the spec in the card's worktree and commits it as the project's worker identity; the card advances to Build on its own (no stop after Spec in v1; the operator's manual block is the stop when wanted). Procedure: worktree-to-main.md sections 1 and 2.",
+      "requiresWorktree": true,
+      "workers": [
+        {
+          "id": "spec-agent",
+          "type": "agent",
+          "source": "agents/spec.md",
+          "model": "sonnet"
+        }
+      ],
+      "transitions": {
+        "next": "Build"
+      }
+    },
+    {
+      "id": "Build",
+      "name": "Build",
+      "description": "Agent work against the IDs the card cites; code carries @covers marks and tests name their AC. Build may not change a promise: if building shows the promise is wrong, the worker blocks the card, an intent PR is opened, and the card resumes when it merges. One loop, builder then runner, up to the loop cap; exhaustion blocks the card here, in place. The builder pushes every attempt and opens the draft PR on the first push. Procedure: worktree-to-main.md sections 2 through 4.",
+      "requiresWorktree": true,
+      "workers": [
+        {
+          "id": "build-loop",
+          "type": "ralphLoop",
+          "description": "Builder then runner, LOOP_CAP attempts. The runner runs the gate script and posts its exit code as the verdict; it judges nothing.",
+          "maxAttempts": 3,
+          "workers": [
+            {
+              "id": "builder",
+              "type": "agent",
+              "source": "agents/build.md",
+              "model": "sonnet"
+            },
+            {
+              "id": "build-runner",
+              "type": "agent",
+              "source": "agents/runner.md",
+              "model": "haiku",
+              "disallowTools": [
+                "Edit",
+                "Write",
+                "Read",
+                "Glob",
+                "Grep",
+                "MultiEdit",
+                "NotebookEdit",
+                "WebFetch",
+                "WebSearch",
+                "Agent",
+                "Task",
+                "TodoWrite",
+                "Skill",
+                "mcp__potato-cannon__get_ticket",
+                "mcp__potato-cannon__attach_artifact",
+                "mcp__potato-cannon__add_ticket_comment",
+                "mcp__potato-cannon__create_ticket",
+                "mcp__potato-cannon__create_epic",
+                "mcp__potato-cannon__get_epic",
+                "mcp__potato-cannon__list_artifacts",
+                "mcp__potato-cannon__get_artifact",
+                "mcp__potato-cannon__create_task",
+                "mcp__potato-cannon__get_task",
+                "mcp__potato-cannon__update_task_status",
+                "mcp__potato-cannon__add_comment_to_task",
+                "mcp__potato-cannon__answer_question"
+              ]
+            }
+          ]
+        }
+      ],
+      "transitions": {
+        "next": "Gate"
+      }
+    },
+    {
+      "id": "Gate",
+      "name": "Gate",
+      "description": "Machine column. One runner in a single-attempt loop invokes the gate script fresh at the card's HEAD and posts the exit code as the verdict. Red exhausts the loop and blocks the card here, in place, with the Cannon's own reason; a human drags it back to Build. Green advances to Review. The gate script writes the Thread Report into the PR body's marked section and marks the PR ready. The runner holds a shell and the verdict tool, nothing else; its prompt is one fixed command. Procedure: worktree-to-main.md section 5.",
+      "requiresWorktree": true,
+      "workers": [
+        {
+          "id": "gate-loop",
+          "type": "ralphLoop",
+          "description": "One runner, one attempt: a red verdict blocks in place through the Cannon's own exhaustion path.",
+          "maxAttempts": 1,
+          "workers": [
+            {
+              "id": "gate-runner",
+              "type": "agent",
+              "source": "agents/runner.md",
+              "model": "haiku",
+              "disallowTools": [
+                "Edit",
+                "Write",
+                "Read",
+                "Glob",
+                "Grep",
+                "MultiEdit",
+                "NotebookEdit",
+                "WebFetch",
+                "WebSearch",
+                "Agent",
+                "Task",
+                "TodoWrite",
+                "Skill",
+                "mcp__potato-cannon__get_ticket",
+                "mcp__potato-cannon__attach_artifact",
+                "mcp__potato-cannon__add_ticket_comment",
+                "mcp__potato-cannon__create_ticket",
+                "mcp__potato-cannon__create_epic",
+                "mcp__potato-cannon__get_epic",
+                "mcp__potato-cannon__list_artifacts",
+                "mcp__potato-cannon__get_artifact",
+                "mcp__potato-cannon__create_task",
+                "mcp__potato-cannon__get_task",
+                "mcp__potato-cannon__update_task_status",
+                "mcp__potato-cannon__add_comment_to_task",
+                "mcp__potato-cannon__answer_question"
+              ]
+            }
+          ]
+        }
+      ],
+      "transitions": {
+        "next": "Align"
+      }
+    },
+    {
+      "id": "Align",
+      "name": "Align",
+      "description": "Human column, no workers. The operator reads the Thread Report on the PR. Accept is the merge, by the operator's hand, with a merge commit: judgment and merge are one act. If the work missed the promise, drag the card to Build with a comment naming what missed. If the promise was wrong, flag the card blocked, open a Pull Request for Intent, write its link as the card's intent-pr: line; when it merges, unblock and drag to Build. After the merge, wait for CI green at the merge SHA, then drag to Done. Restart-to-phase is forbidden on this project. Procedure: worktree-to-main.md sections 7 through 10.",
+      "requiresWorktree": false,
+      "workers": [],
+      "transitions": {
+        "next": "Done",
+        "manual": true
+      }
+    }
+  ],
+  "entryChecks": {
+    "Spec": {
+      "command": [
+        "scripts/column-entry.sh",
+        "Spec"
+      ],
+      "timeoutSeconds": 60
+    },
+    "Build": {
+      "command": [
+        "scripts/column-entry.sh",
+        "Build"
+      ],
+      "timeoutSeconds": 60
+    },
+    "Gate": {
+      "command": [
+        "scripts/column-entry.sh",
+        "Gate"
+      ],
+      "timeoutSeconds": 60
+    },
+    "Done": {
+      "command": [
+        "scripts/column-entry.sh",
+        "Done"
+      ],
+      "timeoutSeconds": 900
+    },
+    "Align": {
+      "command": [
+        "scripts/column-entry.sh",
+        "Align"
+      ],
+      "timeoutSeconds": 900
+    }
+  }
+}

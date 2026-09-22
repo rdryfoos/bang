@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lend something</title>
+<style>
+body{margin:0;font-family:-apple-system,"Helvetica Neue",Helvetica,sans-serif;background:#f6f3ec;color:#1b1a17}
+a{color:#2f5d4a}a:hover{color:#1f4232}
+input{font:inherit}
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 24px 28px 24px; display: flex; flex-direction: column; gap: 20px; background: #f6f3ec;">
+  <a href="outstanding.html" style="align-self: flex-start; display: inline-flex; align-items: center; height: 44px; font-size: 15px; text-decoration: none; color: #2f5d4a;">Back to the list</a>
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-family: Georgia, 'Times New Roman', serif; font-size: 30px; line-height: 1.1; color: #1b1a17;">Lend something</div>
+    <div style="font-size: 15px; color: #5b574f;">Write it down now, so you stop relying on memory.</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label for="what" style="font-size: 14px; font-weight: 600; color: #1b1a17;">What</label>
+      <input id="what" type="text" value="Torque wrench" style="height: 48px; padding: 0 14px; border: 1px solid #c9c3b5; border-radius: 10px; background: #ffffff; font-size: 17px; color: #1b1a17;">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label for="who" style="font-size: 14px; font-weight: 600; color: #1b1a17;">To whom</label>
+      <input id="who" type="text" value="" placeholder="A name" style="height: 48px; padding: 0 14px; border: 1px solid #a8391f; border-radius: 10px; background: #ffffff; font-size: 17px; color: #1b1a17;">
+      <div style="font-size: 13px; color: #a8391f;">A borrower is required. Nothing was saved.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label for="when" style="font-size: 14px; font-weight: 600; color: #1b1a17;">Date out</label>
+      <input id="when" type="text" value="Sep 20, 2026" style="height: 48px; padding: 0 14px; border: 1px solid #c9c3b5; border-radius: 10px; background: #ffffff; font-size: 17px; color: #1b1a17;">
+      <div style="font-size: 13px; color: #5b574f;">Today unless you change it.</div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1;"></div>
+
+  <button type="button" style="display: flex; align-items: center; justify-content: center; height: 52px; background: #2f5d4a; color: #ffffff; border: 0; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer;">Save</button>
+
+  <!-- FULFILS
+       US-LEND-10 · FR-LEND-10 · AC-LEND-10 · AC-LEND-20 · NFR-PRIV-10
+       Saved to your own file on this machine. It appears in the list at once.
+       These IDs are for the agents and the Gate. They were visible on this screen
+       until 2026-09-21; a person lending a chair to a neighbour has no use for a
+       registry ID, and the screens are what the software looks like to them. -->
+</div>
+</body>
+</html>
