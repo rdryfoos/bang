@@ -12,40 +12,40 @@ below do not change when they do — that is the point of creating at intent.
 
 - US-LEND-10 — As the owner, I write down what I lent, to whom, and when, so I
   stop relying on memory.
-- FR-LEND-10 — An item record holds a name, a borrower, and a date out.
-- AC-LEND-10 — An item saved with a borrower and a date out appears in the
-  outstanding list immediately.
-- AC-LEND-20 — An item saved without a borrower is refused, with the reason
-  shown to the owner.
+  - FR-LEND-10 — An item record holds a name, a borrower, and a date out.
+    - AC-LEND-10 — An item saved with a borrower and a date out appears in the
+      outstanding list immediately.
+    - AC-LEND-20 — An item saved without a borrower is refused, with the reason
+      shown to the owner.
 
 ## Seeing what is still out
 
 - US-OUT-10 — As the owner, I can see everything still out without hunting.
-- FR-OUT-10 — The outstanding list shows every item not yet marked returned,
-  oldest first.
-- AC-OUT-10 — An item marked returned no longer appears in the outstanding list.
-- AC-OUT-20 — With nothing outstanding, the list says so in words rather than
-  showing an empty screen.
+  - FR-OUT-10 — The outstanding list shows every item not yet marked returned,
+    oldest first.
+    - AC-OUT-10 — An item marked returned no longer appears in the outstanding list.
+    - AC-OUT-20 — With nothing outstanding, the list says so in words rather than
+      showing an empty screen.
 
 ## Returning an item
 
 - US-RET-10 — As the owner, I mark a thing returned and it stops nagging me.
-- FR-RET-10 — Marking returned records the date back and moves the item out of
-  outstanding.
-- AC-RET-10 — Marking an item returned records the date it came back, and that
-  date survives a restart.
+  - FR-RET-10 — Marking returned records the date back and moves the item out of
+    outstanding.
+    - AC-RET-10 — Marking an item returned records the date it came back, and that
+      date survives a restart.
 
 ## Cross-cutting
 
 - NFR-PRIV-10 — Borrower names and item records never leave this machine. No
   network calls, no cloud storage, no third-party services, no contacts access.
-- AC-PRIV-10 — No file under the repository contains a value from the local answers. The reader's filled CASE lives outside the worktree at BANG_CASE_FILE; nothing in this repository, at any commit, carries an item, a borrower, or a date from it.
-- AC-PRIV-20 — The application makes no outbound network request during any
-  lending, listing, or returning operation.
+  - AC-PRIV-10 — No file under the repository contains a value from the local answers. The reader's filled CASE lives outside the worktree at BANG_CASE_FILE; nothing in this repository, at any commit, carries an item, a borrower, or a date from it.
+  - AC-PRIV-20 — The application makes no outbound network request during any
+    lending, listing, or returning operation.
 - NFR-DUR-10 — Records survive restarting the application.
-- AC-DUR-10 — After a restart, every lend and return recorded before the restart is still present with its dates.
+  - AC-DUR-10 — After a restart, every lend and return recorded before the restart is still present with its dates.
 - NFR-ENG-10 — Records are written by one path: the screens call the engine's operations and keep no write of their own.
-- AC-ENG-10 — No file under src/whms other than the engine modules writes a record; a test proves the web app's lend, return and list go through the engine.
+  - AC-ENG-10 — No file under src/whms other than the engine modules writes a record; a test proves the web app's lend, return and list go through the engine.
 
 ## Screens
 
@@ -56,12 +56,12 @@ promise when the sentence here and the screen there both hold.
 ## Screen promises
 
 - US-UI-10 — As the owner, I lend, see what is out, and mark things returned on a screen in my browser, not only at the command line.
-- FR-UI-10 — A local web app serves the four screens in design/ and reads and writes the same records file the command line does; nothing leaves the machine.
-- AC-UI-10 — Opening the app shows the outstanding list as design/outstanding.html draws it, oldest first with days out, or design/nothing-out.html when nothing is out.
-- AC-UI-20 — Lend something works as design/lend.html draws it: what, to whom, date out defaulting to today; a missing borrower is refused in place and nothing is saved.
-- AC-UI-30 — Mark returned works as design/mark-returned.html draws it: date back defaulting to today; the item leaves the list at once and the record survives a restart.
+  - FR-UI-10 — A local web app serves the four screens in design/ and reads and writes the same records file the command line does; nothing leaves the machine.
+    - AC-UI-10 — Opening the app shows the outstanding list as design/outstanding.html draws it, oldest first with days out, or design/nothing-out.html when nothing is out.
+    - AC-UI-20 — Lend something works as design/lend.html draws it: what, to whom, date out defaulting to today; a missing borrower is refused in place and nothing is saved.
+    - AC-UI-30 — Mark returned works as design/mark-returned.html draws it: date back defaulting to today; the item leaves the list at once and the record survives a restart.
 - US-UI-20 — As the owner, when I lend something I see what I have lent that person before and whether it came back, so I decide with the history in front of me.
-- AC-UI-40 — On the Lend screen, once a borrower is named, the app lists what that person has had before, showing what came back and what is still out; a borrower with no history shows nothing extra.
+  - AC-UI-40 — On the Lend screen, once a borrower is named, the app lists what that person has had before, showing what came back and what is still out; a borrower with no history shows nothing extra.
 
 ---
 

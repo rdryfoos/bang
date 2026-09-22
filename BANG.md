@@ -158,9 +158,21 @@ given. If a receipt does not match, it stops and prints what it saw.
 6. SpecAssay. Add the three SpecAssay catalogs and install the bundle,
    exactly as the SpecAssay README's catalog path gives them. If the Gate
    config file is reported MISSING, copy it from the template as the
-   README says. Receipt: the first two lines of
+   README says. Then put this project's own settings in place of the
+   installed defaults:
+
+       cp cannon-template/specassay-check-config.yml \
+          .specify/extensions/specassay-check/specassay-check-config.yml
+
+   The installed file has two settings this project needs and ships
+   commented out: `parent_derivation`, which is what makes the
+   specification a tree rather than a flat list, and `test_results`,
+   which is what makes a passing test count as proof rather than a test
+   whose name merely matches. Receipt: the first two lines of
    `bash .specify/extensions/specassay-check/scripts/check-traceability.sh`,
-   which name the config file it found.
+   which name the config file it found, and
+   `grep ^parent_derivation .specify/extensions/specassay-check/specassay-check-config.yml`
+   printing `parent_derivation: heading-nesting`.
 
 7. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the
    branch and commit above; `pnpm install`; `pnpm build`. Do not build the
