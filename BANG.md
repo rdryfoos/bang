@@ -35,11 +35,12 @@ Everything this file does lands in one of these places, and nowhere else.
 
 Read this one twice: the Cannon's worker sessions run Claude Code with
 permission prompts turned off (`--dangerously-skip-permissions`). That is
-how a card moves from Spec to Build to Review without you approving each
-file write. Three things stand in for the prompts you would otherwise see.
-The project's rules file, `CONSTITUTION.md`, which every worker reads
-first. A check called `scripts/governed-files.py`, which refuses a card
-that changes the scripts or the screens that judge it. And the working
+how a card moves from Spec to Build to Gate to Align without you
+approving each file write. Three things stand in for the prompts you
+would otherwise see. The project's rules file, `CONSTITUTION.md`, which
+every worker reads first. A check called `scripts/governed-files.py`,
+which refuses a card that changes the scripts or the screens that judge
+it. And the working
 copy itself: each card is built in its own copy of the project under
 `~/bang/.potato/worktrees/`, so a worker's writes land there and not in
 your checkout. The workers only ever run inside ~/bang. Your own
@@ -106,17 +107,22 @@ given. If a receipt does not match, it stops and prints what it saw.
    you at step 7. If `node --version` already starts with `v22.`, skip to
    pnpm. Otherwise, no administrator password needed:
 
-       mkdir -p ~/.local
-       curl -fsSL -o /tmp/node22.tar.xz \
+       mkdir -p ~/.local ~/.potato-cannon
+       curl -fsSL -o ~/.potato-cannon/node22.tar.xz \
          https://nodejs.org/dist/v22.23.2/node-v22.23.2-darwin-arm64.tar.xz
-       tar -xJf /tmp/node22.tar.xz -C ~/.local --strip-components=1
-       rm /tmp/node22.tar.xz
+       tar -xJf ~/.potato-cannon/node22.tar.xz -C ~/.local --strip-components=1
+       rm ~/.potato-cannon/node22.tar.xz
        export PATH="$HOME/.local/bin:$PATH"
 
    On an Intel Mac, use `node-v22.23.2-darwin-x64.tar.xz` instead. Then
    enable pnpm through Node's own corepack:
 
        corepack enable pnpm
+
+   `~/.potato-cannon` may not exist yet at this step, so the first line
+   creates it. The tarball is downloaded there rather than to `/tmp` so
+   that every byte this file writes is inside one of the five places
+   listed above, and it is deleted as soon as it is unpacked.
 
    Receipt: `node --version` prints a version beginning `v22.`, and
    `pnpm --version` prints a version. Add `export PATH="$HOME/.local/bin:$PATH"`
@@ -131,8 +137,23 @@ given. If a receipt does not match, it stops and prints what it saw.
    `--here` means this folder rather than a new one, and `--force` skips
    the confirmation that a non-empty folder would otherwise ask for.
    Neither deletes what is already here: Spec Kit adds `.specify/` and
-   `.claude/`, and leaves every file this repository ships. Receipt:
-   `.specify/` exists and `ls .specify/` is printed.
+   `.claude/`, and leaves every file this repository ships.
+
+   Then put this project's own rules in the place Spec Kit's commands
+   read from:
+
+       cp CONSTITUTION.md .specify/memory/constitution.md
+
+   This project's own prompts read `CONSTITUTION.md` at the root, but
+   every Spec Kit command a worker runs reads
+   `.specify/memory/constitution.md`, and what `specify init` leaves
+   there is Spec Kit's blank template. Without this copy a worker would
+   plan and check its work against that template, whose heading still has
+   a placeholder where the project's name should be.
+
+   Receipt: `.specify/` exists, `ls .specify/` is printed, and
+   `head -1 .specify/memory/constitution.md` prints
+   `# Constitution: Who Has My Stuff`.
 
 6. SpecAssay. Add the three SpecAssay catalogs and install the bundle,
    exactly as the SpecAssay README's catalog path gives them. If the Gate
@@ -176,16 +197,20 @@ given. If a receipt does not match, it stops and prints what it saw.
          <key>KeepAlive</key><true/>
          <key>ThrottleInterval</key><integer>30</integer>
          <key>StandardOutPath</key>
-         <string>REPLACE_WITH_HOME/.potato-cannon/daemon.log</string>
+         <string>/Users/you/.potato-cannon/daemon.log</string>
          <key>StandardErrorPath</key>
-         <string>REPLACE_WITH_HOME/.potato-cannon/daemon.log</string>
+         <string>/Users/you/.potato-cannon/daemon.log</string>
        </dict>
        </plist>
 
-   Replace `REPLACE_WITH_HOME` with the full path of your home folder;
-   a plist does not expand `~` or `$HOME` in those two fields. The host
-   and port are set by `POTATO_DAEMON_HOST` and `POTATO_DAEMON_PORT`, not
-   by command-line flags. Load it with
+   Those last two paths are shown with `/Users/you` because a plist does
+   not expand `~` or `$HOME` in them: the agent reads your home folder
+   with `echo "$HOME"` and writes the real path into the file, so what
+   lands on disk names your own home and not a placeholder. Everywhere
+   else in the plist `$HOME` is inside a shell command, where it is
+   expanded when the daemon starts. The host and port are set by
+   `POTATO_DAEMON_HOST` and `POTATO_DAEMON_PORT`, not by command-line
+   flags. Load it with
    `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`.
    Receipt: `curl -s http://127.0.0.1:3131/health` returns a response
    whose status is ok.
