@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# pre-commit: the courtesy hook, in the shape Chalkup uses (decision 0016 there).
+# Two scripts: no value out of the reader's local answers may be committed, and no
+# commit lands on the default branch unless a promotion is making it.
+# Installed by pointing core.hooksPath at this directory, so every worktree shares it.
+set -uo pipefail
+root="$(git rev-parse --show-toplevel)"
+python3 "$root/scripts/no-records-in-repo.py" || exit 1
+python3 "$root/scripts/no-commit-on-main.py" || exit 1
