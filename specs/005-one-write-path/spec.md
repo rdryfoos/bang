@@ -20,8 +20,8 @@ and is proved by a named test.
 
 ### User Story 1 - The record means one thing (Priority: P1)
 
-**NFR-ENG-10** — Records are written by one path: the screens call the engine's
-operations and keep no write of their own.
+**NFR-ENG-10** — Records are written by one path: every entry point onto them, present
+and future, calls the engine's operations and keeps no write of its own.
 
 However many doors the software grows, the record is the same record through every one
 of them. Nothing about it says which door was used, because there is only one place the
@@ -71,8 +71,8 @@ it names no entry point, so it holds for the ones that do not exist yet.
 
 - Q: What is the engine? → A: The modules that hold what a record is and where it lives:
   `src/whms/store.py`, `src/whms/records.py`, `src/whms/outstanding.py`. Everything else
-  under `src/whms` is an entry point onto them. Source: the promise's own words, "the
-  screens call the engine's operations".
+  under `src/whms` is an entry point onto them. Source: the promise's own words, "every
+  entry point onto them ... calls the engine's operations".
 - Q: Did the duplication ship into this repository? → A: No. The browser that carried the
   second write path on the rehearsal board never shipped here with one: its return handler
   called the engine. What was owed was the proof that nothing else can quietly start
@@ -92,8 +92,8 @@ it names no entry point, so it holds for the ones that do not exist yet.
 
 ### Functional Requirements
 
-- **NFR-ENG-10**: Records are written by one path: the screens call the engine's
-  operations and keep no write of their own.
+- **NFR-ENG-10**: Records are written by one path: every entry point onto them, present
+  and future, calls the engine's operations and keeps no write of its own.
   - No file under `src/whms` other than the engine modules writes a record, read from the
     source, binding every entry point present and future (AC-ENG-10).
 

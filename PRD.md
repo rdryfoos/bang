@@ -44,7 +44,7 @@ below do not change when they do — that is the point of creating at intent.
     lending, listing, or returning operation.
 - NFR-DUR-10 — Records survive restarting the application.
   - AC-DUR-10 — After a restart, every lend and return recorded before the restart is still present with its dates.
-- NFR-ENG-10 — Records are written by one path: the screens call the engine's operations and keep no write of their own.
+- NFR-ENG-10 — Records are written by one path: every entry point onto them, present and future, calls the engine's operations and keeps no write of its own.
   - AC-ENG-10 — No file under src/whms other than the engine modules writes a record. The rule is read from the source and binds every entry point, present and future: a module added later that writes a record of its own fails the same test.
 
 ## Screens

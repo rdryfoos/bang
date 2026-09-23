@@ -2,8 +2,10 @@
 # gate: the project's one deaf check. Invoked from the worktree root with no arguments
 # by the runner (its fixed command) and by CI. Floor tier first, first red stops
 # (exit 1); then every gate-tier check, every red listed (exit 2); missing tool exit 3.
-# Writes the Thread Report into the PR body's two marked sections through the host's
-# CLI, from a file, never a command line. Judges nothing.
+# Prints its report and writes a receipt; judges nothing. It reaches no network at all:
+# on 2026-09-23 the last three things that did were removed, the two scanners and
+# everything that spoke to a forge, because this project has no remote and BANG.md
+# promises a reader it pushes nothing anywhere.
 # Specification: the box's cargo/gate-script.md. Written by the born-threaded practice; MIT.
 # Two checks were removed on 2026-09-23 by Rik's ruling, after the first cold run: the
 # secrets scan and the dependency advisory scan. Neither was on BANG.md's list of what
@@ -16,8 +18,9 @@
 # secrets scanner cannot make. The tiers are renumbered rather than left with gaps.
 # The source project's
 # own copy lives at gate/gate.sh rather than scripts/, because its SURFACE.md row M4 holds
-# scripts/ to zero network capability and this script writes the PR body through gh; see
-# that project's decision 0048.
+# scripts/ to zero network capability and its copy of this script wrote the PR body
+# through gh; see that project's decision 0048. This copy no longer does, so here it is
+# a script like any other.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(pwd)"
@@ -51,7 +54,6 @@ need() { # name, command, version-args
 }
 missing=0
 need python3 python3 --version || missing=1
-need gh gh --version || missing=1
 need git git --version || missing=1
 [ -x "$HERE/check-anchors.py" ] || { line "  MISSING TOOL: check-anchors ($HERE/check-anchors.py)"; missing=1; }
 [ -f "$SPECASSAY_CHECK" ] || { line "  MISSING TOOL: specassay check ($SPECASSAY_CHECK)"; missing=1; }
@@ -153,19 +155,11 @@ lines.append(f"bounce count: Build entered {bounces} time(s), from the journal")
 open(out,"a").write("\n".join(lines)+"\n")
 PY
   [ -f "$TELEMETRY.phase" ] && PHASE="$(cat "$TELEMETRY.phase")" && rm -f "$TELEMETRY.phase"
-  # shared load
-  files_here="$(git diff --name-only "origin/$DEFAULT_BRANCH"...HEAD 2>/dev/null | sort -u)"
-  shared="$(gh pr list --state open --json number,headRefName,files --jq '.[] | select(.headRefName != "'"$(git rev-parse --abbrev-ref HEAD)"'") | "\(.number) " + ([.files[].path] | join(" "))' 2>/dev/null | python3 -c '
-import sys
-mine=set(l.strip() for l in open(sys.argv[1]) if l.strip())
-out=[]
-for l in sys.stdin:
-    parts=l.split(); 
-    if not parts: continue
-    num=parts[0]; common=sorted(mine & set(parts[1:]))
-    if common: out.append("PR #%s: %s" % (num, ", ".join(common)))
-print("; ".join(out) if out else "none")' <(printf '%s\n' "$files_here"))"
-  tline "shared load: $shared"
+  # There used to be a "shared load" line here, asking the forge which other open pull
+  # requests touched the files this branch touches. This project has no forge and no
+  # pull requests: its promotions are local merges into its own main branch, which
+  # BANG.md promises a reader before they paste anything. A telemetry line that can
+  # only ever say "none" is worse than no line, because it reads like an answer.
 fi
 
 # The local receipt. An project with no forge behind it has no CI run to point at, so the
@@ -221,30 +215,9 @@ elif [ "$RECEIPT_SOURCE" = "local" ]; then
   line "gate: no receipt, this run is not a promotion (BANG_PROMOTION is unset); read-only"
 fi
 
-# Write the PR body: section one always, section two only when telemetry exists
-PR_NUM="$(gh pr list --state all --head "$(git rev-parse --abbrev-ref HEAD)" --json number --jq '.[0].number' 2>/dev/null || true)"
-if [ -n "$PR_NUM" ] && [ "$PR_NUM" != "null" ]; then
-  body_file="$(mktemp)"; gh pr view "$PR_NUM" --json body --jq .body > "$body_file" 2>/dev/null || true
-  python3 - "$body_file" "$REPORT" "$TELEMETRY" <<'PY'
-import sys
-body_path,report_path,tele_path=sys.argv[1:4]
-body=open(body_path).read()
-B1,E1="<!-- thread-report:begin -->","<!-- thread-report:end -->"
-B2,E2="<!-- project-telemetry:begin -->","<!-- project-telemetry:end -->"
-def replace(body,b,e,content):
-    if b in body and e in body and body.index(b)<body.index(e):
-        pre=body[:body.index(b)+len(b)]; post=body[body.index(e):]
-        return pre+"\n"+content.rstrip("\n")+"\n"+post
-    return body
-report=open(report_path).read()
-body=replace(body,B1,E1,"```\n"+report+"```")
-tele=open(tele_path).read()
-if tele.strip():
-    body=replace(body,B2,E2,"```\n"+tele+"```")
-open(body_path,"w").write(body)
-PY
-  gh pr edit "$PR_NUM" --body-file "$body_file" >/dev/null 2>&1 || line "gate: PR body write failed (non-fatal)"
-  rm -f "$body_file"
-  if [ "$verdict_code" = 0 ] && [ "$PHASE" = "Gate" ]; then gh pr ready "$PR_NUM" >/dev/null 2>&1 && line "gate: PR #$PR_NUM marked ready for review"; fi
-fi
+# The Thread Report used to be written into a pull request's body from here, into two
+# marked sections, and a green run in the Gate phase marked that PR ready for review.
+# Both are gone with the remote they assumed. What a reader sees instead is the report
+# this script prints, and the review packet the Align entry check writes onto the card,
+# which reads the same trace-manifest.json and is on the board rather than on a forge.
 exit "$verdict_code"
