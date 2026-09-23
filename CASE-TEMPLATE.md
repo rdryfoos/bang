@@ -1,129 +1,94 @@
 # CASE
 
-**What is this file?** It is the thing you write before any code exists.
-It says what you want, who it is for, and how you will know it worked.
-Everything the machine builds later gets tied back to what you write
-here.
+Short for business case: what you are setting out to do and why, in
+words anyone could read.
 
-**How to use it.** Fill it in by hand, in your own words, in one go.
-Do not look things up. Do not make it good. A rough honest
-version beats a polished vague one, and you will rewrite it anyway
-once you see the first working piece.
+Write it in one go, then come back if you want to improve it. Each
+question has an invented example under it, a sort of toy example. You
+can tell by the dashes. Sit back and use this CASE as is to build the
+toy, or have some fun and replace the text with an idea that you want to
+build (but please, keep the dashes).
 
-**How long?** Half an hour. If a section stumps you, write "not sure
-yet" and move on. Not sure yet is a real answer and a useful one.
+## What is the problem, and what do people do about it now?
 
----
+The thing that is wrong or missing, as it actually shows up. Then the
+workaround people use today.
 
-## 1. The problem
+- I lend things and forget who has them. A ladder has been gone since
+  spring and I cannot remember to whom.
+- Today: memory, and asking around.
 
-What is annoying, slow, or lost today? Write it as a story about a
-real moment, not as a feature request.
+## Who has it, and who would be first?
 
-Two or three sentences.
+Kinds of people you could describe, never names. If it is only you, say
+so. Then the one kind of person who would use this before anyone else.
 
--
+- Anyone who lends tools, books and kit to friends and neighbours.
+- First: me, with about twenty things out at any time.
 
-## 2. Who has this problem
+## What are you betting?
 
-Who is this for? If it is just you, say so. That is a fine answer and
-it makes everything downstream easier.
+One line per bet: if they can do this, then this will be true for them.
+Three is plenty.
 
--
+- If the owner can see what is out and to whom, then things come back
+  sooner and lending gets easier to say yes to.
 
-## 3. What you are promising
+## How would you know?
 
-If this thing existed and worked, what would it do for that person?
-Write three to five promises. Each one should be something you could
-later point at and say yes or no about.
+For each bet, one thing you could measure or look at and see plainly.
 
-Write them as plain sentences, not features. "I can tell at a glance
-which plants need watering this week" is a promise. "Reminder screen"
-is a feature.
+- The oldest item on the list is younger than it was a month ago, and
+  the owner can say where every lent item is.
 
-1.
-2.
-3.
-4.
-5.
+## What are you assuming, and what do you not know?
 
-## 4. How you would know it is working
+List them. Mark each one desirable (do they want it), feasible (can it
+be built) or viable (does it pay, or spread). Put the one with the least
+evidence and the most at stake at the top; something you do not know yet
+goes there too. The top line is the first thing to test.
 
-For each promise above, what would you see, do, or count that tells
-you it is true? If you cannot think of anything, say so. A promise
-nobody can check is worth knowing about now rather than later.
+- Desirable: the owner will bother to write a lend down at the moment
+  it happens. Least evidence, most at stake.
+- Feasible: a list that works from a plain file on one machine is
+  enough; no account, no sync.
+- Viable: for a project of one, nothing to pay; it spreads if the person
+  who borrowed the ladder wants one too.
 
-1.
-2.
-3.
-4.
-5.
+## How will you solve it?
 
-## 5. What you are assuming
+Two or three bullets, enough that a builder knows where to start.
 
-List what has to be true for this to be worth building. Put the one
-that scares you most at the top. The scary one is usually where to
-start.
+- A list of what is out, oldest first, with days out.
+- Lend something: what, to whom, when. Mark it returned.
+- A screen in the browser and the same thing at the command line.
 
--
--
--
+## How will it spread, or pay for itself?
 
-## 6. The smallest first piece
+A sentence each: how people find it, what it costs, what pays for it,
+and why you rather than someone else. Blank is an honest answer for a
+project of one.
 
-What is the smallest version that would teach you whether the scary
-assumption holds? Not the smallest product. The smallest thing that
-settles the question.
+- Spreads by the person I lent to asking for it. No revenue. Costs my
+  evenings. Nobody else is going to build it for my shed.
 
--
+## What is the smallest first piece?
 
-## 7. Not now
+What to build first, to test the top assumption.
 
-What are you deliberately leaving out of the first pass? Writing this
-down keeps it from creeping back in on a Tuesday.
+- Write a lend down and see it on the list. Nothing else until the
+  owner has done that ten times without being reminded.
 
--
--
--
+## What will this refuse to do, now or ever?
 
-## 8. Open questions
+One line each.
 
-Anything you are unsure about, including questions about the tools
-themselves. These are notes to yourself and to whoever helps you.
+- Never remind, nag or message the borrower.
+- Never keep a record anywhere but the owner's own machine.
+- No accounts, no sharing, not now.
 
--
--
--
+## Leave these out
 
----
-
-## Things to leave out of this file
-
-- **Technology choices.** No frameworks, no databases, no model
-  names. Those decisions come later and they come easier once the
-  promises are clear.
-- **Screens and layouts.** Describe what someone can do, not where
-  the button goes.
-- **ID numbers.** You do not write those. The machine mints them
-  later and attaches them to your promises. That is the whole point:
-  you write in plain language, and the thread gets added around it.
-- **Anything you would be embarrassed to be held to.** If you would
-  not want to be asked "did you do this?" in six weeks, do not
-  promise it here.
-
-## What happens next
-
-Nothing, until you decide to build it. The file is worth having on its
-own: it is the clearest half hour you will spend on an idea, and the
-promises in it are yours whether or not any machine ever reads them.
-
-When you do build, this file is what the work is tied to. An agent
-reads your promises, gives each one a durable identifier, and from
-then on every piece of code and every test it writes points back to
-the promise it serves. When you look at the work later, you can ask
-any line of it why it exists and get your own words back.
-
-If you are joining a project someone else runs, hand this file to
-whoever sent you. If the idea is your own, keep it. The path from a
-case to a project of your own is being written, and the page that
-brought you here will point at it when it exists.
+- Real names, real records, real addresses. Invent them.
+- The solution, until its own question.
+- More than three bets. If you have more, you have more than one case.

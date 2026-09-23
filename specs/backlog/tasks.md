@@ -33,7 +33,7 @@ as debt on an open task of its own.
 
 ## No card yet
 
-- [ ] T906 Make the screens call the engine's operations and keep no write of their own. **Carries**: NFR-ENG-10, AC-ENG-10 (reserved backlog). **The work is done**; this line is open because nothing else claims the two IDs. The screens already called the engine, so what was owed was proof that nothing else can quietly start writing: `tests/test_one_write_path.py` reads the source for a second write path and drives the screens' lend, return and list through the engine, and `src/whms/store.py` carries the marks. Both IDs are proven. Ticking this line turns the Gate red with `registry ID missing from specs: AC-ENG-10`, because a promise is claimed by a spec or by an open task and no spec claims these: the work was done by hand, with no card and so no spec directory. It closes when one claims them. No card yet.
+- [x] T906 Make the screens call the engine's operations and keep no write of their own. **Carries**: NFR-ENG-10, AC-ENG-10 (reserved backlog). The reservation expires now that a spec claims it: `specs/005-one-write-path`, written by hand on 2026-09-22 for work done in PR #4. Both IDs are proven by `tests/test_one_write_path.py`, and `src/whms/store.py` carries the marks. No card; the work was done by hand.
 
 - [x] T903 Make records survive restarting the application. **Carries**: NFR-DUR-10 (reserved backlog). Carried by card BAN-5, spec `specs/003-records-survive-restart`. It was the blue the reader was meant to see on the first pass, with no card behind it; the reservation expires now that a spec claims it.
 
