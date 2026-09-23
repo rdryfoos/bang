@@ -6,10 +6,21 @@ nothing else. The procedure worktree-to-main.md sections 2 through 4 are your
 protocol; this file restates the parts you act on.
 
 ## Read first
-0a. Say one line through `chat_notify` before you start reading: what you are about
-   to build and that you are reading the spec and the tree. Reading takes minutes
-   and writes nothing, so the feed shows "Working on it" over an empty conversation
-   and a reader cannot tell a worker thinking from a worker stuck.
+0a. Before any action, say through `chat_notify` what you are standing in. One
+   readable sentence naming the card id, the spec file you are building from, the
+   branch, and the SHA it was cut from; then the card's `ids:` line under it.
+   Sentence first, IDs under it, the way a card's own description is written.
+
+       Reading BANV-1, spec specs/002-lend-and-return/spec.md, on branch
+       potato/BANV-1 cut from main at 461ed12.
+       ids: US-UI-10, FR-UI-10, AC-UI-10
+
+   Reading takes minutes and writes nothing, so without this the feed shows "Working
+   on it" over an empty conversation and a reader cannot tell a worker thinking from
+   a worker stuck. The SHA is there because a card branch carries the prompts and
+   scripts that existed when it was cut: a fix landed on the default branch does not
+   reach a branch cut before it, and this line is how anybody later works out which
+   version of the instructions a run was actually following.
 0. If you entered Build from Align, the card carries a `Rework` block. Read it before
    anything else. A card comes back from Align because a person looked at what was
    built and wanted it different; the block is that, written down where you would
@@ -41,24 +52,39 @@ protocol; this file restates the parts you act on.
    that fulfils the ID, and a test proves an ID by carrying it in the test's name. A
    promise marked only on its test reads as delivered by nobody, and a card can reach
    Done over it with the board green.
-1. Implement the tasks in order. Every source file that serves an ID carries an
+1. Before you write code for an ID, look on the default branch for work that already
+   keeps that promise. Two greps, both cheap:
+
+       git grep -n "@covers.*<ID>" <default branch> -- src tests
+       git grep -n "<the behaviour in the ID's own words>" <default branch> -- src
+
+   If the promise is already kept there, **stop and ask** with `update_ticket`:
+   `blocked: true` together with a `blocked-reason:` line naming the ID, the file and
+   line that already keeps it, and what you were about to add. Do not add a second
+   path and do not quietly build on top of one you did not expect.
+
+   Two implementations of one promise are not a duplicated function. They are two
+   answers to the question of what the record is, and the second one to run wins. The
+   Gate cannot see it: it asks whether this branch proves the ID, and both would.
+
+2. Implement the tasks in order. Every source file that serves an ID carries an
    `@covers` mark naming it. Every test that proves an AC names the AC in its
    identifier. Tests come from criteria, never from guesses.
-2. Run the project's test command and the project's gate script locally before you
+3. Run the project's test command and the project's gate script locally before you
    finish an attempt. Red is information; fix it or record it as tracked debt on an
    open task, never hide it.
-3. Commit as you go, on the card branch only. Your identity is set by the daemon; do
+4. Commit as you go, on the card branch only. Your identity is set by the daemon; do
    not set one. Every commit carries three trailers: `Card:` with the card id, `Ids:`
    with the card's `ids:` line verbatim, and `Session:` with your Cannon session id,
    read from the daemon's session list for the active session on this card.
-4. At the end of every attempt, push the card branch to the remote. On the first push,
+5. At the end of every attempt, push the card branch to the remote. On the first push,
    open one draft PR from the card branch to the default branch, titled with the card
    id and the story's title, whose body holds the two marker pairs the gate script
    owns, thread-report and project-telemetry, and nothing between them yet. Then write the `pr:` line onto the card with
    `update_ticket`: `lines: [{name: "pr", value: <the PR url>}]`. It sets or replaces
    that one line and leaves every other line of the description as it found it, so
    you never read the description, rebuild it and write it back.
-5. Write the `try:` line onto the card with `update_ticket`:
+6. Write the `try:` line onto the card with `update_ticket`:
    `lines: [{name: "try", value: <the line>}]`. It says how to open the software
    where this card's promise shows, and it is what a reader presses Try it for.
 
@@ -81,12 +107,12 @@ protocol; this file restates the parts you act on.
    same call, on its own line, so the reader knows why they are reading a transcript
    instead of looking at the thing.
 
-6. Say what you wrote, in your own words, through `chat_notify`. Two lines, no more:
+7. Say what you wrote, in your own words, through `chat_notify`. Two lines, no more:
    what the build now does that it did not before, in a sentence a reader who has not
    seen the diff can follow; and which test names which ID, one pair per ID the card
    carries. If an ID has no test yet, say which and why. A card's reader sees only
    what you say here.
-7. If implementing shows the promise itself is wrong or incomplete: stop building.
+8. If implementing shows the promise itself is wrong or incomplete: stop building.
    Block the card with `update_ticket`, in one call: `blocked: true` together with
    `lines: [{name: "blocked-reason", value: <the ID and what is wrong>}]`. One call,
    because a card that is blocked with no reason on it, even for a second, is a card
