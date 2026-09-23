@@ -1,4 +1,4 @@
-# @covers FR-LEND-10, AC-LEND-10, NFR-PRIV-10, AC-UI-30, NFR-ENG-10, AC-ENG-10, AC-DUR-10, AC-PRIV-10
+# @covers FR-LEND-10, AC-LEND-10, NFR-PRIV-10, NFR-ENG-10, AC-ENG-10, AC-DUR-10, AC-PRIV-10
 """Item records kept in one JSON file on this machine."""
 import json
 import os

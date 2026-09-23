@@ -280,11 +280,37 @@ given. If a receipt does not match, it stops and prints what it saw.
    template. Receipt: `curl -s http://127.0.0.1:3131/api/projects` lists
    one project named bang.
 
-10. First cards. Create the cards named in `~/bang/FIRST-CARDS.md` in the
-    Ideas column, in that order, with those descriptions, and no others.
-    Each card is created with `POST /api/tickets/<project id>` and a title
-    and description; the project id came back from step 9. Receipt: the
-    card ids, one per line.
+10. First cards. Create these three in the Ideas column, in this order and
+    no others. Each is created with `POST /api/tickets/<project id>` and a
+    title and a description; the project id came back from step 9. A
+    description is the text under its title exactly as written here,
+    newlines and all, with the four spaces of indentation removed and
+    nothing added.
+
+    Title: Lend and return in the browser
+
+    Drag this card to Spec and watch what happens.
+    As the owner, I want to lend, see what is out, and mark things returned on a screen in my browser, so I am not tied to the command line. The screens are in design/. Read design/README.md first.
+    Every write the screens make goes through the engine (NFR-ENG-10); the test will refuse anything else.
+    ids: US-UI-10, FR-UI-10, AC-UI-10, AC-UI-20, AC-UI-30
+
+    Title: What I have lent before
+
+    As the owner, when I lend something I want to see what I have lent that person before and whether it came back, so I can decide with the history in front of me.
+    ids: US-UI-20, AC-UI-40
+
+    Title: Remind the borrower
+
+    As the owner, I want the app to nudge me about a thing that has been out too long.
+
+    Nothing in `PRD.md` promises this yet. It is here to show what the board does with a card whose promise does not exist: it waits, and it says why.
+
+    These are the same three, in the same words, as `~/bang/FIRST-CARDS.md`,
+    which says why they are these three. Either file is the payload, and
+    this project's own tests compare them, so they cannot drift apart
+    without something going red.
+
+    Receipt: the card ids, one per line.
 
 11. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
     the line `Bang done. Your board is open.`, and only then open the URL

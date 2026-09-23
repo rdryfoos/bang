@@ -173,7 +173,7 @@ fi
 # SHA it ran on. Three conditions, all required:
 #
 #   RECEIPT_SOURCE=local   the project declares it has no forge to attest for it
-#   ESTATE_PROMOTION=1     a promotion invoked this run, set by promote-to-done.sh
+#   BANG_PROMOTION=1     a promotion invoked this run, set by promote-to-done.sh
 #   on DEFAULT_BRANCH      the fact recorded is about the project's history
 #
 # The middle one was added 2026-09-20 after a Build-phase runner, standing in the primary
@@ -185,7 +185,7 @@ fi
 # kind and carries actor "orchestrator": a receipt written by a script is not a hand's
 # note, and the recorder's one-shot --note mode stamps actor "hand", which would be an
 # attribution this project does not permit.
-if [ "$RECEIPT_SOURCE" = "local" ] && [ "${ESTATE_PROMOTION:-}" = "1" ]; then
+if [ "$RECEIPT_SOURCE" = "local" ] && [ "${BANG_PROMOTION:-}" = "1" ]; then
   cur_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
   if [ "$cur_branch" = "$DEFAULT_BRANCH" ]; then
     mkdir -p "$JOURNAL_PREFIX"
@@ -204,7 +204,7 @@ if [ "$RECEIPT_SOURCE" = "local" ] && [ "${ESTATE_PROMOTION:-}" = "1" ]; then
     # Taken here instead, because here is where every green promotion passes: a card's
     # and a hand's alike. The manifests are untracked everywhere else, so this is the
     # one copy anything reads, and it is written only on a green run, only on the
-    # default branch, only under ESTATE_PROMOTION. A red run leaves the last good
+    # default branch, only under BANG_PROMOTION. A red run leaves the last good
     # snapshot alone rather than replacing it with a picture of a tree that was
     # rolled back.
     if [ "$verdict_code" = 0 ] && [ -s trace-manifest.json ]; then
@@ -218,7 +218,7 @@ if [ "$RECEIPT_SOURCE" = "local" ] && [ "${ESTATE_PROMOTION:-}" = "1" ]; then
     line "gate: no receipt, this run is on $cur_branch and receipts are written on $DEFAULT_BRANCH only"
   fi
 elif [ "$RECEIPT_SOURCE" = "local" ]; then
-  line "gate: no receipt, this run is not a promotion (ESTATE_PROMOTION is unset); read-only"
+  line "gate: no receipt, this run is not a promotion (BANG_PROMOTION is unset); read-only"
 fi
 
 # Write the PR body: section one always, section two only when telemetry exists

@@ -43,7 +43,7 @@ FROM="${POTATO_FROM_PHASE:-}"
 # guard. The receipt was appended, staged, and left uncommitted, and the message saying
 # so scrolled past in a hook nobody was reading. Set once, here, for everything this
 # script does.
-export ESTATE_PROMOTION=1
+export BANG_PROMOTION=1
 
 say() { printf 'promote: %s\n' "$*"; }
 

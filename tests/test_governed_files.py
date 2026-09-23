@@ -80,7 +80,7 @@ def test_editing_the_gate_config_is_red(project):
     assert "scripts/gate.conf" in r.stderr
 
 
-def test_a_new_robot_is_red_too(project):
+def test_a_new_worker_is_red_too(project):
     card_branch(project, "potato/CARD-4", "scripts/helpful.py", "# added by a card\n")
     r = check(project)
     assert r.returncode == 1

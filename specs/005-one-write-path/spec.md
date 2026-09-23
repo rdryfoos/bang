@@ -7,7 +7,8 @@
 **Status**: Done
 
 **Input**: No card. Written by hand on 2026-09-22, outside the board, for work done in
-PR #4. `ids: NFR-ENG-10, AC-ENG-10`
+PR #4, and narrowed on 2026-09-23 when the browser came out of the shipped tree.
+`ids: NFR-ENG-10, AC-ENG-10`
 
 This specification is written after the fact. The promises it claims were created on
 2026-09-21 and held in reserved backlog by an open task; the work that keeps them landed
@@ -22,10 +23,10 @@ and is proved by a named test.
 **NFR-ENG-10** — Records are written by one path: the screens call the engine's
 operations and keep no write of their own.
 
-The owner lends a thing at the command line and marks it returned in the browser, or the
-other way round, and the record is the same record either way. Nothing about the software
-says which door was used, because there is only one place the file is written and both
-doors knock on it.
+However many doors the software grows, the record is the same record through every one
+of them. Nothing about it says which door was used, because there is only one place the
+file is written and every door knocks on it. Today there is one door, the command line.
+Card one adds the screens; the rule is waiting for them.
 
 **Why this priority**: On 2026-09-21 two cards implemented marking a thing returned, one
 in the engine and one in the browser screens, and both passed every check this project
@@ -35,33 +36,34 @@ a duplicated function. They are two answers to the question of what a record is,
 second one to run wins.
 
 **Independent Test**: Read every module under `src/whms` and look for a file outside the
-engine that can put a record on disk. Then drive the browser screens through a lend, a
-listing and a return, and watch each one pass through the engine on its way.
+engine that can put a record on disk. The reading is the whole test, and deliberately so:
+it names no entry point, so it holds for the ones that do not exist yet.
 
 **Acceptance Scenarios**:
 
 1. **AC-ENG-10** — **Given** the source under `src/whms`, **When** every module outside
    the engine is read for a call that writes a file, **Then** there is none.
-2. **AC-ENG-10** — **Given** the browser screens running over a records file, **When** the
-   owner lends a thing, opens the outstanding list and marks the thing returned, **Then**
-   each of those three went through the engine's operations to reach the file.
+2. **AC-ENG-10** — **Given** a module added to `src/whms` later, by a card or by a hand,
+   **When** it writes a record of its own rather than calling the engine, **Then** the
+   same reading fails, without anybody having added it to a list.
 
 ---
 
 ### Edge Cases
 
-- **A screen that reads without writing.** Reading is not the promise. The screens read
-  through the engine too, but a read that went another way would take nothing from the
-  record; a write that went another way would define it.
+- **An entry point that reads without writing.** Reading is not the promise. A read that
+  went another way would take nothing from the record; a write that went another way
+  would define it.
 - **A helper both sides call.** One function called from two places is not two paths. The
   promise is about the number of answers to what a record is, not the number of callers.
-- **A new screen.** It keeps the promise by calling the engine, as the existing ones do,
-  and the proof holds without being changed, because the proof reads whatever is there
-  rather than a list of files it knows about.
+- **A new entry point.** The screens card one builds, a second command, anything. It
+  keeps the promise by calling the engine, and the proof holds without being changed,
+  because the proof reads whatever is there rather than a list of files it knows about.
+  This is the case the test was really written for.
 - **A write that is not to the records file.** A log line, a temporary file, a served
   page. The proof looks for a call that could put a record on disk, and it is deliberately
-  wider than the records file: a screen that writes anything at all is a screen that has
-  started to keep state, which is where a second record comes from.
+  wider than the records file: an entry point that writes anything at all has started to
+  keep state, which is where a second record comes from.
 
 ## Clarifications
 
@@ -69,11 +71,14 @@ listing and a return, and watch each one pass through the engine on its way.
 
 - Q: What is the engine? → A: The modules that hold what a record is and where it lives:
   `src/whms/store.py`, `src/whms/records.py`, `src/whms/outstanding.py`. Everything else
-  under `src/whms` is a screen or a command line. Source: the promise's own words, "the
+  under `src/whms` is an entry point onto them. Source: the promise's own words, "the
   screens call the engine's operations".
-- Q: Did the duplication ship into this repository? → A: No. `src/whms/web.py` has no
-  file access at all; its return handler calls the engine. What was owed was the proof
-  that nothing else can quietly start writing, not a change to the application.
+- Q: Did the duplication ship into this repository? → A: No. The browser that carried the
+  second write path on the rehearsal board never shipped here with one: its return handler
+  called the engine. What was owed was the proof that nothing else can quietly start
+  writing, not a change to the application. On 2026-09-23 the browser came out of the
+  shipped tree entirely, to be card one's work; the proof stayed, because it was never
+  about the browser.
 - Q: What counts as writing, for the proof? → A: A call that could put bytes on disk:
   `open` in a writing mode, or a call on `os`, `shutil`, `tempfile`, `json` or `pathlib`
   that creates, replaces or removes a file. Qualified by module on purpose, so that
@@ -89,22 +94,24 @@ listing and a return, and watch each one pass through the engine on its way.
 
 - **NFR-ENG-10**: Records are written by one path: the screens call the engine's
   operations and keep no write of their own.
-  - No file under `src/whms` other than the engine modules writes a record, and the
-    browser screens' lend, return and list go through the engine (AC-ENG-10).
+  - No file under `src/whms` other than the engine modules writes a record, read from the
+    source, binding every entry point present and future (AC-ENG-10).
 
 ### Key Entities
 
 - **The engine**: `store.py`, `records.py` and `outstanding.py`. What a record is, where
   it lives, and which records are outstanding.
-- **A screen**: any module under `src/whms` that presents records to a person, currently
-  `web.py` and `pages.py`. It may read and present; it may not write.
+- **An entry point**: any module under `src/whms` that puts records in front of a person,
+  currently `cli.py` and the screens card one will build. It may read and present; it may
+  not write.
 
 ## Success Criteria *(mandatory)*
 
 - **SC-001** (AC-ENG-10): Reading the source of every module under `src/whms` outside the
   engine yields zero calls that could put a record on disk.
-- **SC-002** (AC-ENG-10): A lend, a listing and a return made through the browser screens
-  each pass through an engine operation, with no fourth way to the file.
+- **SC-002** (AC-ENG-10): A module added under `src/whms` after this specification was
+  written is held to the same rule by the same reading, with nobody having to remember
+  to add it.
 
 ## Assumptions
 
@@ -125,6 +132,6 @@ IDs are inherited from PRD.md. None is created here. Scope of this feature:
 
 | Failure | User impact | Mitigation / trace |
 |---------|-------------|-------------------|
-| A screen writes the records file itself | Two answers to what a record is; the last write wins and the owner cannot tell which ran | NFR-ENG-10, AC-ENG-10 |
+| An entry point writes the records file itself | Two answers to what a record is; the last write wins and the owner cannot tell which ran | NFR-ENG-10, AC-ENG-10 |
 | A second implementation passes because every behavioural test still passes | The board goes green over work that was already done, twice | AC-ENG-10, first scenario |
-| A new screen is added that keeps its own state | The same failure again, later, with nobody watching for it | AC-ENG-10, proof reads the tree rather than a list |
+| A new entry point is added that keeps its own state | The same failure again, later, with nobody watching for it | AC-ENG-10, second scenario |

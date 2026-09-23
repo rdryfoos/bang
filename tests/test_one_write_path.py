@@ -1,4 +1,4 @@
-"""One path to the records file, and the screens on it.
+"""One path to the records file, whatever knocks on it.
 
 On 2026-09-21 two cards implemented marking a thing returned, one in the engine and
 one in the browser screens, and both passed every check the project had. Nothing asked
@@ -6,14 +6,14 @@ whether a promise was already served; the checks asked whether each branch prove
 and both did. Two paths that write the same record are not a duplicated function: they
 are two answers to the question of what a record is, and the second one to run wins.
 
-These tests are the question nothing was asking. The first reads the source and says
-which files can put a record on disk. The second drives the browser screens and says
-that lending, returning and listing all went through the engine to get there.
+This test is the question nothing was asking. It reads the source and fails any module
+under src/whms outside the engine that can put a record on disk. It names no entry point,
+which is the point: it was written while the browser was in the tree, it keeps working
+with the browser out of it, and it will refuse a second write path in the screens on the
+day somebody builds them back.
 """
 import ast
 import pathlib
-
-from whms import store
 
 SRC = pathlib.Path(__file__).resolve().parent.parent / "src" / "whms"
 
@@ -23,8 +23,8 @@ SRC = pathlib.Path(__file__).resolve().parent.parent / "src" / "whms"
 ENGINE = {"store.py", "records.py", "outstanding.py"}
 
 # Modules a write would have to go through, and the calls in them that write. Qualified
-# by module on purpose: a bare name would catch `text.replace(",", " ")` in pages.py and
-# report a screen writing records because it tidies a string.
+# by module on purpose: a bare name would catch a `text.replace(",", " ")` in a module
+# that tidies a string and report it as a second write path.
 FS_MODULES = {"os", "shutil", "tempfile", "json", "pathlib"}
 FS_WRITES = {"replace", "rename", "remove", "unlink", "rmdir", "makedirs", "mkdir",
              "mkstemp", "mkdtemp", "NamedTemporaryFile", "TemporaryFile", "fdopen",
@@ -65,33 +65,3 @@ def test_AC_ENG_10_no_file_outside_the_engine_writes_a_record():
         if calls:
             offenders[path.name] = calls
     assert not offenders, "a second write path: %s" % offenders
-
-
-def test_AC_ENG_10_the_screens_lend_return_and_list_through_the_engine(app, data_file,
-                                                                      monkeypatch):
-    through = []
-
-    def watch(name):
-        real = getattr(store, name)
-
-        def seen(*args, **kwargs):
-            through.append(name)
-            return real(*args, **kwargs)
-
-        monkeypatch.setattr(store, name, seen)
-
-    for operation in ("load", "append", "mark_returned"):
-        watch(operation)
-
-    app.request("/lend", {"name": "Torque wrench", "borrower": "Sam",
-                          "date_out": "Sep 1, 2026"})
-    assert "append" in through, "the Lend screen saved without calling the engine"
-
-    listing = app.get("/")
-    assert "Torque wrench" in listing
-    assert "load" in through, "the outstanding list was read without the engine"
-
-    app.request("/return/0", {"date_back": "Sep 20, 2026"})
-    assert "mark_returned" in through, "the return screen wrote without the engine"
-
-    assert "Torque wrench" not in app.get("/")
