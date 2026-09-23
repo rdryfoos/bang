@@ -23,7 +23,7 @@
     {
       "id": "Build",
       "name": "Build",
-      "description": "Agent work against the IDs the card cites; code carries @covers marks and tests name their AC. Build may not change a promise: if building shows the promise is wrong, the worker blocks the card, an intent PR is opened, and the card resumes when it merges. One loop, builder then runner, up to the loop cap; exhaustion blocks the card here, in place. The builder pushes every attempt and opens the draft PR on the first push. Procedure: worktree-to-main.md sections 2 through 4.",
+      "description": "Agent work against the IDs the card cites; code carries @covers marks and tests name their AC. Build may not change a promise: if building shows the promise is wrong, the worker blocks the card with its reason, a person adds or changes the promise in PRD.md by hand on the default branch, and the card resumes when they unblock it. One loop, builder then runner, up to the loop cap; exhaustion blocks the card here, in place. The builder commits on the card branch and writes the branch name and head SHA onto the card; it pushes nothing, because this project has no remote. Procedure: worktree-to-main.md sections 2 through 4.",
       "requiresWorktree": true,
       "workers": [
         {
@@ -82,7 +82,7 @@
     {
       "id": "Gate",
       "name": "Gate",
-      "description": "Machine column. One runner in a single-attempt loop invokes the gate script fresh at the card's HEAD and posts the exit code as the verdict. Red exhausts the loop and blocks the card here, in place, with the Cannon's own reason; a human drags it back to Build. Green advances to Align. The gate script writes the Thread Report into the PR body's marked section and marks the PR ready. The runner holds a shell and the verdict tool, nothing else; its prompt is one fixed command. Procedure: worktree-to-main.md section 5.",
+      "description": "Machine column. One runner in a single-attempt loop invokes the gate script fresh at the card's HEAD and posts the exit code as the verdict. Red exhausts the loop and blocks the card here, in place, with the Cannon's own reason; a human drags it back to Build. Green advances to Align. The gate script prints its report and writes a receipt into the journal; the Thread Report a person reads is the one the Align entry check writes onto the card. The runner holds a shell and the verdict tool, nothing else; its prompt is one fixed command. Procedure: worktree-to-main.md section 5.",
       "requiresWorktree": true,
       "workers": [
         {
@@ -135,7 +135,7 @@
     {
       "id": "Align",
       "name": "Align",
-      "description": "Human column, no workers. The operator reads the Thread Report on the PR. Accept is the merge, by the operator's hand, with a merge commit: judgment and merge are one act. If the work missed the promise, drag the card to Build with a comment naming what missed. If the promise was wrong, flag the card blocked, open a Pull Request for Intent, write its link as the card's intent-pr: line; when it merges, unblock and drag to Build. After the merge, wait for CI green at the merge SHA, then drag to Done. Restart-to-phase is forbidden on this project. Procedure: worktree-to-main.md sections 7 through 10.",
+      "description": "Human column, no workers. The operator reads the Thread Report and the review packet on the card. Accept is the merge, by the operator's hand, into the default branch on this machine, with a merge commit: judgment and merge are one act. If the work missed the promise, drag the card to Build with a comment naming what missed. If the promise was wrong, flag the card blocked, add or change the promise in PRD.md by hand on the default branch, then unblock and drag to Build. After the merge, the gate script runs on it as a promotion and writes the receipt; then drag to Done. Restart-to-phase is forbidden on this project. Procedure: worktree-to-main.md sections 7 through 10.",
       "requiresWorktree": false,
       "workers": [],
       "transitions": {

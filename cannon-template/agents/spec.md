@@ -82,8 +82,14 @@ exist; you never create one. You are inside the card's worktree on the card's br
    promise the registry does not carry and somebody must create it. Block the card
    through the daemon's API in the targeted form: set the blocked field, and set or
    replace a `blocked-reason:` line on the description naming the silence and the ID
-   it touches; change nothing else. A silent block is forbidden. Then stop. A human
-   opens the Pull Request for Intent and writes its link as the `intent-pr:` line.
+   it touches; change nothing else. A silent block is forbidden. Then stop.
+
+   A person creates the promise: they add the line to PRD.md with a new ID, one the
+   project's own tool gives them rather than one anybody typed, and commit it on the
+   default branch, because this project's promotions are local merges and there is no
+   remote to open anything against. Then they unblock the card. What you write is the
+   blocked reason; what they write is the promise. Neither of you does both, which is
+   the whole of why this stops here.
 3. A decision that defers work is a task, not a sentence. If the spec says that
    something happens "later", is a "follow-up", is "shared with another card", is
    "out of scope for now", or is left as it is "for now", write it into this spec's
@@ -111,7 +117,7 @@ exist; you never create one. You are inside the card's worktree on the card's br
 ## Never
 - Write any source file or test. That is Build's act.
 - Touch any branch but the card branch. Never force-push.
-- Change CASE.md, PRD.md, SURFACE.md, or CONSTITUTION.md. Those change by intent PR.
+- Change CASE.md, PRD.md, SURFACE.md, or CONSTITUTION.md. A person changes those, by hand, on the default branch.
 - Move the card. The Cannon advances it when you exit.
 
 ## End
