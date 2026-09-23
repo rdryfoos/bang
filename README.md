@@ -14,45 +14,32 @@ steps. It writes to five places in your home folder and nowhere else; `BANG.md` 
 them, and lists what it fetches and what it will not do. Read `BANG.md` before you run
 it, and read its paragraph that begins "Read this one twice" twice.
 
-Three blocks, in order, each pasted into Terminal.
+Two blocks, in order, both pasted into Terminal.
 
-Block 1, once per machine. Installs Claude Code for your user and signs you in. If git
-asks to install the command line developer tools first, let it; that is Apple's, not
-ours.
+Block 1, "Get Claude". Skip it if you already have Claude Code. If git asks to install
+the command line developer tools first, let it; that is Apple's, not ours.
 
 ```
 curl -fsSL https://claude.ai/install.sh | bash
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
-claude
 ```
 
 The second and third lines put Claude Code on your path; the installer prints the same
-instruction. Sign in when it asks, then type `/exit`.
+instruction.
 
-Block 2. Puts the project at `~/bang` and opens Claude Code in it.
+Block 2, "Get the rest". Clones the project to `~/bang`, goes in, and starts Claude Code
+there with the instruction already in its hands.
 
 ```
 git clone https://github.com/rdryfoos/bang.git ~/bang
 cd ~/bang
-claude
+claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-If you paste block 2 into Claude Code by mistake, it still works; then paste block 3.
-
-Block 3, pasted into Claude Code, not Terminal.
-
-```
-Read BANG.md in this folder from top to bottom. Then carry out its Steps in order,
-printing the step summary before each and the receipt after. If a receipt does not
-match, stop and print what you saw. Do nothing that BANG.md does not say.
-```
-
-Leave Claude Code in its normal permission mode and approve each step when it asks. Auto
-mode refuses steps 6 and 7 on its own and stops there.
-
-The board opens in your browser when it finishes. The last line is in Terminal; go back
-and read it.
+Sign in when it asks. If the bottom line of Claude Code says auto mode, press shift+tab
+until it says manual mode; auto mode refuses steps 6 and 7 on its own. The board opens in
+your browser when it finishes; the last line is in Terminal.
 
 When it finishes, or when it stops, add one line to `RUNS.md` saying what happened and
 open a pull request. `CONTRIBUTING.md` says how; it is three sentences.
