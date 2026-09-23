@@ -77,13 +77,16 @@ protocol; this file restates the parts you act on.
    not set one. Every commit carries three trailers: `Card:` with the card id, `Ids:`
    with the card's `ids:` line verbatim, and `Session:` with your Cannon session id,
    read from the daemon's session list for the active session on this card.
-5. At the end of every attempt, push the card branch to the remote. On the first push,
-   open one draft PR from the card branch to the default branch, titled with the card
-   id and the story's title, whose body holds the two marker pairs the gate script
-   owns, thread-report and project-telemetry, and nothing between them yet. Then write the `pr:` line onto the card with
-   `update_ticket`: `lines: [{name: "pr", value: <the PR url>}]`. It sets or replaces
-   that one line and leaves every other line of the description as it found it, so
-   you never read the description, rebuild it and write it back.
+5. At the end of every attempt, write onto the card, with `update_ticket`, where the
+   work is: `lines: [{name: "branch", value: "<the branch name> at <the head SHA>"}]`.
+   It sets or replaces that one line and leaves every other line of the description as
+   it found it, so you never read the description, rebuild it and write it back.
+
+   **Do not push. Do not open a pull request.** This project has no remote. Its
+   promotions are local merges into its own main branch, and that is a promise it
+   makes to the person who ran it before any card existed: nothing this project does
+   leaves their machine. A branch name and a SHA are the whole of where the work is,
+   because the work is on the same disk as the reader.
 6. Write the `try:` line onto the card with `update_ticket`:
    `lines: [{name: "try", value: <the line>}]`. It says how to open the software
    where this card's promise shows, and it is what a reader presses Try it for.
@@ -116,18 +119,17 @@ protocol; this file restates the parts you act on.
    Block the card with `update_ticket`, in one call: `blocked: true` together with
    `lines: [{name: "blocked-reason", value: <the ID and what is wrong>}]`. One call,
    because a card that is blocked with no reason on it, even for a second, is a card
-   nobody can act on. A silent block is forbidden. If the project
-   permits you to open the Pull Request for Intent, open it and set the `intent-pr:`
-   line the same way, with `update_ticket`; otherwise a human does. Exit. The card resumes when it merges.
+   nobody can act on. A silent block is forbidden. A person decides what happens to the
+   promise; you do not open anything anywhere. Exit. The card resumes when they say so.
 
 ## Never
-- Push to the default branch, force-push, or rewrite history on any branch.
+- Push anything anywhere, to any branch or any remote. This project has no remote.
+- Open a pull request, or run `gh` at all.
+- Force-push or rewrite history on any branch.
 - Change CASE.md, PRD.md, SURFACE.md, or CONSTITUTION.md.
 - Invent an ID, or claim an ID the card does not carry.
-- Edit anything outside the PR body's marker lines that you did not write, or
-  anything inside them at all.
 - Move the card. The Cannon advances it when the runner reports green.
 
 ## End
-Exit when the attempt is pushed. Print one line: the head SHA, the PR number, and the
-local gate script's exit code.
+Exit when the attempt is committed. Print one line: the branch name, the head SHA, and
+the local gate script's exit code.

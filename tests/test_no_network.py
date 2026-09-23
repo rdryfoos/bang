@@ -10,10 +10,11 @@ from whms.cli import main
 SRC = pathlib.Path(__file__).resolve().parent.parent / "src" / "whms"
 DENY = {"socket", "http", "urllib", "ssl", "smtplib", "ftplib", "xmlrpc", "requests",
         "httpx", "aiohttp", "asyncio", "telnetlib", "poplib", "imaplib", "socketserver"}
-# The one listener. web.py may import the server and URL-parsing pieces; the clients that
-# make outbound requests (http.client, urllib.request, socket itself) stay denied for it too.
-SERVER_MODULE = "web.py"
-SERVER_OK = {"http.server", "urllib.parse"}
+# No module is exempt. While the browser shipped, web.py was allowed http.server and
+# urllib.parse, because a local listener is not an outbound request. The screens are card
+# one's work now, and the exemption comes back when the module it was for comes back:
+# until then a name on this list is denied to everything, which is the stricter reading
+# and the one a reader can check.
 ALLOWED = {"argparse", "datetime", "html", "json", "os", "sys", "tempfile", "typing"}
 
 
@@ -41,8 +42,6 @@ def test_NFR_PRIV_10_source_imports_no_network_or_third_party_client():
             else:
                 continue
             for name in names:
-                if path.name == SERVER_MODULE and name in SERVER_OK:
-                    continue
                 top = name.split(".")[0]
                 assert top not in DENY, "%s imports %s" % (path.name, name)
                 assert top in stdlib or top == "whms", "%s imports non-stdlib %s" % (path.name, name)

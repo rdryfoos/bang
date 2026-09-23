@@ -8,7 +8,7 @@ checkout on the default branch, one `git commit` away from putting work on main 
 branch, no review and no promotion. On 2026-09-20 the only thing that stopped it was the
 agent noticing where it was.
 
-The promotion sets ESTATE_PROMOTION=1 and is the only caller that may. A human doing
+The promotion sets BANG_PROMOTION=1 and is the only caller that may. A human doing
 project work by hand sets it too, deliberately, and that use is visible in the shell
 history and in this file's reason for existing.
 
@@ -47,13 +47,13 @@ def main():
 
     if branch != default_branch:
         return 0
-    if os.environ.get("ESTATE_PROMOTION") == "1":
+    if os.environ.get("BANG_PROMOTION") == "1":
         return 0
 
     print(f"no-commit-on-main: commit refused. This checkout is on {default_branch}, and "
           "the promotion path is the only way onto it (constitution IV).", file=sys.stderr)
     print("no-commit-on-main: work on a card's branch and let the drag from Review to Done "
-          "merge it. If you are the promotion, set ESTATE_PROMOTION=1 and mean it.",
+          "merge it. If you are the promotion, set BANG_PROMOTION=1 and mean it.",
           file=sys.stderr)
     return 1
 

@@ -21,6 +21,12 @@
 #   2. The daemon is run directly rather than through the Cannon's own start command,
 #      which passes --daemon, detaches and exits. Nothing can supervise a process that
 #      has already gone, so KeepAlive would restart a thing that exits every time.
+#   3. The path names ~/.potato-cannon/node/bin first, which is where BANG.md step 4
+#      puts Node 22, so the daemon runs on the Node it was built against and not on
+#      whatever the person happens to have. COREPACK_HOME, PNPM_HOME and
+#      npm_config_cache are set for the same reason the path is: anything the daemon
+#      or a worker under it downloads lands in ~/.potato-cannon, which is one of the
+#      places BANG.md says this project writes to, and Undo removes it whole.
 #
 # Usage:  bash scripts/write-launch-agent.sh
 #         bash scripts/write-launch-agent.sh --dry-run    print it, write nothing
@@ -41,7 +47,7 @@ stop() { printf 'write-launch-agent: STOPPED. %s\n' "$*" >&2; exit 1; }
 # variable rather than inside the plist text is what makes the promise checkable: one
 # line here is one line in the file, and the check below says so before anything is
 # installed.
-EXEC_LINE='cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL" TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8" PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" node ./apps/daemon/dist/server/server.js'
+EXEC_LINE='cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL" TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8" PATH="$HOME/.potato-cannon/node/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" node ./apps/daemon/dist/server/server.js'
 
 case "$EXEC_LINE" in
   *$'\n'*) stop "the daemon's command has a newline in it. That is the bug this file exists to prevent." ;;

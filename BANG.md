@@ -18,10 +18,16 @@ Everything this file does lands in one of these places, and nowhere else.
    works in; nothing else is built here.
 2. `~/.local/bin/`  Two small command-line tools: `uv` (a Python tool
    installer) and `specify` (Spec Kit). Both are user-level; nothing goes
-   into /usr or /opt. If Node is missing it also goes under `~/.local`.
+   into /usr or /opt.
 3. `~/.potato-cannon/`  Potato Cannon's own home: the built application
    under `app/`, its settings file, its database, the registration of
-   ~/bang as a project, and a copy of the workflow template it runs.
+   ~/bang as a project, and a copy of the workflow template it runs. Node
+   22 goes in here too, under `node/`, and so does every package cache the
+   build fills: corepack's, pnpm's store and cache, and npm's prebuilds.
+   They are pointed here on purpose. Left to themselves they write about a
+   gigabyte into `~/.cache`, `~/Library/pnpm` and `~/.npm`, three places
+   this file would then have to list and Undo would have to reach into;
+   here they are one folder that Undo removes whole.
 4. `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One launch
    agent so the Cannon daemon starts when you log in and listens on
    127.0.0.1:3131 only. It is never reachable from another machine.
@@ -115,26 +121,35 @@ given. If a receipt does not match, it stops and prints what it saw.
    you at step 7. If `node --version` already starts with `v22.`, skip to
    pnpm. Otherwise, no administrator password needed:
 
-       mkdir -p ~/.local ~/.potato-cannon
+       mkdir -p ~/.potato-cannon/node
        curl -fsSL -o ~/.potato-cannon/node22.tar.xz \
          https://nodejs.org/dist/v22.23.2/node-v22.23.2-darwin-arm64.tar.xz
-       tar -xJf ~/.potato-cannon/node22.tar.xz -C ~/.local --strip-components=1
+       tar -xJf ~/.potato-cannon/node22.tar.xz -C ~/.potato-cannon/node --strip-components=1
        rm ~/.potato-cannon/node22.tar.xz
-       export PATH="$HOME/.local/bin:$PATH"
+       export PATH="$HOME/.potato-cannon/node/bin:$PATH"
+       export COREPACK_HOME="$HOME/.potato-cannon/corepack"
 
    On an Intel Mac, use `node-v22.23.2-darwin-x64.tar.xz` instead. Then
    enable pnpm through Node's own corepack:
 
        corepack enable pnpm
 
-   `~/.potato-cannon` may not exist yet at this step, so the first line
-   creates it. The tarball is downloaded there rather than to `/tmp` so
-   that every byte this file writes is inside one of the five places
-   listed above, and it is deleted as soon as it is unpacked.
+   **This Node lives in `~/.potato-cannon/node` and nowhere else.** It is
+   the Cannon's Node, not yours: it is on the path only in the terminal
+   you are working in now, and in the environment the daemon starts with,
+   and it never shadows the Node you already had. That is why it does not
+   go into `~/.local/bin`, which is on many people's path already, and why
+   this file does not ask you to change your shell profile. `COREPACK_HOME`
+   keeps corepack's downloads beside it rather than in `~/.cache`.
 
-   Receipt: `node --version` prints a version beginning `v22.`, and
-   `pnpm --version` prints a version. Add `export PATH="$HOME/.local/bin:$PATH"`
-   to your shell profile if you want these on the path in new terminals.
+   The tarball is downloaded into `~/.potato-cannon` rather than `/tmp` so
+   that every byte this file writes is inside one of the places listed
+   above, and it is deleted as soon as it is unpacked.
+
+   Receipt: `~/.potato-cannon/node/bin/node --version` prints a version
+   beginning `v22.`, `pnpm --version` prints a version, and `node --version`
+   in a new terminal window prints whatever you had before this step, or
+   nothing if you had none.
 
 5. Spec Kit on this project. The flag that names Claude Code is
    `--integration`. Initialise into this folder, which already has files
@@ -159,12 +174,26 @@ given. If a receipt does not match, it stops and prints what it saw.
    plan and check its work against that template, whose heading still has
    a placeholder where the project's name should be.
 
-   Receipt: `.specify/` exists, `ls .specify/` is printed, and
-   `head -1 .specify/memory/constitution.md` prints
-   `# Constitution: Who Has My Stuff`.
+   Then commit what Spec Kit added, on main:
 
-6. SpecAssay. Add the three SpecAssay catalogs and install the bundle,
-   exactly as the SpecAssay README's catalog path gives them. If the Gate
+       git add -A && git commit -m "Bang: Spec Kit initialised"
+
+   Every card the board runs is built in its own worktree cut from a
+   commit, and a worktree carries only what is committed. Left uncommitted,
+   `.specify/` is in your checkout and in no worker's, so the first card to
+   reach the Gate finds no checker and fails on a file that is three
+   folders away on the same disk.
+
+   Receipt: `.specify/` exists, `ls .specify/` is printed,
+   `head -1 .specify/memory/constitution.md` prints
+   `# Constitution: Who Has My Stuff`, `git status` is clean, and
+   `git ls-tree HEAD .specify` prints the folder.
+
+6. SpecAssay. Read the SpecAssay README from the network and do not save
+   it anywhere: it is reference, and a copy of it written into a scratch
+   folder is a file this project put on your machine outside the places
+   listed above. Then add the three SpecAssay catalogs and install the
+   bundle, exactly as that README's catalog path gives them. If the Gate
    config file is reported MISSING, copy it from the template as the
    README says. Then put this project's own settings in place of the
    installed defaults:
@@ -185,10 +214,34 @@ given. If a receipt does not match, it stops and prints what it saw.
    `test-results.xml` does not exist is expected here; no test has run
    yet.
 
-7. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the
-   branch and commit above; `pnpm install`; `pnpm build`. Do not build the
-   desktop app. Receipt: `git -C ~/.potato-cannon/app rev-parse --short
-   HEAD` prints 5a5404c and `pnpm build` ended with no error.
+7. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
+   and commit above, then, in the same terminal as step 4:
+
+       export PATH="$HOME/.potato-cannon/node/bin:$PATH"
+       export COREPACK_HOME="$HOME/.potato-cannon/corepack"
+       export PNPM_HOME="$HOME/.potato-cannon/pnpm"
+       export npm_config_cache="$HOME/.potato-cannon/npm-cache"
+       cd ~/.potato-cannon/app
+       pnpm install --filter '!@potato-cannon/desktop' \
+         --store-dir "$HOME/.potato-cannon/pnpm-store" \
+         --cache-dir "$HOME/.potato-cannon/pnpm-cache"
+       pnpm build
+
+   The filter is what keeps the desktop app out. It is the only part of
+   the Cannon that depends on Electron, and installing it downloads a
+   hundred megabytes of browser you would never run: the board is a web
+   page the daemon serves, and this file never builds the desktop app.
+   `pnpm build` builds the three the board needs and no more, so the
+   filter matches what is built.
+
+   The four exports are there so that nothing this step downloads lands
+   outside `~/.potato-cannon`. Without them corepack writes to
+   `~/.cache/node`, pnpm to `~/Library/pnpm`, and `prebuild-install` to
+   `~/.npm`, which is about a gigabyte in three places this file never
+   told you about and Undo does not remove.
+
+   Receipt: `git -C ~/.potato-cannon/app rev-parse --short HEAD` prints
+   5a5404c and `pnpm build` ended with no error.
 
 8. The daemon. Run the script this repository ships:
 
@@ -215,6 +268,7 @@ given. If a receipt does not match, it stops and prints what it saw.
    its own templates folder, so copy this project's template there first,
    then register:
 
+       export PATH="$HOME/.potato-cannon/node/bin:$PATH"
        mkdir -p ~/.potato-cannon/templates
        cp -R ~/bang/cannon-template ~/.potato-cannon/templates/bang
        curl -s -X POST http://127.0.0.1:3131/api/projects \
@@ -226,11 +280,37 @@ given. If a receipt does not match, it stops and prints what it saw.
    template. Receipt: `curl -s http://127.0.0.1:3131/api/projects` lists
    one project named bang.
 
-10. First cards. Create the cards named in `~/bang/FIRST-CARDS.md` in the
-    Ideas column, in that order, with those descriptions, and no others.
-    Each card is created with `POST /api/tickets/<project id>` and a title
-    and description; the project id came back from step 9. Receipt: the
-    card ids, one per line.
+10. First cards. Create these three in the Ideas column, in this order and
+    no others. Each is created with `POST /api/tickets/<project id>` and a
+    title and a description; the project id came back from step 9. A
+    description is the text under its title exactly as written here,
+    newlines and all, with the four spaces of indentation removed and
+    nothing added.
+
+    Title: Lend and return in the browser
+
+    Drag this card to Spec and watch what happens.
+    As the owner, I want to lend, see what is out, and mark things returned on a screen in my browser, so I am not tied to the command line. The screens are in design/. Read design/README.md first.
+    Every write the screens make goes through the engine (NFR-ENG-10); the test will refuse anything else.
+    ids: US-UI-10, FR-UI-10, AC-UI-10, AC-UI-20, AC-UI-30
+
+    Title: What I have lent before
+
+    As the owner, when I lend something I want to see what I have lent that person before and whether it came back, so I can decide with the history in front of me.
+    ids: US-UI-20, AC-UI-40
+
+    Title: Remind the borrower
+
+    As the owner, I want the app to nudge me about a thing that has been out too long.
+
+    Nothing in `PRD.md` promises this yet. It is here to show what the board does with a card whose promise does not exist: it waits, and it says why.
+
+    These are the same three, in the same words, as `~/bang/FIRST-CARDS.md`,
+    which says why they are these three. Either file is the payload, and
+    this project's own tests compare them, so they cannot drift apart
+    without something going red.
+
+    Receipt: the card ids, one per line.
 
 11. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
     the line `Bang done. Your board is open.`, and only then open the URL
@@ -257,9 +337,10 @@ Run these in order to remove everything this file did.
     uv tool uninstall specify-cli
     rm ~/.local/bin/uv ~/.local/bin/uvx
 
-Node, if this file installed it, is under `~/.local` and can be removed by
-deleting `~/.local/bin/node`, `~/.local/bin/npm`, `~/.local/bin/npx`,
-`~/.local/bin/corepack` and `~/.local/lib/node_modules`. The session
+Node, if this file installed it, is under `~/.potato-cannon/node` and goes
+with the third line, along with every package cache the build filled. Your
+own Node, if you had one, is untouched: this file never put anything on the
+path outside the terminal it was working in. The session
 transcripts under `~/.claude/projects/` are Claude Code's, not Bang's, and
 are left alone; the folders whose names begin with your home path and
 `-bang` are the ones this project produced, and deleting them loses

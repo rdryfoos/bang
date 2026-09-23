@@ -48,6 +48,9 @@ printing the step summary before each and the receipt after. If a receipt does n
 match, stop and print what you saw. Do nothing that BANG.md does not say.
 ```
 
+Leave Claude Code in its normal permission mode and approve each step when it asks. Auto
+mode refuses steps 6 and 7 on its own and stops there.
+
 The board opens in your browser when it finishes. The last line is in Terminal; go back
 and read it.
 
