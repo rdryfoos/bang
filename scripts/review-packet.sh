@@ -48,15 +48,14 @@ trap 'rm -f "$PACKET" "$GATE_OUT" "$THREAD"' EXIT
   # reading a transcript they did not expect. The worker put that sentence on the card
   # because it had read the branch; it belongs where the reviewing starts.
   #
-  # The command goes in the line, not just a mention of it, so a reviewer knows what
-  # they are about to be shown before they press anything. And it says what will not
-  # happen: try.sh will not open a screen design/README.md maps this card's IDs to. A
-  # card that built no screen can still inherit one from the default branch, and a
-  # screen that works while proving nothing this card did looks exactly like proof.
+  # The commands go in a block under the sentence, one per line, because a reviewer
+  # reads them before they press anything and a single bold line of shell is a wall.
+  # The card's try: line separates them with semicolons; the block separates them the
+  # way a person would type them.
   if printf '%s' "$TRY_LINE" | grep -q '^command '; then
-    printf '**No screen; try: `%s`**\n\n' "${TRY_LINE#command }"
-    printf 'This card built no screen. Try it runs that command line and shows the '
-    printf 'transcript. It does not open a mapped screen instead.\n\n'
+    printf 'No screen. Try it runs this and shows the transcript:\n\n```\n'
+    printf '%s' "${TRY_LINE#command }" | tr ';' '\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | grep -v '^$'
+    printf '```\n\n'
   fi
 
   if [ -z "$BRANCH" ] || ! git rev-parse --verify --quiet "$BRANCH^{commit}" >/dev/null; then
