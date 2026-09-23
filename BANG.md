@@ -1,7 +1,7 @@
 # BANG.md
 
 This file is what your Claude Code session is told to carry out when you
-paste block 3 in README.md. Read it before you paste. The agent reads the
+paste block 2 in README.md. Read it before you paste. The agent reads the
 same file, in this order, and does nothing that is not written here.
 
 Bang leaves you with a working project: this folder, ~/bang, holding a
