@@ -99,9 +99,11 @@ given. If a receipt does not match, it stops and prints what it saw.
    main.
 
 2. Check what is already here. Print the version of each of: `uv`,
-   `specify`, `node`, `pnpm`, `claude`. For each that is missing, say so.
-   Do not install anything in this step. Receipt: five lines, present or
-   missing.
+   `specify`, `node`, `pnpm`, `claude`, `python3`. For each that is
+   missing, say so. Do not install anything in this step. Receipt: six
+   lines, present or missing. There is no minimum for `python3` yet: the
+   checks ran on Apple's own 3.9.6 on 2026-09-23, so the version line is
+   recorded rather than judged.
 
 3. Install uv if missing, into `~/.local/bin`, with the installer named
    above. Then `uv tool install specify-cli`. Receipt: `specify --version`
@@ -135,8 +137,8 @@ given. If a receipt does not match, it stops and prints what it saw.
    to your shell profile if you want these on the path in new terminals.
 
 5. Spec Kit on this project. The flag that names Claude Code is
-   `--integration`, and the current release is Spec Kit 1.0.4. Initialise
-   into this folder, which already has files in it:
+   `--integration`. Initialise into this folder, which already has files
+   in it:
 
        specify init --here --force --non-interactive --integration claude
 
@@ -174,62 +176,38 @@ given. If a receipt does not match, it stops and prints what it saw.
    commented out: `parent_derivation`, which is what makes the
    specification a tree rather than a flat list, and `test_results`,
    which is what makes a passing test count as proof rather than a test
-   whose name merely matches. Receipt: the first two lines of
+   whose name merely matches. Receipt: the line beginning `config:` in the
+   output of
    `bash .specify/extensions/specassay-check/scripts/check-traceability.sh`,
-   which name the config file it found, and
+   which names this project's `specassay-check-config.yml`, and
    `grep ^parent_derivation .specify/extensions/specassay-check/specassay-check-config.yml`
-   printing `parent_derivation: heading-nesting`.
+   printing `parent_derivation: heading-nesting`. A WARN that
+   `test-results.xml` does not exist is expected here; no test has run
+   yet.
 
 7. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the
    branch and commit above; `pnpm install`; `pnpm build`. Do not build the
    desktop app. Receipt: `git -C ~/.potato-cannon/app rev-parse --short
    HEAD` prints 5a5404c and `pnpm build` ended with no error.
 
-8. The daemon. Write `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`
-   so that it runs the built daemon directly, in the foreground, with a
-   named environment and nothing else in it. The Cannon's own start command
-   passes `--daemon`, which detaches and exits, and nothing can then
-   supervise it, so the server is run directly instead:
+8. The daemon. Run the script this repository ships:
 
-       <?xml version="1.0" encoding="UTF-8"?>
-       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-         "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-       <plist version="1.0">
-       <dict>
-         <key>Label</key><string>com.dryfoos.bang.cannon</string>
-         <key>ProgramArguments</key>
-         <array>
-           <string>/bin/bash</string><string>-lc</string>
-           <string>cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i
-             HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL"
-             TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8"
-             PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-             GIT_AUTHOR_NAME="Bang Worker"
-             GIT_AUTHOR_EMAIL="bang-worker@localhost"
-             GIT_COMMITTER_NAME="Bang Worker"
-             GIT_COMMITTER_EMAIL="bang-worker@localhost"
-             POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131"
-             node ./apps/daemon/dist/server/server.js</string>
-         </array>
-         <key>RunAtLoad</key><true/>
-         <key>KeepAlive</key><true/>
-         <key>ThrottleInterval</key><integer>30</integer>
-         <key>StandardOutPath</key>
-         <string>/Users/you/.potato-cannon/daemon.log</string>
-         <key>StandardErrorPath</key>
-         <string>/Users/you/.potato-cannon/daemon.log</string>
-       </dict>
-       </plist>
+       bash scripts/write-launch-agent.sh
 
-   Those last two paths are shown with `/Users/you` because a plist does
-   not expand `~` or `$HOME` in them: the agent reads your home folder
-   with `echo "$HOME"` and writes the real path into the file, so what
-   lands on disk names your own home and not a placeholder. Everywhere
-   else in the plist `$HOME` is inside a shell command, where it is
-   expanded when the daemon starts. The host and port are set by
-   `POTATO_DAEMON_HOST` and `POTATO_DAEMON_PORT`, not by command-line
-   flags. Load it with
-   `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`.
+   It writes `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist` and
+   nothing else, checks it with `plutil -lint` before installing it, loads
+   it with `launchctl bootstrap`, and prints the health line. Read it
+   first; it is short, and its header says why the daemon is run directly
+   rather than through the Cannon's own start command, which passes
+   `--daemon`, detaches and exits so that nothing can supervise it.
+
+   This used to be a plist printed here for you to copy, and it could not
+   be copied: the daemon's command is one long shell line, a plist typeset
+   to fit a page breaks it across nine lines, and a `<string>` keeps every
+   newline it is given. What landed on disk was a command with newlines in
+   the middle of it and a daemon that never started. Nothing in this file
+   is now typeset in a way that changes what it means.
+
    Receipt: `curl -s http://127.0.0.1:3131/health` returns a response
    whose status is ok.
 
@@ -254,10 +232,12 @@ given. If a receipt does not match, it stops and prints what it saw.
     and description; the project id came back from step 9. Receipt: the
     card ids, one per line.
 
-11. Open the board. Print `http://127.0.0.1:3131` and open it in the
-    default browser. Receipt: the URL.
-
-Then print, on its own, the line: `Bang done. Your board is open.`
+11. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
+    the line `Bang done. Your board is open.`, and only then open the URL
+    in the default browser. The done line goes before the open command so
+    that it is the last thing written to the terminal: opening the browser
+    takes the reader's attention away, and a line printed after it is a
+    line nobody reads. Receipt: the URL and the done line.
 
 ## What done looks like
 

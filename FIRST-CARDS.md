@@ -12,6 +12,8 @@ behind it, and so you can see what a queue looks like.
 
 ## 1. Lend and return in the browser
 
+Drag this card to Spec and watch what happens.
+
 As the owner, I want to lend, see what is out, and mark things returned on a screen
 in my browser, so I am not tied to the command line. The screens are in `design/`.
 Read `design/README.md` first.
