@@ -14,9 +14,9 @@ stumbled, in your own words. Add yours and open a pull request; that is the whol
 - 2026-09-23, MacBook Pro (Apple silicon, fresh standard user), about ten minutes, Bang at
   `157f672`: the second cold run, by Rik. It stopped once at the step 6 receipt because
   Claude Code was in auto mode; continued in default mode. It finished: the board is open.
-  (This line is dated 2026-09-23 and was added on the 24th: it was written into that run's
-  report and its pull request description and never into this file, and the miss was found
-  while adding the third.)
+  (Added later the same day, with the third run's line: this one was written into that
+  run's report and its pull request description and never into this file, and the miss was
+  found while adding the third above it.)
 
 - 2026-09-23, MacBook Pro (Apple silicon, Homebrew already present), about ten minutes,
   Bang at `de27709`: the first cold run, by Rik, from the three blocks in the README.
