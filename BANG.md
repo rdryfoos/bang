@@ -1,9 +1,8 @@
 # BANG.md
 
 This file is what your Claude Code session is told to carry out when you
-paste the third block on specassay.com/bang. Read it before you paste. The
-agent reads the same file, in this order, and does nothing that is not
-written here.
+paste block 3 in README.md. Read it before you paste. The agent reads the
+same file, in this order, and does nothing that is not written here.
 
 Bang leaves you with a working project: this folder, ~/bang, holding a
 small ready-made application, its specification with durable IDs, the
@@ -96,7 +95,8 @@ number and the one-line summary; after each it prints the receipt line
 given. If a receipt does not match, it stops and prints what it saw.
 
 1. Confirm where we are. `pwd` must be `~/bang` and `git rev-parse HEAD`
-   must match the commit the page named. Receipt: the commit hash.
+   and `git branch --show-current`. Receipt: the commit hash and the word
+   main.
 
 2. Check what is already here. Print the version of each of: `uv`,
    `specify`, `node`, `pnpm`, `claude`. For each that is missing, say so.
