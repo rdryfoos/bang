@@ -47,6 +47,12 @@ your checkout. The workers only ever run inside ~/bang. Your own
 interactive Claude Code session, the one reading this file, runs with
 prompts on as usual.
 
+The instructions every worker reads are in `cannon-template/agents/`, one
+file per worker, and they are the only copy: step 9 below installs that
+folder as the project's template, and the workflow reads the prompts from
+it. Read them before you paste anything, because they are the whole of
+what a worker with the prompts turned off has been told to do.
+
 What there is not, and you should know it: no check reads a card's
 specification and refuses a file the specification did not name. A worker
 that decides to change a source file nobody asked it to change will do so,

@@ -26,7 +26,7 @@ reasonably clear and simple.
 When the board has done what the page promised, the second project
 is yours: clone bang again into a folder of your own name, replace
 CASE.md with your case (the template is CASE-TEMPLATE.md, the same
-five questions), empty PRD.md of the lending promises and write your
+questions), empty PRD.md of the lending promises and write your
 own, redraw or delete the screens, keep the constitution. The how-to
 there is basic lean product management. A design loop focused on
 understanding users, their needs and motivations, their journey and
