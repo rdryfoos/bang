@@ -5,10 +5,16 @@
 # Writes the Thread Report into the PR body's two marked sections through the host's
 # CLI, from a file, never a command line. Judges nothing.
 # Specification: the box's cargo/gate-script.md. Written by the born-threaded practice; MIT.
-# Corrected 2026-09-15 by the source project before its first card: the secrets report line
-# carried a backslash inside an f-string, a syntax error on Python 3.9 that would have hidden
-# every finding's rule and file; and the advisory scanner's --output flag is deprecated in
-# 2.6.0 in favor of --output-file. Both are the cold run's to re-prove. The source project's
+# Two checks were removed on 2026-09-23 by Rik's ruling, after the first cold run: the
+# secrets scan and the dependency advisory scan. Neither was on BANG.md's list of what
+# this project fetches, so a Build worker that met MISSING TOOL installed both from
+# GitHub releases on its own to get past the preflight, which is a check satisfied by
+# fetching rather than by being true. Neither was load-bearing here: this project has no
+# dependencies at all, so the advisory scan had no lockfile to read and said so on every
+# run, and it holds no credential of any kind, while the promise it does make about
+# borrower names is kept by no-records-in-repo.py and test_repo_privacy.py, which a
+# secrets scanner cannot make. The tiers are renumbered rather than left with gaps.
+# The source project's
 # own copy lives at gate/gate.sh rather than scripts/, because its SURFACE.md row M4 holds
 # scripts/ to zero network capability and this script writes the PR body through gh; see
 # that project's decision 0048.
@@ -45,8 +51,6 @@ need() { # name, command, version-args
 }
 missing=0
 need python3 python3 --version || missing=1
-need gitleaks gitleaks version || missing=1
-need osv-scanner osv-scanner --version || missing=1
 need gh gh --version || missing=1
 need git git --version || missing=1
 [ -x "$HERE/check-anchors.py" ] || { line "  MISSING TOOL: check-anchors ($HERE/check-anchors.py)"; missing=1; }
@@ -61,79 +65,23 @@ if [ "$verdict_code" = 0 ]; then
   # the hard way: an f-string with a nested same-type quote, valid from 3.12 and a
   # syntax error on 3.9, run-through in a branch of this very script.
   if out="$(python3 -m compileall -q "$HERE" 2>&1)"; then line "  0 scripts compile: green, $(python3 -c 'import sys;print("python "+".".join(map(str,sys.version_info[:3])))')"; else line "  0 scripts compile: RED"; printf '%s\n' "$out" | head -20 | sed 's/^/    /' | tee -a "$REPORT"; floor_red=1; fi
-  # 1 secrets over the diff against the default branch
-  base="$(git merge-base "origin/$DEFAULT_BRANCH" HEAD 2>/dev/null || git merge-base "$DEFAULT_BRANCH" HEAD 2>/dev/null || echo "")"
-  cfg=""; [ -f .gitleaks.toml ] && cfg="--config .gitleaks.toml"
-  sec_out="$(mktemp)"
-  if [ -n "$base" ]; then
-    # shellcheck disable=SC2086
-    gitleaks git --no-banner --redact $cfg --log-opts="$base..HEAD" --report-format json --report-path "$sec_out" >/dev/null 2>&1 || true
-  else
-    # shellcheck disable=SC2086
-    gitleaks dir . --no-banner --redact $cfg --report-format json --report-path "$sec_out" >/dev/null 2>&1 || true
-  fi
-  sec_n="$(python3 -c 'import json,sys
-try: print(len(json.load(open(sys.argv[1])) or []))
-except Exception: print(0)' "$sec_out")"
-  if [ "$sec_n" != "0" ]; then
-    line "  1 secrets: RED, $sec_n finding(s), floor"
-    python3 - "$sec_out" <<'PY2' | tee -a "$REPORT"
-import json,sys
-for f in json.load(open(sys.argv[1])): print("    rule {} in {} line {}".format(f.get("RuleID"), f.get("File"), f.get("StartLine")))
-PY2
-    floor_red=1
-  else line "  1 secrets: green, 0 findings over $( [ -n "$base" ] && echo "${base:0:7}..HEAD" || echo "the tree")"; fi
-  rm -f "$sec_out"
-  # 2 advisories at the floor
-  adv_out="$(mktemp)"; lock_n="$(git ls-files | grep -c -E '(^|/)(Package\.resolved|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|poetry\.lock|uv\.lock|Cargo\.lock|go\.sum|Gemfile\.lock|requirements.*\.txt)$' || true)"
-  ADV_REVIEW=""
-  if [ "$floor_red" = 0 ]; then
-    if [ "$lock_n" = "0" ]; then line "  2 advisories: green, no lockfile present, nothing scanned"
-    else
-      osv-scanner scan --recursive --format json --output-file "$adv_out" . >/dev/null 2>&1 || true
-      read -r crit rest < <(python3 - "$adv_out" <<'PY'
-import json,sys
-try: d=json.load(open(sys.argv[1]))
-except Exception: print("0 0"); sys.exit()
-crit=0; other=[]
-for r in d.get("results",[]):
-    for p in r.get("packages",[]):
-        for v in p.get("vulnerabilities",[]):
-            sev=(v.get("database_specific",{}) or {}).get("severity","") or ""
-            score=0.0
-            for s in v.get("severity",[]) or []:
-                try: score=max(score,float(str(s.get("score","0")).split("/")[0].split(":")[-1] or 0))
-                except Exception: pass
-            if str(sev).upper()=="CRITICAL" or score>=9.0: crit+=1
-            else: other.append(f"{v.get('id')} {p.get('package',{}).get('name')} {sev or score}")
-print(crit, len(other)); 
-open(sys.argv[1]+".review","w").write("\n".join(other))
-PY
-)
-      if [ "${crit:-0}" != "0" ]; then line "  2 advisories: RED, $crit critical, floor"; floor_red=1
-      else line "  2 advisories: green at the floor, ${rest:-0} below critical kept for review lines"; fi
-      [ -f "$adv_out.review" ] && ADV_REVIEW="$(cat "$adv_out.review")"
-    fi
-  fi
-  rm -f "$adv_out" "$adv_out.review"
 
   if [ "$floor_red" = 1 ]; then line "verdict: FLOOR RED, exit 1"; verdict_code=1
   else
     line "gate: gate tier"
-    # 3 anchors
-    if out="$(python3 "$HERE/check-anchors.py" 2>&1)"; then line "  3 anchors: green, ${out##*$'\n'}"; else line "  3 anchors: RED"; printf '%s\n' "$out" | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
-    # 4 tests
+    # 1 anchors
+    if out="$(python3 "$HERE/check-anchors.py" 2>&1)"; then line "  1 anchors: green, ${out##*$'\n'}"; else line "  1 anchors: RED"; printf '%s\n' "$out" | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
+    # 2 tests
     if [ -n "${TEST_COMMAND:-}" ]; then
-      if bash -c "$TEST_COMMAND" >"$REPORT.tests" 2>&1; then line "  4 tests: green (results at ${TEST_RESULTS:-unset})"; else line "  4 tests: RED"; tail -40 "$REPORT.tests" | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
+      if bash -c "$TEST_COMMAND" >"$REPORT.tests" 2>&1; then line "  2 tests: green (results at ${TEST_RESULTS:-unset})"; else line "  2 tests: RED"; tail -40 "$REPORT.tests" | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
       rm -f "$REPORT.tests"
-    else line "  4 tests: RED, no test command configured in gate.conf"; gate_reds=$((gate_reds+1)); fi
-    # 4b governed files: a card may not change the machinery that judges it
-    if out="$(python3 "$HERE/governed-files.py" --base "$DEFAULT_BRANCH" 2>&1)"; then line "  4b governed files: ${out#governed-files: }"; else line "  4b governed files: RED"; printf '%s\n' "$out" | sed 's/^governed-files: /    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
-    # 5 specassay
-    if out="$(bash "$SPECASSAY_CHECK" 2>&1)"; then line "  5 specassay: green"; else line "  5 specassay: RED"; printf '%s\n' "$out" | grep -E 'FAIL|GAP|orphan|drift|gate' | head -40 | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
+    else line "  2 tests: RED, no test command configured in gate.conf"; gate_reds=$((gate_reds+1)); fi
+    # 2b governed files: a card may not change the machinery that judges it
+    if out="$(python3 "$HERE/governed-files.py" --base "$DEFAULT_BRANCH" 2>&1)"; then line "  2b governed files: ${out#governed-files: }"; else line "  2b governed files: RED"; printf '%s\n' "$out" | sed 's/^governed-files: /    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
+    # 3 specassay
+    if out="$(bash "$SPECASSAY_CHECK" 2>&1)"; then line "  3 specassay: green"; else line "  3 specassay: RED"; printf '%s\n' "$out" | grep -E 'FAIL|GAP|orphan|drift|gate' | head -40 | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
     # 6 advisories below the floor
-    if [ -n "$ADV_REVIEW" ]; then line "  6 advisories below the floor (review tier):"; printf '%s\n' "$ADV_REVIEW" | sed 's/^/    /' | tee -a "$REPORT"; else line "  6 advisories below the floor: none"; fi
-    # 7 docs owed
+    # 4 docs owed
     owed="$(python3 - <<'PY'
 import re,subprocess,glob
 owed=[]
@@ -152,7 +100,7 @@ for path in glob.glob("**/*.md", recursive=True):
 print(", ".join(sorted(set(owed))) if owed else "")
 PY
 )"
-    if [ -n "$owed" ]; then line "  7 docs owed: $owed"; else line "  7 docs owed: none"; fi
+    if [ -n "$owed" ]; then line "  4 docs owed: $owed"; else line "  4 docs owed: none"; fi
     if [ "$gate_reds" -gt 0 ]; then line "verdict: GATE RED, $gate_reds red line(s), exit 2"; verdict_code=2; else line "verdict: GREEN, exit 0"; fi
   fi
 fi
