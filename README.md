@@ -1,5 +1,3 @@
-Not yet run cold. Do not paste from this repository until specassay.com/bang links here.
-
 Bang is one command that leaves you with a working project on your own machine: a
 small lending tracker, its specification with durable IDs, the checks that refuse
 unfinished work, and a board in your browser with the first cards already on it.
@@ -11,10 +9,10 @@ and person in this repository is invented.
 
 ## Run it
 
-Bang needs a Mac, an Anthropic account, and about twenty minutes. It writes to five
-places in your home folder and nowhere else; `BANG.md` lists them, and lists what it
-fetches and what it will not do. Read `BANG.md` before you run it, and read its
-paragraph that begins "Read this one twice" twice.
+Bang needs a Mac, an Anthropic account, and about ten minutes, most of it approving
+steps. It writes to five places in your home folder and nowhere else; `BANG.md` lists
+them, and lists what it fetches and what it will not do. Read `BANG.md` before you run
+it, and read its paragraph that begins "Read this one twice" twice.
 
 Three blocks, in order, each pasted into Terminal.
 
@@ -24,10 +22,13 @@ ours.
 
 ```
 curl -fsSL https://claude.ai/install.sh | bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 claude
 ```
 
-Sign in when it asks, then type `/exit`.
+The second and third lines put Claude Code on your path; the installer prints the same
+instruction. Sign in when it asks, then type `/exit`.
 
 Block 2. Puts the project at `~/bang` and opens Claude Code in it.
 
@@ -37,6 +38,8 @@ cd ~/bang
 claude
 ```
 
+If you paste block 2 into Claude Code by mistake, it still works; then paste block 3.
+
 Block 3, pasted into Claude Code, not Terminal.
 
 ```
@@ -44,6 +47,9 @@ Read BANG.md in this folder from top to bottom. Then carry out its Steps in orde
 printing the step summary before each and the receipt after. If a receipt does not
 match, stop and print what you saw. Do nothing that BANG.md does not say.
 ```
+
+The board opens in your browser when it finishes. The last line is in Terminal; go back
+and read it.
 
 When it finishes, or when it stops, add one line to `RUNS.md` saying what happened and
 open a pull request. `CONTRIBUTING.md` says how; it is three sentences.

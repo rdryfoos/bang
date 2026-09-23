@@ -1,4 +1,4 @@
-# @covers US-LEND-10, AC-LEND-10, AC-LEND-20, US-OUT-10, AC-OUT-20
+# @covers US-LEND-10, AC-LEND-10, AC-LEND-20, US-OUT-10, AC-OUT-20, AC-PRIV-20
 """`lend add` and `lend list`."""
 import argparse
 import sys
