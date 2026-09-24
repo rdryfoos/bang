@@ -26,7 +26,11 @@
 #      whatever the person happens to have. COREPACK_HOME, PNPM_HOME and
 #      npm_config_cache are set for the same reason the path is: anything the daemon
 #      or a worker under it downloads lands in ~/.potato-cannon, which is one of the
-#      places BANG.md says this project writes to, and Undo removes it whole.
+#      places BANG.md says this project writes to, and Undo removes it whole. The four
+#      UV_* are there for the same reason and for one more: a tool installed under one
+#      UV_TOOL_DIR is invisible to a call made without it, so a worker running specify
+#      has to carry the same four BANG.md step 3 installed with or be told the thing is
+#      not there.
 #
 # Usage:  bash scripts/write-launch-agent.sh
 #         bash scripts/write-launch-agent.sh --dry-run    print it, write nothing
@@ -47,7 +51,7 @@ stop() { printf 'write-launch-agent: STOPPED. %s\n' "$*" >&2; exit 1; }
 # variable rather than inside the plist text is what makes the promise checkable: one
 # line here is one line in the file, and the check below says so before anything is
 # installed.
-EXEC_LINE='cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL" TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8" PATH="$HOME/.potato-cannon/node/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" node ./apps/daemon/dist/server/server.js'
+EXEC_LINE='cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL" TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8" PATH="$HOME/.potato-cannon/node/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache" UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python" UV_TOOL_BIN_DIR="$HOME/.local/bin" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" node ./apps/daemon/dist/server/server.js'
 
 case "$EXEC_LINE" in
   *$'\n'*) stop "the daemon's command has a newline in it. That is the bug this file exists to prevent." ;;

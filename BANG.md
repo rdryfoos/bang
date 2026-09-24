@@ -112,8 +112,31 @@ given. If a receipt does not match, it stops and prints what it saw.
    recorded rather than judged.
 
 3. Install uv if missing, into `~/.local/bin`, with the installer named
-   above. Then `uv tool install specify-cli`. Receipt: `specify --version`
-   prints a version at or above 0.14.0.
+   above. Then, in this terminal:
+
+       export UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"
+       export UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache"
+       export UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python"
+       export UV_TOOL_BIN_DIR="$HOME/.local/bin"
+       uv tool install specify-cli
+
+   Those four are why this step does not put anything in a place this file
+   never told you about. Left to itself uv keeps its tools in
+   `~/.local/share/uv`, its cache in `~/.cache/uv` and any Python it
+   downloads beside them, which is three more directories and several
+   hundred megabytes. `UV_TOOL_BIN_DIR` is the exception and points at
+   `~/.local/bin` on purpose: that is where the `specify` command has to
+   land to be on your path, and `~/.local/bin` is already one of the five
+   places.
+
+   **Every later call to `uv` or `specify` carries the same four**, in this
+   file, in `scripts/`, and in the launch agent's environment. A tool
+   installed under one `UV_TOOL_DIR` is invisible to a call made without
+   it, which is a confusing way to be told the thing you just installed is
+   not there.
+
+   Receipt: `specify --version` prints a version at or above 0.14.0, and
+   `ls ~/.local/share/uv ~/.cache/uv` says both are missing.
 
 4. Node and pnpm. **Node 22, not the current LTS.** The Cannon's database
    library has no prebuilt binary for newer Node and building it from
@@ -155,6 +178,10 @@ given. If a receipt does not match, it stops and prints what it saw.
    `--integration`. Initialise into this folder, which already has files
    in it:
 
+       export UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"
+       export UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache"
+       export UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python"
+       export UV_TOOL_BIN_DIR="$HOME/.local/bin"
        specify init --here --force --non-interactive --integration claude
 
    `--here` means this folder rather than a new one, and `--force` skips
@@ -213,6 +240,22 @@ given. If a receipt does not match, it stops and prints what it saw.
    printing `parent_derivation: heading-nesting`. A WARN that
    `test-results.xml` does not exist is expected here; no test has run
    yet.
+
+   Then commit what SpecAssay added, on main:
+
+       git add -A && git commit -m "Bang: SpecAssay installed"
+
+   This covers `.specify/` and the `.claude/skills/speckit-specassay-*`
+   folders. It is here for the same reason step 5's commit is, and the
+   fourth cold run proved it the expensive way: a card's worktree is cut
+   from a commit and carries only what is committed, so BAN-1's first Build
+   iteration reported MISSING TOOL because the checker was three folders
+   away in your checkout and in no worker's. Uncommitted, the Gate cannot
+   run on any card.
+
+   Receipt adds: `git status` is clean, and
+   `git ls-tree HEAD .specify/extensions/specassay-check` prints the
+   folder.
 
 7. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
    and commit above, then, in the same terminal as step 4:
@@ -332,13 +375,28 @@ Run these in order to remove everything this file did.
 
     launchctl bootout gui/$(id -u)/com.dryfoos.bang.cannon
     rm ~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist
+    UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" uv tool uninstall specify-cli
+    rm ~/.local/bin/specify
     rm -rf ~/.potato-cannon
     rm -rf ~/bang
-    uv tool uninstall specify-cli
+
+The uninstall carries `UV_TOOL_DIR` because the install did: uv keeps its
+tools where that variable points, and a call without it looks in
+`~/.local/share/uv`, finds nothing, and says so. It goes before the
+`rm -rf ~/.potato-cannon` for the same reason: afterwards there is nothing
+left for it to uninstall. `specify` is removed by name because
+`UV_TOOL_BIN_DIR` put it in `~/.local/bin`, which holds things this file
+did not install.
+
+**Remove uv itself only if this file installed it**, which step 2's receipt
+told you: it listed `uv` as missing. If step 2 said uv was present, it is
+yours and predates this project, and these two lines are not yours to run:
+
     rm ~/.local/bin/uv ~/.local/bin/uvx
 
 Node, if this file installed it, is under `~/.potato-cannon/node` and goes
-with the third line, along with every package cache the build filled. Your
+with `rm -rf ~/.potato-cannon`, along with every package cache the build
+filled. Your
 own Node, if you had one, is untouched: this file never put anything on the
 path outside the terminal it was working in. The session
 transcripts under `~/.claude/projects/` are Claude Code's, not Bang's, and

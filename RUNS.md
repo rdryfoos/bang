@@ -3,6 +3,22 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-24, MacBook Pro (Apple silicon, fresh standard user), about ten minutes to
+  install, Bang at `302a5fd`: the fourth cold run, by Rik, and the first that reached a
+  board and then ran a card on it. BAN-1 went through Spec with no question asked, Build
+  wrote ten tests named for their criteria, and the Gate went GREEN on the second Build
+  iteration. Spec took nine minutes and Build twenty-six including the retry.
+
+  It could not be promoted. `scripts/column-check.py` refused the card, because the Build
+  worker had written `branch: potato/BAN-1 at 213f8b6` and the check takes everything
+  after `branch:` as a branch name. The work was finished and proven and the board would
+  not let it through, which is the best kind of refusal to find: the card was right and
+  the two files that had to agree about one line did not.
+
+  The first Build iteration also reported MISSING TOOL, because `.specify/` was in the
+  checkout and in no worker's worktree. The worker copied it in and carried on, which is
+  a worker fetching its own judge. Both are fixed here.
+
 - 2026-09-23, MacBook Pro (Apple silicon, fresh standard user), Bang at `4034d05`: the
   third cold run, by Rik, abandoned at step 6 by decision rather than finished. Steps 1 to
   5 were clean: `.specify` committed on main, Node 22 under `~/.potato-cannon/node`, the
