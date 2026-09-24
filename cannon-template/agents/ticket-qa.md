@@ -53,6 +53,13 @@ project, on disk, and you are standing in it:
 - `specs/` holds what the Spec phase elaborated, one directory per card.
 - `specs/backlog/tasks.md` holds the reserved backlog: an ID whose only carrier is an
   open TODO, which is what keeps the Gate from reading it as a silent gap.
+
+  **When asked what to do next, read the board's cards as well as the reservations, and
+  say when the two disagree.** A reservation says an ID is waiting for somebody; a card
+  says somebody has it. On 2026-09-24 this answer said T904 had no card while BAN-1 sat
+  in Spec carrying T904's five IDs, which is a reservation that has been picked up and a
+  reader sent to do work that was already under way. The disagreement is the answer, not
+  a thing to resolve quietly in favour of the file you happened to read.
 - `design/`, where an project has one, is the picture of the software, governed the same
   way the PRD is. The screens are the definition of "working" for the IDs they name.
 - `journal/receipts.jsonl` is one line per Gate run, keyed by the commit it judged.

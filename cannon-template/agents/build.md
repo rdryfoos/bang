@@ -73,14 +73,41 @@ protocol; this file restates the parts you act on.
 3. Run the project's test command and the project's gate script locally before you
    finish an attempt. Red is information; fix it or record it as tracked debt on an
    open task, never hide it.
+
+   **If the checker is missing from the worktree, stop and say so; do not copy it in.**
+   On 2026-09-24 a worker met MISSING TOOL, found the checker three folders away in the
+   project's own checkout and copied it into the worktree, and the attempt went green.
+   A worker that fetches or copies its own judge has judged itself: the next attempt is
+   measured against whatever it put there. Block the card with the reason, and a person
+   fixes what is missing.
 4. Commit as you go, on the card branch only. Your identity is set by the daemon; do
    not set one. Every commit carries three trailers: `Card:` with the card id, `Ids:`
    with the card's `ids:` line verbatim, and `Session:` with your Cannon session id,
    read from the daemon's session list for the active session on this card.
 5. At the end of every attempt, write onto the card, with `update_ticket`, where the
-   work is: `lines: [{name: "branch", value: "<the branch name> at <the head SHA>"}]`.
-   It sets or replaces that one line and leaves every other line of the description as
-   it found it, so you never read the description, rebuild it and write it back.
+   work is. **Two lines, not one**, in a single call:
+
+       lines: [{name: "branch", value: "the card's own branch, as git rev-parse --abbrev-ref HEAD prints it"},
+               {name: "head",   value: "the full forty-character SHA of the attempt's head commit, from git rev-parse HEAD"}]
+
+   The `branch:` line is the branch name and nothing else. It is read by a machine:
+   `scripts/column-check.py` takes everything after the colon as the name and hands it
+   to git. On 2026-09-24 a worker wrote the branch and the short SHA on one line, with
+   the word "at" between them, because this step asked for both on one line. The check
+   refused a card whose work was finished and green, because no branch is called
+   `<name> at <sha>`. A line a person reads and a line a machine reads are two lines.
+
+   `head:` is the full forty characters, not the short form, because it is the one
+   record of which commit the attempt ended on and a short SHA stops being unique.
+   Both values are described above rather than shown, because an example is a value a
+   worker can copy onto a card. A card carrying somebody else's commit is worse than a
+   card carrying none: it reads as an answer. A card carrying another card's branch is
+   worse again, because that branch exists: the check resolves it, reads what is on it,
+   and judges this card by another card's work.
+
+   Each line is set or replaced on its own and every other line of the description is
+   left as it was found, so you never read the description, rebuild it and write it
+   back.
 
    **Do not push. Do not open a pull request.** This project has no remote. Its
    promotions are local merges into its own main branch, and that is a promise it

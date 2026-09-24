@@ -9,10 +9,13 @@ and person in this repository is invented.
 
 ## Run it
 
-Bang needs a Mac, an Anthropic account, and about ten minutes, most of it approving
-steps. It writes to five places in your home folder and nowhere else; `BANG.md` lists
-them, and lists what it fetches and what it will not do. Read `BANG.md` before you run
-it, and read its paragraph that begins "Read this one twice" twice.
+Bang needs a Mac, an Anthropic account, and two clocks. About ten minutes to install,
+most of it saying yes. Then the first card takes the board about twenty-five minutes on
+its own; you can watch, or come back.
+
+It writes to five places in your home folder and nowhere else; `BANG.md` lists them, and
+lists what it fetches and what it will not do. Read `BANG.md` before you run it, and read
+its paragraph that begins "Read this one twice" twice.
 
 Two blocks, in order, both pasted into Terminal.
 
@@ -37,9 +40,11 @@ cd ~/bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-Sign in when it asks. If the bottom line of Claude Code says auto mode, press shift+tab
-until it says manual mode; auto mode refuses steps 6 and 7 on its own. The board opens in
-your browser when it finishes; the last line is in Terminal.
+Sign in when it asks. Choose "Yes, I trust this folder" when Claude Code asks; that is
+Claude Code's own question about the folder you just cloned. If the bottom line of Claude
+Code says auto mode, press shift+tab until it says manual mode; auto mode refuses steps 6
+and 7 on its own. The board opens in your browser when it finishes; the last line is in
+Terminal.
 
 When it finishes, or when it stops, add one line to `RUNS.md` saying what happened and
 open a pull request. `CONTRIBUTING.md` says how; it is three sentences.
