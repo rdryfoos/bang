@@ -87,22 +87,23 @@ protocol; this file restates the parts you act on.
 5. At the end of every attempt, write onto the card, with `update_ticket`, where the
    work is. **Two lines, not one**, in a single call:
 
-       lines: [{name: "branch", value: "potato/BAN-1"},
+       lines: [{name: "branch", value: "the card's own branch, as git rev-parse --abbrev-ref HEAD prints it"},
                {name: "head",   value: "the full forty-character SHA of the attempt's head commit, from git rev-parse HEAD"}]
 
    The `branch:` line is the branch name and nothing else. It is read by a machine:
    `scripts/column-check.py` takes everything after the colon as the name and hands it
-   to git. On 2026-09-24 a worker wrote `branch: potato/BAN-1 at 213f8b6` because this
-   step asked for the branch and the SHA on one line, and the check refused a card
-   whose work was finished and green, because there is no branch called
-   `potato/BAN-1 at 213f8b6`. A line a person reads and a line a machine reads are two
-   lines.
+   to git. On 2026-09-24 a worker wrote the branch and the short SHA on one line, with
+   the word "at" between them, because this step asked for both on one line. The check
+   refused a card whose work was finished and green, because no branch is called
+   `<name> at <sha>`. A line a person reads and a line a machine reads are two lines.
 
    `head:` is the full forty characters, not the short form, because it is the one
    record of which commit the attempt ended on and a short SHA stops being unique.
-   It is described above rather than shown, because an example SHA is a value a
-   worker can copy onto a card, and a card carrying somebody else's commit is worse
-   than a card carrying none: it reads as an answer.
+   Both values are described above rather than shown, because an example is a value a
+   worker can copy onto a card. A card carrying somebody else's commit is worse than a
+   card carrying none: it reads as an answer. A card carrying another card's branch is
+   worse again, because that branch exists: the check resolves it, reads what is on it,
+   and judges this card by another card's work.
 
    Each line is set or replaced on its own and every other line of the description is
    left as it was found, so you never read the description, rebuild it and write it

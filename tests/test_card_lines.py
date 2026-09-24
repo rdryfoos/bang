@@ -31,10 +31,18 @@ def _column_check():
     return module
 
 
-# A SHA the test supplies. build.md deliberately no longer carries one: an example SHA
-# is a value a worker can copy onto a card, and a card carrying somebody else's commit
-# reads as an answer.
+# A branch and a SHA the test supplies. build.md deliberately carries neither: an
+# example is a value a worker can copy onto a card. A card carrying somebody else's
+# commit reads as an answer; a card carrying another card's branch is worse, because
+# that branch exists and the check judges this card by what is on it.
+A_REAL_BRANCH = "potato/BAN-1"
 A_REAL_SHA = "213f8b6c4e2a9d17f05b8e3c6a1d4f9021ab7c3e"
+
+
+def _step_five():
+    """Step 5 of build.md, which is where the card's lines are specified."""
+    text = BUILD_MD.read_text(encoding="utf-8")
+    return text.split("\n5. At the end of every attempt", 1)[1].split("\n6. ", 1)[0]
 
 
 def _card_text_build_md_specifies():
@@ -53,18 +61,25 @@ def test_build_md_tells_the_worker_to_write_branch_and_head_separately():
         % written["branch"])
 
 
+def test_build_md_tells_the_worker_where_to_get_the_branch_name():
+    # Described rather than shown, and the description says where to get it, which an
+    # example branch name never did.
+    branch = _card_text_build_md_specifies()["branch"]
+    assert "rev-parse --abbrev-ref HEAD" in branch, (
+        "build.md no longer tells the worker where to get its branch: %r" % branch)
+
+
 def test_branch_of_returns_the_bare_name_for_the_card_build_md_writes():
-    # The pair, checked end to end: the exact text build.md specifies, fed to the
-    # function that reads it.
-    written = _card_text_build_md_specifies()
+    # The pair, checked end to end: a card in the shape build.md specifies, with real
+    # values, fed to the function that reads it.
     description = "\n".join([
         "ids: US-UI-10, FR-UI-10, AC-UI-10, AC-UI-20, AC-UI-30",
         "Drag this card to Spec and watch what happens.",
-        "branch: %s" % written["branch"],
+        "branch: %s" % A_REAL_BRANCH,
         "head: %s" % A_REAL_SHA,
         "try: route /",
     ])
-    assert _column_check().branch_of(description, "BAN-1") == written["branch"]
+    assert _column_check().branch_of(description, "BAN-1") == A_REAL_BRANCH
 
 
 def test_the_head_build_md_asks_for_is_a_full_sha():
@@ -78,13 +93,20 @@ def test_the_head_build_md_asks_for_is_a_full_sha():
         "build.md no longer tells the worker where to get the SHA: %r" % head)
 
 
-def test_build_md_shows_no_sha_a_worker_could_copy_onto_a_card():
-    # An example value in a prompt is a value that gets copied. A card carrying somebody
-    # else's commit is worse than a card carrying none: it reads as an answer.
-    step = BUILD_MD.read_text(encoding="utf-8").split("\n5. At the end of every attempt", 1)[1]
-    step = step.split("\n6. ", 1)[0]
-    found = re.findall(r"\b[0-9a-f]{40}\b", step)
-    assert not found, "step 5 carries a copyable SHA: %s" % found
+def test_build_md_shows_no_value_a_worker_could_copy_onto_a_card():
+    # An example value in a prompt is a value that gets copied.
+    #
+    # A card carrying somebody else's commit is worse than a card carrying none: it
+    # reads as an answer. A card carrying another card's branch is worse again, because
+    # that branch exists, so the check resolves it, reads what is on it, and judges this
+    # card by another card's work: a pass or a fail that is about the wrong thing.
+    step = _step_five()
+
+    shas = re.findall(r"\b[0-9a-f]{40}\b", step)
+    assert not shas, "step 5 carries a copyable SHA: %s" % shas
+
+    branches = re.findall(r"\b[A-Za-z0-9._-]+/[A-Z]{2,}-\d+\b", step)
+    assert not branches, "step 5 carries a copyable branch name: %s" % branches
 
 
 def test_the_old_one_line_form_is_what_refused_a_finished_card():
