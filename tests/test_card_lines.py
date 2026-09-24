@@ -31,6 +31,12 @@ def _column_check():
     return module
 
 
+# A SHA the test supplies. build.md deliberately no longer carries one: an example SHA
+# is a value a worker can copy onto a card, and a card carrying somebody else's commit
+# reads as an answer.
+A_REAL_SHA = "213f8b6c4e2a9d17f05b8e3c6a1d4f9021ab7c3e"
+
+
 def _card_text_build_md_specifies():
     """The card lines build.md tells the worker to write, taken from build.md itself."""
     text = BUILD_MD.read_text(encoding="utf-8")
@@ -55,7 +61,7 @@ def test_branch_of_returns_the_bare_name_for_the_card_build_md_writes():
         "ids: US-UI-10, FR-UI-10, AC-UI-10, AC-UI-20, AC-UI-30",
         "Drag this card to Spec and watch what happens.",
         "branch: %s" % written["branch"],
-        "head: %s" % written["head"],
+        "head: %s" % A_REAL_SHA,
         "try: route /",
     ])
     assert _column_check().branch_of(description, "BAN-1") == written["branch"]
@@ -63,9 +69,22 @@ def test_branch_of_returns_the_bare_name_for_the_card_build_md_writes():
 
 def test_the_head_build_md_asks_for_is_a_full_sha():
     # Short SHAs stop being unique, and the head line is the one record of which commit
-    # an attempt ended on.
+    # an attempt ended on. build.md describes the value instead of showing one, so what
+    # is asserted is the instruction: it must demand the full forty and say where the
+    # worker gets them.
     head = _card_text_build_md_specifies()["head"]
-    assert re.fullmatch(r"[0-9a-f]{40}", head), "build.md's head example is not 40 hex: %r" % head
+    assert "forty" in head, "build.md no longer asks for the full forty characters: %r" % head
+    assert "rev-parse HEAD" in head, (
+        "build.md no longer tells the worker where to get the SHA: %r" % head)
+
+
+def test_build_md_shows_no_sha_a_worker_could_copy_onto_a_card():
+    # An example value in a prompt is a value that gets copied. A card carrying somebody
+    # else's commit is worse than a card carrying none: it reads as an answer.
+    step = BUILD_MD.read_text(encoding="utf-8").split("\n5. At the end of every attempt", 1)[1]
+    step = step.split("\n6. ", 1)[0]
+    found = re.findall(r"\b[0-9a-f]{40}\b", step)
+    assert not found, "step 5 carries a copyable SHA: %s" % found
 
 
 def test_the_old_one_line_form_is_what_refused_a_finished_card():

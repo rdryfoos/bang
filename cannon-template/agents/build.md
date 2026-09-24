@@ -88,7 +88,7 @@ protocol; this file restates the parts you act on.
    work is. **Two lines, not one**, in a single call:
 
        lines: [{name: "branch", value: "potato/BAN-1"},
-               {name: "head",   value: "213f8b6c4e2a9d17f05b8e3c6a1d4f9021ab7c3e"}]
+               {name: "head",   value: "the full forty-character SHA of the attempt's head commit, from git rev-parse HEAD"}]
 
    The `branch:` line is the branch name and nothing else. It is read by a machine:
    `scripts/column-check.py` takes everything after the colon as the name and hands it
@@ -100,6 +100,9 @@ protocol; this file restates the parts you act on.
 
    `head:` is the full forty characters, not the short form, because it is the one
    record of which commit the attempt ended on and a short SHA stops being unique.
+   It is described above rather than shown, because an example SHA is a value a
+   worker can copy onto a card, and a card carrying somebody else's commit is worse
+   than a card carrying none: it reads as an answer.
 
    Each line is set or replaced on its own and every other line of the description is
    left as it was found, so you never read the description, rebuild it and write it
