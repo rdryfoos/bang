@@ -399,7 +399,7 @@ Where a step says nothing about the machine, the one text is both.
    carries `KeepAlive`, so launchd starts the daemon again if it dies. A
    logon task has no equivalent. On Windows a daemon that dies stays dead
    until you log in again or run `schtasks /run` yourself, and that is a
-   thing the Lenovo run is there to find out the size of.
+   thing the Dell run is there to find out the size of.
 
    This used to be a plist printed here for you to copy, and it could not
    be copied: the daemon's command is one long shell line, a plist typeset
@@ -412,7 +412,7 @@ Where a step says nothing about the machine, the one text is both.
    Cannon is running, and it is not yours: everything after this step would be
    judged against somebody else's board. The script prints which process holds
    the port and which user owns it, from `lsof` on a Mac and from
-   `netstat -ano` with `tasklist` on Windows. Stop that daemon, or log in as
+   `Get-NetTCPConnection` on Windows. Stop that daemon, or log in as
    that user and stop it there, before running this again. Nothing was
    written.
 
