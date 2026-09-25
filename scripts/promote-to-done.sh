@@ -97,7 +97,7 @@ fail() {                      # fail <exit code> <reason...>
 # has not been read by anyone.
 case "${FROM:-}" in
   ""|Align|Review) ;;
-  *) fail 1 "a card enters Done from Align, and this one came from $FROM" ;;
+  *) fail 1 "a card enters Done from Review, and this one came from $FROM" ;;
 esac
 
 # The merge happens in the project's own checkout, on its default branch. If the

@@ -40,7 +40,7 @@ Everything this file does lands in one of these places, and nowhere else.
 
 Read this one twice: the Cannon's worker sessions run Claude Code with
 permission prompts turned off (`--dangerously-skip-permissions`). That is
-how a card moves from Spec to Build to Gate to Align without you
+how a card moves from Spec to Build to Gate to Review without you
 approving each file write. Three things stand in for the prompts you
 would otherwise see. The project's rules file, `CONSTITUTION.md`, which
 every worker reads first. A check called `scripts/governed-files.py`,
@@ -339,7 +339,7 @@ given. If a receipt does not match, it stops and prints what it saw.
          -H 'Content-Type: application/json' \
          -d "{\"path\":\"$HOME/bang\",\"displayName\":\"bang\",\"template\":\"bang\"}"
 
-   The template's columns are Ideas, Spec, Build, Gate, Align and Done.
+   The template's columns are Ideas, Spec, Build, Gate, Review and Done.
    Ideas and Done are added by the Cannon; the other four come from the
    template. Receipt: `curl -s http://127.0.0.1:3131/api/projects` lists
    one project named bang.
