@@ -341,3 +341,37 @@ def test_nothing_states_a_count_of_the_places_this_file_writes_to():
                 offenders.setdefault(name, []).append("%d: %s" % (number, line.strip()))
     assert not offenders, (
         "a count of the places is a second copy of the list: %s" % offenders)
+
+
+def test_nothing_still_calls_bang_one_command():
+    """It has been two pastes since the README grew two blocks, and three on Windows.
+
+    The sentence outlived the thing it described because it is the first line, which
+    is the line nobody re-reads. It is also the line the Sites page is to take its own
+    first sentence from, so a false one here would have become a false one in public.
+    """
+    claim = re.compile(r"\bone command\b", re.I)
+    offenders = {}
+    for name, text in (("README.md", README), ("BANG.md", BANG)):
+        for number, line in enumerate(text.splitlines(), 1):
+            if claim.search(line):
+                offenders.setdefault(name, []).append("%d: %s" % (number, line.strip()))
+    assert not offenders, (
+        "Bang is not one command and has not been since block 2: %s" % offenders)
+
+
+def test_the_readmes_first_line_and_its_run_it_section_agree_about_the_machines():
+    """The first line names the machines; Run it is where a reader acts on that.
+
+    Two sentences about the same fact, forty lines apart, and the first is the one
+    quoted elsewhere. If a third machine lands in one and not the other, the page
+    promises what its own instructions do not carry.
+    """
+    first = README.strip().splitlines()
+    opening = " ".join(first[:5])
+    assert "Mac or Windows" in opening, "the first line no longer names the machines"
+    assert "Mac and Windows." in README, "Run it no longer says which machines it runs on"
+    # Linux is named as coming, and nowhere claimed as working.
+    assert "Omarchy Linux soon" in opening
+    assert "Linux is not supported yet" in BANG, (
+        "BANG.md no longer says Linux is not supported, while the page says soon")

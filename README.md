@@ -1,6 +1,8 @@
-Bang is one command that leaves you with a working project on your own machine: a
-small lending tracker, its specification with durable IDs, the checks that refuse
-unfinished work, and a board in your browser with the first cards already on it.
+Bang takes a bare Mac or Windows machine (Omarchy Linux soon) to a working,
+"born-threaded" project with a board in your browser: a couple of pastes, about ten
+minutes, then your first card. What you are left with is a small lending tracker, its
+specification with durable IDs, the checks that refuse unfinished work, and the first
+cards already on the board.
 `BANG.md` is the whole instruction, and it is meant to be read before you paste
 anything: it lists every folder that will be written, everything fetched from the
 network, and how to undo all of it. The application the project builds is a personal
