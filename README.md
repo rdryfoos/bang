@@ -55,10 +55,17 @@ board opens in your browser when it finishes; the last line is in Terminal.
 Two blocks, in order. Block 1 is pasted into PowerShell, which Windows already has.
 Block 2 is pasted into Git Bash, which block 1 installs.
 
-Block 1, "Get Claude", in three parts, pasted one at a time and not together. Each one
+Block 1, "Get Claude", in four parts, pasted one at a time and not together. Each one
 has to finish before the next means anything.
 
-First, in PowerShell:
+First, in PowerShell, Python. `BANG.md` needs it from step 2 and the project's own
+scripts need it throughout, and a fresh Windows has none:
+
+```
+winget install --id Python.Python.3.12 -e --source winget
+```
+
+Then, in the same window, git:
 
 ```
 winget install --id Git.Git -e --source winget

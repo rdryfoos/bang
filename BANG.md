@@ -131,27 +131,41 @@ Where a step says nothing about the machine, the one text is both.
    half works on Linux is worse than a refusal.
 
    Then print the version of each of: `uv`, `specify`, `node`, `pnpm`,
-   `claude`, `python3`. For each that is missing, say so. Do not install
+   `claude`, and Python. For each that is missing, say so. Do not install
    anything in this step.
 
-   On Windows, `python3` needs a second look, because the check can pass
-   on something that is not Python. Windows ships an App Execution Alias
-   called `python3` that is a stub: it opens the Microsoft Store page for
-   Python and exits. It is on the path, so it answers `command -v`, and it
-   is not an interpreter. Treat Python as missing if `python3 --version`
-   prints nothing, or prints a line that does not begin `Python 3`, or if
-   `where python3` names a path under
-   `AppData\Local\Microsoft\WindowsApps`. Then stop, and say this:
+   **Python is not called `python3` everywhere, so do not ask for it by
+   that name.** This project resolves the name once, in
+   `scripts/python.sh`, and the same resolution is what every script in
+   `scripts/` uses:
+
+       . scripts/python.sh && "$PYTHON" --version
+
+   What it does is ask, rather than assume: the first of `python3` then
+   `python` that prints a line beginning `Python 3` is the interpreter,
+   and anything else is missing. A Mac has `python3` and no `python`.
+   Windows has `python` and no `python3`, and will not grow one: the
+   python.org installer lays down `python.exe` and `py.exe` and no
+   `python3.exe`, while the name `python3` is held by an App Execution
+   Alias that opens the Microsoft Store page and exits. That stub is on
+   the path and answers `command -v`, which is why the test is what the
+   thing prints. It fails on either name without having to be recognised.
+
+   If neither name answers, stop. On Windows, say to open **PowerShell**,
+   which is not the Git Bash window this is running in, and run:
 
        winget install --id Python.Python.3.12 -e --source winget
 
-   then close the Git Bash window and open a new one, because a window
-   reads the path when it opens and will not see an install made after
-   that; then start again from step 1.
+   then close the Git Bash window and open a new Git Bash, because a
+   window reads the path when it opens and will not see an install made
+   after that; then start again from step 1. Name PowerShell rather than
+   saying "a new window": this message is read inside Git Bash, and a
+   reader told to open a new window opens another of the same one.
 
-   Receipt: the `uname -s` line, then six lines, present or missing. There
-   is no minimum for `python3` yet: the checks ran on Apple's own 3.9.6 on
-   2026-09-23, so the version line is recorded rather than judged.
+   Receipt: the `uname -s` line, then six lines, present or missing, with
+   the Python line naming which name answered. There is no minimum for
+   Python yet: the checks ran on Apple's own 3.9.6 on 2026-09-23, so the
+   version line is recorded rather than judged.
 
 3. Install uv if missing, into `~/.local/bin`. On a Mac, with the
    installer named above. On Windows, not that one:

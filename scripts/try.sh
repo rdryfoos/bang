@@ -27,7 +27,7 @@
 # "How the app is started", and that is the governed copy; these three lines are
 # what this script acts on, and they are meant to stay the same three:
 #
-#   src/whms/web.py           exists and runs as `python3 -m whms.web`
+#   src/whms/web.py           exists and runs as `$PYTHON -m whms.web`
 #   --port N                  the port to listen on, and it binds 127.0.0.1 only
 #   WHMS_DATA_FILE            the records file, the same variable the command line reads
 #
@@ -56,6 +56,9 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
+
+# The interpreter's name is resolved, never spelled. See python.sh.
+. "$HERE/python.sh" || exit 1
 cd "$ROOT" || { echo "try: cannot enter $ROOT"; exit 2; }
 
 # What the card says, and what the design map says.
@@ -69,7 +72,7 @@ cd "$ROOT" || { echo "try: cannot enter $ROOT"; exit 2; }
 card_id() { basename "$ROOT"; }
 
 card_line() {                 # card_line <name>  -> the value, or nothing
-  python3 - "$DAEMON_URL" "$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")" "$(card_id)" "$1" <<'PY' 2>/dev/null
+  "$PYTHON" - "$DAEMON_URL" "$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")" "$(card_id)" "$1" <<'PY' 2>/dev/null
 import json, os, sys, urllib.parse, urllib.request
 
 daemon, repo, ticket, want = sys.argv[1:5]
@@ -102,7 +105,7 @@ PY
 # opens where its promise lives rather than on whatever the front page happens to be.
 route_for_ids() {             # route_for_ids <ids...>  -> a route, or nothing
   [ -f "$ROOT/design/README.md" ] || return 0
-  python3 - "$ROOT/design/README.md" "$@" <<'PY' 2>/dev/null
+  "$PYTHON" - "$ROOT/design/README.md" "$@" <<'PY' 2>/dev/null
 import re, sys
 readme, ids = sys.argv[1], [i.strip().rstrip(",") for i in sys.argv[2:]]
 ROUTES = {"outstanding.html": "/", "nothing-out.html": "/",
@@ -130,9 +133,9 @@ STATE="${TMPDIR:-/tmp}/bang-try-web-$STATE_KEY"
 LIFETIME_MINUTES="${TRY_WEB_MINUTES:-30}"
 
 seed() {                      # the same invented things the command line mode shows
-  python3 -m whms add --name "Green-handled pruning shears" --borrower "Sam" \
+  "$PYTHON" -m whms add --name "Green-handled pruning shears" --borrower "Sam" \
     --date-out 2026-08-01 >/dev/null 2>&1 || true
-  python3 -m whms add --name "Folding camp chair" --borrower "Alex" \
+  "$PYTHON" -m whms add --name "Folding camp chair" --borrower "Alex" \
     --date-out 2026-07-14 >/dev/null 2>&1 || true
 }
 
@@ -165,7 +168,7 @@ start_web() {
   export PYTHONPATH="$ROOT/src"
   seed
 
-  PORT="$(python3 -c 'import socket
+  PORT="$("$PYTHON" -c 'import socket
 s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
   if [ -z "$PORT" ]; then
     echo "try: could not find a free port."
@@ -178,7 +181,7 @@ s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.clos
   echo "records are read or written, and nothing is reachable off this machine."
   echo
 
-  nohup python3 -m whms.web --port "$PORT" > "$STATE/log" 2>&1 &
+  nohup "$PYTHON" -m whms.web --port "$PORT" > "$STATE/log" 2>&1 &
   pid=$!
   echo "$pid" > "$STATE/pid"
 
@@ -279,7 +282,7 @@ case "$TRY_LINE" in
     echo "screen from design/README.md is opened in its place."
     echo
     printf '$ %s\n' "${TRY_LINE#command }"
-    ( eval "lend() { python3 -m whms \"\$@\"; }; ${TRY_LINE#command }" ) 2>&1 | sed 's/^/  /'
+    ( eval "lend() { \"\$PYTHON\" -m whms \"\$@\"; }; ${TRY_LINE#command }" ) 2>&1 | sed 's/^/  /'
     code="${PIPESTATUS[0]}"
     echo
     echo "Exited $code."
@@ -303,7 +306,7 @@ export PYTHONPATH="$ROOT/src"
 
 run() {                       # run <description> <args...>
   printf '$ lend %s\n' "$*"
-  python3 -m whms "$@" 2>&1 | sed 's/^/  /'
+  "$PYTHON" -m whms "$@" 2>&1 | sed 's/^/  /'
   return "${PIPESTATUS[0]}"
 }
 
