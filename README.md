@@ -19,6 +19,8 @@ its paragraph that begins "Read this one twice" twice.
 
 Two blocks, in order, both pasted into Terminal.
 
+Mac only, for now.
+
 Block 1, "Get Claude". Skip it if you already have Claude Code. If git asks to install
 the command line developer tools first, let it; that is Apple's, not ours.
 
@@ -43,8 +45,8 @@ claude --permission-mode manual "Read BANG.md in this folder from top to bottom.
 Sign in when it asks. Choose "Yes, I trust this folder" when Claude Code asks; that is
 Claude Code's own question about the folder you just cloned. If the bottom line of Claude
 Code says auto mode, press shift+tab until it says manual mode; auto mode refuses steps 6
-and 7 on its own. The board opens in your browser when it finishes; the last line is in
-Terminal.
+and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The board
+opens in your browser when it finishes; the last line is in Terminal.
 
 When it finishes, or when it stops, add one line to `RUNS.md` saying what happened and
 open a pull request. `CONTRIBUTING.md` says how; it is three sentences.
