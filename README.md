@@ -3,18 +3,17 @@ Bang takes a bare Mac or Windows machine (Omarchy Linux soon) to a working,
 minutes, then your first card. What you are left with is a small lending tracker, its
 specification with durable IDs, the checks that refuse unfinished work, and the first
 cards already on the board.
-`BANG.md` is the whole instruction, and it is meant to be read before you paste
-anything: it lists every folder that will be written, everything fetched from the
-network, and how to undo all of it. The application the project builds is a personal
-lending tracker, for keeping track of what you have lent and to whom, and every item
-and person in this repository is invented.
+
+`BANG.md` is the instruction set the agent follows. It is written for people too, so
+you can read exactly what the agent will do before you paste anything. `RUN-NOTES.md`
+is the detailed explainer, tailored for human readers: what each paste does, what the
+prompts mean, and what to do when it stops. The project builds a small lending
+tracker, what you have lent and to whom; names in the sample were changed to protect
+the guilty.
 
 ## Run it
 
 You need an Anthropic account; the pastes install everything else.
-
-Every line of this is explained in `RUN-NOTES.md`: what each paste does, what the
-prompts mean, and what to do when it stops.
 
 ### On a Mac
 

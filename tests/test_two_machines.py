@@ -495,12 +495,49 @@ def test_every_beat_is_one_line_and_every_fence_has_a_beat_over_it():
         assert opening, "%s has an unclosed fence" % name
 
 
-def test_the_notes_are_linked_from_run_it_exactly_once():
-    """Once, because a page of beats with a link on every beat is a page of prose."""
+def test_the_notes_are_named_once_in_the_intro_and_not_in_run_it():
+    """The intro says what the two files are for; Run it says what to paste.
+
+    The link used to sit under the Run it heading, which put a sentence of explanation
+    on a page whose whole point is that it has none. It is in the intro now, beside
+    what BANG.md is for, where a reader meets both before they start.
+
+    Once, either way: a page of beats with a link on every beat is a page of prose.
+    """
+    assert (ROOT / "RUN-NOTES.md").exists(), "RUN-NOTES.md is gone but the page names it"
+    assert README.count("RUN-NOTES.md") == 1, (
+        "README names the notes %d times" % README.count("RUN-NOTES.md"))
+
+    intro = README.split("\n## Run it\n", 1)[0]
     run_it = README.split("\n## Run it\n", 1)[1].split("\n## ", 1)[0]
-    assert run_it.count("RUN-NOTES.md") == 1, (
-        "Run it links the notes %d times" % run_it.count("RUN-NOTES.md"))
-    assert (ROOT / "RUN-NOTES.md").exists()
+    assert "RUN-NOTES.md" in intro, "the intro does not say what RUN-NOTES.md is for"
+    assert "RUN-NOTES.md" not in run_it, (
+        "the notes are linked from Run it again, which is a sentence of explanation "
+        "on a page that carries none")
+
+
+def test_the_intro_says_what_each_of_the_two_files_is_for():
+    """One is what the agent follows; the other is why, for a person.
+
+    A reader who does not know which to open reads neither. The intro names both, and
+    says which is written for whom, in one paragraph before anything is pasted.
+    """
+    intro = _flat(README.split("\n## Run it\n", 1)[0])
+    assert "`BANG.md` is the instruction set the agent follows" in intro
+    assert "written for people too" in intro
+    assert "`RUN-NOTES.md` is the detailed explainer, tailored for human readers" in intro
+
+
+def test_the_intro_still_says_the_sample_is_not_real():
+    """It said every item and person was invented. It says it differently now.
+
+    The claim matters more than the wording: `test_repo_privacy.py` holds the tree to
+    it, and a page that stopped saying so would be the one place a reader could take
+    the sample for somebody's real lending.
+    """
+    intro = _flat(README.split("\n## Run it\n", 1)[0])
+    assert "names in the sample were changed to protect the guilty" in intro, (
+        "the intro no longer says the sample is not real")
 
 
 def test_the_notes_say_which_file_they_are_not():
