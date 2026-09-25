@@ -3,6 +3,24 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-25, Dell 7420, rik, Bang at `a31d799`: the Windows walk, and the first run of
+  this on anything that is not a Mac. Fresh Windows 11 has no git at all. `winget`
+  installed Git 2.55, and the window had to be closed and reopened before its path knew
+  about it. `irm https://claude.ai/install.ps1 | iex` installed Claude Code 2.1.282 with
+  the same path gap the Mac installer has, and the PowerShell path line closed it.
+  Clone, then the opening line.
+
+  Claude Code's Bash tool on Windows runs in Git Bash, so steps 1 and 2 of `BANG.md` ran
+  as written and printed their receipts. The worker then read ahead and stopped before
+  step 3, which is the right thing to do with a file it cannot carry out, and named four
+  parts written for a Mac and only a Mac: `python3` on Windows is a Microsoft Store
+  placeholder rather than an interpreter; step 4's Node download is darwin-only; step 3's
+  uv line is `install.sh`; step 8 is a LaunchAgent. The Cannon was never reached.
+
+  That refusal is what this change is. `BANG.md` now reads `uname -s` at step 2 and
+  carries a Windows text for each of those four. None of it has been walked yet. The
+  next run on that Dell is the test.
+
 - 2026-09-25, shark, fresh user, Bang at `7b386ef`, pin `cb39b5b`, blind return at every
   prompt: **the first run to reach the review column.** Install clean, board showing only
   Bang, the daemon shark's own. BAN-1 dragged, and the board ran it: Spec with no

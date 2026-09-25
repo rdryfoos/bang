@@ -28,9 +28,14 @@ Everything this file does lands in one of these places, and nowhere else.
    gigabyte into `~/.cache`, `~/Library/pnpm` and `~/.npm`, three places
    this file would then have to list and Undo would have to reach into;
    here they are one folder that Undo removes whole.
-4. `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One launch
-   agent so the Cannon daemon starts when you log in and listens on
-   127.0.0.1:3131 only. It is never reachable from another machine.
+4. On a Mac, `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One
+   launch agent so the Cannon daemon starts when you log in. On Windows,
+   a Task Scheduler task named `Bang Potato Cannon`, and the one-line
+   script it runs, `~/.potato-cannon/cannon-daemon.sh`. Either way the
+   daemon listens on 127.0.0.1:3131 only and is never reachable from
+   another machine. The Windows task is the one thing this file registers
+   outside your home folder; `schtasks` removes it, and Undo gives the
+   line.
 5. `~/.claude/projects/`  One folder per working copy the Cannon runs a
    worker in, holding that worker's session transcript as a `.jsonl` file.
    Claude Code writes these, not Bang, and it writes them for your own
@@ -66,7 +71,9 @@ unproven.
 
 ## What this fetches from the network
 
-1. `https://astral.sh/uv/install.sh`  The uv installer, run as your user.
+1. `https://astral.sh/uv/install.sh` on a Mac, or
+   `https://astral.sh/uv/install.ps1` on Windows  The uv installer, run as
+   your user. Step 3 says why Windows needs the other one.
 2. `specify-cli` from PyPI, via uv.
 3. SpecAssay's Spec Kit catalogs and release files from
    `github.com/rdryfoos/specassay` (MIT).
@@ -74,7 +81,8 @@ unproven.
    `estate/cannon`, commit
    `b23fcc3400d23e52eddbd840ed9155a2951d6d88`, and the npm packages its
    build needs, fetched by pnpm from the public npm registry.
-5. If Node is missing, the Node 22 tarball from `nodejs.org`.
+5. If Node is missing, the Node 22 build for this machine from
+   `nodejs.org`: a tarball on a Mac, a zip on Windows.
 6. Nothing else. No telemetry, no account, no message to anyone.
 
 Potato Cannon is by crathgeb (github.com/crathgeb/potato-cannon), under the
@@ -103,19 +111,65 @@ The agent carries these out in order. Before each step it prints the step
 number and the one-line summary; after each it prints the receipt line
 given. If a receipt does not match, it stops and prints what it saw.
 
+Some steps are not the same on a Mac as on Windows. Step 2 works out which
+machine this is, and every step that differs says which part is which.
+Where a step says nothing about the machine, the one text is both.
+
 1. Confirm where we are. `pwd` must be `~/bang` and `git rev-parse HEAD`
    and `git branch --show-current`. Receipt: the commit hash and the word
    main.
 
-2. Check what is already here. Print the version of each of: `uv`,
-   `specify`, `node`, `pnpm`, `claude`, `python3`. For each that is
-   missing, say so. Do not install anything in this step. Receipt: six
-   lines, present or missing. There is no minimum for `python3` yet: the
-   checks ran on Apple's own 3.9.6 on 2026-09-23, so the version line is
-   recorded rather than judged.
+2. Which machine this is, and what is already here. First:
 
-3. Install uv if missing, into `~/.local/bin`, with the installer named
-   above. Then, in this terminal:
+       uname -s
+
+   `Darwin` is a Mac. `MINGW64_NT-...` or `MSYS_NT-...` is Windows, seen
+   from the Git Bash window that Git for Windows installs, which is where
+   every command in this file is pasted on that machine. `Linux` is
+   neither: print `Linux is not supported yet` and stop there, because no
+   step below has been written for it and a step written for a Mac that
+   half works on Linux is worse than a refusal.
+
+   Then print the version of each of: `uv`, `specify`, `node`, `pnpm`,
+   `claude`, `python3`. For each that is missing, say so. Do not install
+   anything in this step.
+
+   On Windows, `python3` needs a second look, because the check can pass
+   on something that is not Python. Windows ships an App Execution Alias
+   called `python3` that is a stub: it opens the Microsoft Store page for
+   Python and exits. It is on the path, so it answers `command -v`, and it
+   is not an interpreter. Treat Python as missing if `python3 --version`
+   prints nothing, or prints a line that does not begin `Python 3`, or if
+   `where python3` names a path under
+   `AppData\Local\Microsoft\WindowsApps`. Then stop, and say this:
+
+       winget install --id Python.Python.3.12 -e --source winget
+
+   then close the Git Bash window and open a new one, because a window
+   reads the path when it opens and will not see an install made after
+   that; then start again from step 1.
+
+   Receipt: the `uname -s` line, then six lines, present or missing. There
+   is no minimum for `python3` yet: the checks ran on Apple's own 3.9.6 on
+   2026-09-23, so the version line is recorded rather than judged.
+
+3. Install uv if missing, into `~/.local/bin`. On a Mac, with the
+   installer named above. On Windows, not that one:
+
+       powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+   `install.sh` knows what Git Bash is: it reads `MINGW*` out of `uname`
+   and picks the Windows build. What it cannot do is unpack it. Every
+   other build it fetches is a `.tar.gz` and the Windows one is a `.zip`,
+   so that branch runs `unzip`, which is not among the commands it checks
+   for before it starts and is not among the commands Git for Windows
+   ships. The run downloads the archive and then stops on
+   `command failed: unzip`, with a temporary folder already written. uv's
+   PowerShell installer is the one uv documents for Windows and it lands
+   in the same place: `%USERPROFILE%\.local\bin`, which is `~/.local/bin`
+   as Git Bash spells it, and which is one of the five places above.
+
+   Then, in this terminal, on either machine:
 
        export UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"
        export UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache"
@@ -139,13 +193,16 @@ given. If a receipt does not match, it stops and prints what it saw.
    not there.
 
    Receipt: `specify --version` prints a version at or above 0.14.0, and
-   `ls ~/.local/share/uv ~/.cache/uv` says both are missing.
+   `ls ~/.local/share/uv ~/.cache/uv` says both are missing. On Windows
+   the two to look at are `~/.local/share/uv` and `~/AppData/Local/uv`,
+   which is where uv keeps its cache there when nothing tells it
+   otherwise.
 
 4. Node and pnpm. **Node 22, not the current LTS.** The Cannon's database
    library has no prebuilt binary for newer Node and building it from
    source fails, so a newer Node will get you through this step and stop
    you at step 7. If `node --version` already starts with `v22.`, skip to
-   pnpm. Otherwise, no administrator password needed:
+   pnpm. Otherwise, no administrator password needed. On a Mac:
 
        mkdir -p ~/.potato-cannon/node
        curl -fsSL -o ~/.potato-cannon/node22.tar.xz \
@@ -155,8 +212,29 @@ given. If a receipt does not match, it stops and prints what it saw.
        export PATH="$HOME/.potato-cannon/node/bin:$PATH"
        export COREPACK_HOME="$HOME/.potato-cannon/corepack"
 
-   On an Intel Mac, use `node-v22.23.2-darwin-x64.tar.xz` instead. Then
-   enable pnpm through Node's own corepack:
+   On an Intel Mac, use `node-v22.23.2-darwin-x64.tar.xz` instead.
+
+   On Windows, the same release, the build nodejs.org publishes for it:
+
+       mkdir -p ~/.potato-cannon
+       curl -fsSL -o ~/.potato-cannon/node22.zip \
+         https://nodejs.org/dist/v22.23.2/node-v22.23.2-win-x64.zip
+       powershell -c 'Expand-Archive -Path "$env:USERPROFILE\.potato-cannon\node22.zip" -DestinationPath "$env:USERPROFILE\.potato-cannon" -Force'
+       mv ~/.potato-cannon/node-v22.23.2-win-x64 ~/.potato-cannon/node
+       rm ~/.potato-cannon/node22.zip
+       export PATH="$HOME/.potato-cannon/node:$PATH"
+       export COREPACK_HOME="$HOME/.potato-cannon/corepack"
+
+   Three differences, and each of them bites silently if it is missed.
+   `Expand-Archive` unpacks it rather than `tar`, because the Windows
+   build is a zip and Git Bash has no `unzip`; the same gap step 3 met.
+   The zip unpacks to a folder named for the release, so it is moved to
+   `node` rather than stripped in place. And the path line names
+   `~/.potato-cannon/node`, not `~/.potato-cannon/node/bin`: the Windows
+   build puts `node.exe` at the top of the folder, where the Mac build has
+   a `bin`.
+
+   Then, on either machine, enable pnpm through Node's own corepack:
 
        corepack enable pnpm
 
@@ -168,12 +246,14 @@ given. If a receipt does not match, it stops and prints what it saw.
    this file does not ask you to change your shell profile. `COREPACK_HOME`
    keeps corepack's downloads beside it rather than in `~/.cache`.
 
-   The tarball is downloaded into `~/.potato-cannon` rather than `/tmp` so
-   that every byte this file writes is inside one of the places listed
-   above, and it is deleted as soon as it is unpacked.
+   The tarball, and the zip on Windows, is downloaded into
+   `~/.potato-cannon` rather than `/tmp` so that every byte this file
+   writes is inside one of the places listed above, and it is deleted as
+   soon as it is unpacked.
 
-   Receipt: `~/.potato-cannon/node/bin/node --version` prints a version
-   beginning `v22.`, `pnpm --version` prints a version, and `node --version`
+   Receipt: `~/.potato-cannon/node/bin/node --version` on a Mac, or
+   `~/.potato-cannon/node/node.exe --version` on Windows, prints a version
+   beginning `v22.`; `pnpm --version` prints a version; and `node --version`
    in a new terminal window prints whatever you had before this step, or
    nothing if you had none.
 
@@ -261,7 +341,9 @@ given. If a receipt does not match, it stops and prints what it saw.
    folder.
 
 7. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
-   and commit above, then, in the same terminal as step 4:
+   and commit above. Then, in the same terminal as step 4, where the first
+   line is step 4's path again and on Windows is
+   `$HOME/.potato-cannon/node` without the `bin`:
 
        export PATH="$HOME/.potato-cannon/node/bin:$PATH"
        export COREPACK_HOME="$HOME/.potato-cannon/corepack"
@@ -297,12 +379,27 @@ given. If a receipt does not match, it stops and prints what it saw.
 
        bash scripts/write-launch-agent.sh
 
-   It writes `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist` and
-   nothing else, checks it with `plutil -lint` before installing it, loads
-   it with `launchctl bootstrap`, and prints the health line. Read it
-   first; it is short, and its header says why the daemon is run directly
-   rather than through the Cannon's own start command, which passes
-   `--daemon`, detaches and exits so that nothing can supervise it.
+   It reads `uname -s` and does the same job twice over.
+
+   On a Mac it writes `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`
+   and nothing else, checks it with `plutil -lint` before installing it,
+   loads it with `launchctl bootstrap`, and prints the health line.
+
+   On Windows it writes `~/.potato-cannon/cannon-daemon.sh` and nothing
+   else, checks it with `bash -n` before registering anything, registers a
+   logon task named `Bang Potato Cannon` with
+   `schtasks /create /sc onlogon`, starts it once with `schtasks /run`
+   because you have already logged in, and prints the same health line.
+
+   Read it first; it is short, and its header says why the daemon is run
+   directly rather than through the Cannon's own start command, which
+   passes `--daemon`, detaches and exits so that nothing can supervise it.
+
+   One difference to know before you lean on it: the Mac's launch agent
+   carries `KeepAlive`, so launchd starts the daemon again if it dies. A
+   logon task has no equivalent. On Windows a daemon that dies stays dead
+   until you log in again or run `schtasks /run` yourself, and that is a
+   thing the Dell run is there to find out the size of.
 
    This used to be a plist printed here for you to copy, and it could not
    be copied: the daemon's command is one long shell line, a plist typeset
@@ -314,12 +411,15 @@ given. If a receipt does not match, it stops and prints what it saw.
    **If it refuses because something already listens on 3131, stop.** Another
    Cannon is running, and it is not yours: everything after this step would be
    judged against somebody else's board. The script prints which process holds
-   the port and which user owns it. Stop that daemon, or log in as that user
-   and stop it there, before running this again. Nothing was written.
+   the port and which user owns it, from `lsof` on a Mac and from
+   `Get-NetTCPConnection` on Windows. Stop that daemon, or log in as
+   that user and stop it there, before running this again. Nothing was
+   written.
 
-   Receipt, all three: `curl -s http://127.0.0.1:3131/health` returns a
-   response whose status is ok; the listener the script prints is a `node`
-   process owned by the user you are logged in as; and the count of
+   Receipt, all three, and the same three on both machines:
+   `curl -s http://127.0.0.1:3131/health` returns a response whose status is
+   ok; the listener the script prints is a `node` process, `node.exe` on
+   Windows, owned by the user you are logged in as; and the count of
    `EADDRINUSE` lines in `~/.potato-cannon/daemon.log` is 0.
 
    The health line alone is not a receipt. It says a daemon is there, not that
@@ -330,7 +430,8 @@ given. If a receipt does not match, it stops and prints what it saw.
 
 9. Register the project. The daemon can only name a template that lives in
    its own templates folder, so copy this project's template there first,
-   then register:
+   then register. The first line is step 4's path again, and on Windows it
+   is `$HOME/.potato-cannon/node` without the `bin`:
 
        export PATH="$HOME/.potato-cannon/node/bin:$PATH"
        mkdir -p ~/.potato-cannon/templates
@@ -378,10 +479,11 @@ given. If a receipt does not match, it stops and prints what it saw.
 
 11. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
     the line `Bang done. Your board is open.`, and only then open the URL
-    in the default browser. The done line goes before the open command so
-    that it is the last thing written to the terminal: opening the browser
-    takes the reader's attention away, and a line printed after it is a
-    line nobody reads. Receipt: the URL and the done line.
+    in the default browser: `open` on a Mac, `start` on Windows. The done
+    line goes before the open command so that it is the last thing written
+    to the terminal: opening the browser takes the reader's attention away,
+    and a line printed after it is a line nobody reads. Receipt: the URL
+    and the done line.
 
 ## What done looks like
 
@@ -392,10 +494,22 @@ Light: the first card, dragged through.
 
 ## Undo, in full
 
-Run these in order to remove everything this file did.
+Run these in order to remove everything this file did. The first block is
+the machine's; everything after it is the same on both.
+
+On a Mac:
 
     launchctl bootout gui/$(id -u)/com.dryfoos.bang.cannon
     rm ~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist
+
+On Windows, where the two slashes are not a typo: Git Bash turns a leading
+`/Delete` into a path before `schtasks` ever sees it, and `//Delete` is how
+you stop it.
+
+    schtasks //Delete //TN "Bang Potato Cannon" //F
+
+Then, on either:
+
     UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" uv tool uninstall specify-cli
     rm ~/.local/bin/specify
     rm -rf ~/.potato-cannon
@@ -415,9 +529,12 @@ yours and predates this project, and these two lines are not yours to run:
 
     rm ~/.local/bin/uv ~/.local/bin/uvx
 
+On Windows the same two are `uv.exe` and `uvx.exe`, and a third,
+`uvw.exe`, which uv's Windows build installs beside them.
+
 Node, if this file installed it, is under `~/.potato-cannon/node` and goes
 with `rm -rf ~/.potato-cannon`, along with every package cache the build
-filled. Your
+filled and, on Windows, `cannon-daemon.sh`. Your
 own Node, if you had one, is untouched: this file never put anything on the
 path outside the terminal it was working in. The session
 transcripts under `~/.claude/projects/` are Claude Code's, not Bang's, and
