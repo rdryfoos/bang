@@ -608,8 +608,8 @@ Where a step says nothing about the machine, the one text is both.
     Receipt: the card ids, one per line.
 
 11. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
-    the line `Bang done. Your board is open in your browser; drag BAN-1 to
-    Spec there by hand.`, and only then open the URL
+    the line `Bang. Your board is open in your browser; drag BAN-1 to Spec
+    there by hand.`, and only then open the URL
     in the default browser: `open` on a Mac, `start` on Windows. The done
     line goes before the open command so that it is the last thing written
     to the terminal: opening the browser takes the reader's attention away,
