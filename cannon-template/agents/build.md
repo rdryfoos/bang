@@ -70,6 +70,24 @@ protocol; this file restates the parts you act on.
 2. Implement the tasks in order. Every source file that serves an ID carries an
    `@covers` mark naming it. Every test that proves an AC names the AC in its
    identifier. Tests come from criteria, never from guesses.
+
+   **Tick each task in `tasks.md` as you finish it, before the commit that finishes
+   it.** `- [ ]` becomes `- [x]`. A task you did and did not tick is a line that says
+   the work is owed, on a card whose tests pass, and the next reader has to open the
+   diff to find out which is true.
+
+   **And close the reservation your spec claims.** A promise waiting in
+   `specs/backlog/tasks.md` is held there by an open task, which is what keeps the Gate
+   from reading it as a silent gap. Once your spec claims that ID and your work proves
+   it, the reservation has expired: tick it, and say on the line which spec claims it
+   now, the way the ticked lines above it do.
+
+   If a task is genuinely not done, leave it open and say so on the line. Open is an
+   honest state. Open-and-finished is the one nobody can read.
+
+   The door into the review column refuses a card whose open tasks carry its own IDs,
+   and names the lines. On 2026-09-24 a card arrived there with forty passing tests, a
+   green Gate, and five open tasks it had itself completed.
 3. Run the project's test command and the project's gate script locally before you
    finish an attempt. Red is information; fix it or record it as tracked debt on an
    open task, never hide it.

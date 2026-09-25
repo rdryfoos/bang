@@ -12,6 +12,9 @@ Two checks, deliberately minimal. The full version, every column, comes after th
                      every ID the card cites.
   --has-commits      Build to Gate: the card's branch carries at least one commit
                      written since the card entered Build.
+  --tasks-ticked     Gate to Review: no open task on the card's branch carries an ID
+                     the card carries. A worker that did the work and left the boxes
+                     unticked leaves a card that reads as debt while its tests pass.
   --ids-delivered    Align to Done: every ID the card cites reads proven or
                      tracked-debt in the branch's trace-manifest. An ID still at
                      backlog or at GAP means the card is claiming a promise it did not
@@ -168,6 +171,75 @@ def has_commits(ticket, description):
     return f"{branch} carries {count} commit(s) written since Build began at {since}"
 
 
+OPEN_TASK = re.compile(r"^\s*-\s*\[ \]\s*(?P<body>.+)$")
+CARRIES = re.compile(r"\*\*(?:Carries|Traces)\*\*:\s*(?P<ids>[^.]*)")
+
+
+def open_tasks_carrying(text, ids):
+    """Open task lines in `text` whose Carries list names any of `ids`.
+
+    A task is open when its box is unticked. What it carries is the **Carries** field
+    the Gate already reads, so this asks the same question of the same field rather
+    than inventing a second way to say what a task is for.
+    """
+    wanted = set(ids)
+    found = []
+    for line in (text or "").splitlines():
+        m = OPEN_TASK.match(line)
+        if not m:
+            continue
+        carries = CARRIES.search(m.group("body"))
+        if not carries:
+            continue
+        named = set(ID.findall(carries.group("ids")))
+        if named & wanted:
+            found.append(line.strip())
+    return found
+
+
+def tasks_ticked(ticket, description):
+    """The work is done; the boxes have to say so.
+
+    On the eighth cold run BAN-1 reached the review column with forty passing tests and
+    a GREEN Gate, and its Intent block read OPEN DEBT: four tasks in its own spec and
+    the backlog reservation its spec claims, all unticked. The Build worker had done
+    every one of them and ticked none.
+
+    A card like that is not slightly untidy. Its own file says the work is owed, the
+    reservation says nobody has started, and the next reader has to open the diff to
+    find out which is true. The Gate cannot catch it: the Gate asks whether the ids are
+    proven, and they were.
+
+    Both places are read, because both were wrong on that card: the spec directories on
+    the card's branch, and specs/backlog/tasks.md, where a reservation waits for the
+    spec that claims it.
+    """
+    branch = branch_of(description, ticket)
+    require_branch(branch, ticket)
+    ids = ids_of(description, ticket)
+
+    listing = git(["ls-tree", "-r", "--name-only", branch]) or ""
+    task_files = [p for p in listing.splitlines()
+                  if p.startswith("specs/") and os.path.basename(p) == "tasks.md"]
+    if not task_files:
+        return f"no tasks.md on {branch}; nothing to tick"
+
+    offenders = []
+    for path in sorted(task_files):
+        for line in open_tasks_carrying(git(["show", f"{branch}:{path}"]), ids):
+            offenders.append(f"{path}: {line}")
+
+    if offenders:
+        shown = "\n  ".join(offenders)
+        raise Refused(
+            1,
+            f"{len(offenders)} task(s) on {branch} are still open and carry this card's "
+            f"IDs. Tick what was done, or say on the line what is not:\n  {shown}",
+        )
+    return (f"{len(task_files)} tasks.md on {branch}, no open task carries any of the "
+            f"card's {len(ids)} IDs")
+
+
 def ids_delivered(ticket, description):
     """Every ID the card cites has to have arrived somewhere real.
 
@@ -215,6 +287,7 @@ def main():
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--spec-names-ids", action="store_true")
     g.add_argument("--has-commits", action="store_true")
+    g.add_argument("--tasks-ticked", action="store_true")
     g.add_argument("--ids-delivered", action="store_true")
     args = p.parse_args()
 
@@ -229,6 +302,8 @@ def main():
             result = spec_names_ids(ticket, description)
         elif args.has_commits:
             result = has_commits(ticket, description)
+        elif args.tasks_ticked:
+            result = tasks_ticked(ticket, description)
         else:
             result = ids_delivered(ticket, description)
         print(f"column-check: {result}")
