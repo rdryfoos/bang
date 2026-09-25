@@ -429,28 +429,38 @@ def test_run_it_is_pastes_and_beats_and_carries_no_explanation():
     to find the next thing to paste, and every one of them is now in RUN-NOTES.md,
     where a reader who wants it goes on purpose.
 
-    So a line in Run it is one of four things: a heading, a numbered beat, a fence or
-    what is inside one, or the one line that links the notes. Anything else is prose
-    that has crept back, and prose creeps back a sentence at a time.
+    Once the beats start, a line is one of three things: a heading, a numbered beat, or
+    a fence and what is inside one. Anything else is prose that has crept back, and
+    prose creeps back a sentence at a time.
+
+    Above the first machine heading is a preamble, and it is allowed to be prose: what
+    you need before you start, and where the explanation went. A reader meets it once,
+    before they have a terminal open, rather than between two things to paste. What the
+    Sites room found when it cut the page at 880cc4c was that the account requirement
+    had gone with everything else, and it is not an explanation of a paste: it is the
+    one thing the pastes cannot install for you.
     """
     run_it = README.split("\n## Run it\n", 1)[1].split("\n## ", 1)[0]
+    preamble, _, beats = run_it.partition("### ")
+
+    # The preamble is short on purpose. It is not a place for the prose to come back to.
+    sentences = [s for s in re.split(r"(?<=[.!?])\s+", " ".join(preamble.split())) if s]
+    assert len(sentences) <= 3, (
+        "Run it's preamble has grown to %d sentences:\n%s" % (len(sentences), preamble))
 
     stray, in_fence = [], False
-    for number, line in enumerate(run_it.splitlines(), 1):
+    for number, line in enumerate(("### " + beats).splitlines(), 1):
         if line.startswith("```"):
             in_fence = not in_fence
             continue
         if in_fence or not line.strip():
             continue
-        if line.startswith("#"):
-            continue
-        if re.match(r"^\d+\. ", line):
-            continue
-        if "RUN-NOTES.md" in line or line.startswith("prompts mean"):
+        if line.startswith("#") or re.match(r"^\d+\. ", line):
             continue
         stray.append("%d: %s" % (number, line.strip()))
     assert not stray, (
-        "Run it has prose in it again; it belongs in RUN-NOTES.md:\n%s" % "\n".join(stray))
+        "Run it has prose among the beats again; it belongs in RUN-NOTES.md:\n%s"
+        % "\n".join(stray))
 
 
 def test_every_beat_is_one_line_and_every_fence_has_a_beat_over_it():

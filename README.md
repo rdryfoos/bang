@@ -11,6 +11,8 @@ and person in this repository is invented.
 
 ## Run it
 
+You need an Anthropic account; the pastes install everything else.
+
 Every line of this is explained in `RUN-NOTES.md`: what each paste does, what the
 prompts mean, and what to do when it stops.
 
