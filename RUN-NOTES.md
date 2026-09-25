@@ -109,5 +109,5 @@ A stop is a result. Write it down.
 
 ## When it finishes, or when it stops
 
-Add one line to `RUNS.md` saying what happened, and open a pull request.
-`CONTRIBUTING.md` says how; it is three sentences.
+When it finishes, or when it stops, add one line to `RUNS.md` saying what happened and
+open a pull request. `CONTRIBUTING.md` says how; it is three sentences.
