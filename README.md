@@ -53,32 +53,46 @@ board opens in your browser when it finishes; the last line is in Terminal.
 ### On Windows
 
 Two blocks, in order. Block 1 is pasted into PowerShell, which Windows already has.
-Block 2 is pasted into Git Bash, which block 1 installs, and every command in `BANG.md`
-after that is pasted there too.
+Block 2 is pasted into Git Bash, which block 1 installs.
 
-Block 1, "Get Claude", in three parts, because two of them only take effect in a window
-opened afterwards. First, in PowerShell:
+Block 1, "Get Claude", in three parts, pasted one at a time and not together. Each one
+has to finish before the next means anything.
+
+First, in PowerShell:
 
 ```
 winget install --id Git.Git -e --source winget
 ```
 
 Close that PowerShell window and open a new one, so it reads the path Git just added.
-Then, in the new one:
+Then, on its own:
 
 ```
 irm https://claude.ai/install.ps1 | iex
+```
+
+Wait for that to come back to a prompt. It is an installer, and a line pasted while it
+is still running goes to the installer rather than to PowerShell. Then, on its own
+again:
+
+```
 [Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.local\bin", 'User')
 ```
 
-The second line puts Claude Code on your path, the way the Mac block's two lines do. It
-writes your own path setting and not the machine's, so it needs no administrator and
-touches nothing another user of this PC would see. Now close that window too and open
-**Git Bash**: it is in the Start menu, and it is where the rest of this happens.
+That puts Claude Code on your path, the way the Mac block's two lines do. It writes your
+own path setting and not the machine's, so it needs no administrator and touches nothing
+another user of this PC would see.
 
-Block 2, "Get the rest". Clones the project to `$HOME\bang`, goes in, and starts Claude
-Code there with the instruction already in its hands. Git Bash writes that folder
-`~/bang`, and it is the same folder.
+Now close this window and open a new PowerShell. Windows reads the user path when a
+window opens and never again, so the window you just typed that in cannot see it, and
+neither can anything you start from it. In the new one, `claude --version` should
+answer; if it does not, the path line is what to look at, and nothing below will work
+until it does.
+
+Block 2, "Get the rest", in **Git Bash**: it is in the Start menu, and it is where the
+rest of this happens, including every command in `BANG.md`. Clones the project to
+`$HOME\bang`, goes in, and starts Claude Code there with the instruction already in its
+hands. Git Bash writes that folder `~/bang`, and it is the same folder.
 
 ```
 git clone https://github.com/rdryfoos/bang.git ~/bang

@@ -79,7 +79,7 @@ unproven.
    `github.com/rdryfoos/specassay` (MIT).
 4. Potato Cannon from `github.com/rdryfoos/potato-cannon`, branch
    `estate/cannon`, commit
-   `b23fcc3400d23e52eddbd840ed9155a2951d6d88`, and the npm packages its
+   `ef5087c012f834192484fc114286c55fe0432a81`, and the npm packages its
    build needs, fetched by pnpm from the public npm registry.
 5. If Node is missing, the Node 22 build for this machine from
    `nodejs.org`: a tarball on a Mac, a zip on Windows.
@@ -369,7 +369,7 @@ Where a step says nothing about the machine, the one text is both.
    told you about and Undo does not remove.
 
    Receipt: `git -C ~/.potato-cannon/app rev-parse HEAD` prints
-   `b23fcc3400d23e52eddbd840ed9155a2951d6d88`, the commit named above,
+   `ef5087c012f834192484fc114286c55fe0432a81`, the commit named above,
    character for character, and `pnpm build` ended with no error. The full
    SHA rather than the short one, because the receipt's whole job is to say
    the clone is at the commit this file pinned, and a seven-character

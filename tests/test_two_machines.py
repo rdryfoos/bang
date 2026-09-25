@@ -120,3 +120,69 @@ def test_the_windows_daemon_command_is_still_one_line():
         found = re.search(r"^%s='(.*)'$" % name, SCRIPT, re.M)
         assert found, "%s is no longer one quoted line in the script" % name
         assert "\n" not in found.group(1)
+
+
+def test_the_pin_is_the_same_in_both_of_bangs_two_places():
+    """The fork commit, in the fetch list and in step 7's receipt.
+
+    The receipt's whole job is to say the clone is at the commit this file pinned, and
+    it can only say that while the two lines agree. They are forty characters each, for
+    the reason step 7 gives: a seven-character comparison is a weaker claim than the one
+    being made, and forty characters are forty chances to fix one place and not the
+    other.
+    """
+    pins = re.findall(r"\b[0-9a-f]{40}\b", BANG)
+    assert len(pins) == 2, "BANG.md carries %d full SHAs; the pin is two places" % len(pins)
+    assert pins[0] == pins[1], "the two pins differ: %s and %s" % tuple(pins)
+
+    fetches = BANG.split("## What this fetches from the network", 1)[1].split("\n## ", 1)[0]
+    step_seven = BANG.split("\n7. Potato Cannon.", 1)[1].split("\n8. ", 1)[0]
+    assert pins[0] in fetches, "the fetch list does not name the pin"
+    assert pins[0] in step_seven, "step 7's receipt does not name the pin"
+
+
+def test_no_windows_paste_joins_the_path_line_to_another_command():
+    """One paste, one command's worth, for the two that cannot survive being joined.
+
+    On the Dell the path line and the `git clone` under it were read as one thing and
+    the path line never ran. In the file they were already in separate fenced blocks,
+    two paragraphs apart, so the joining happened in the reading and not in the
+    markdown: the line above the path line starts an installer, and anything pasted
+    after it while it is still running goes to the installer instead of to PowerShell.
+
+    A block holding one command cannot be pasted half-run. This is that, checked.
+    """
+    windows = _run_it_sections()["Windows"]
+    blocks = re.findall(r"\n```\n(.*?)\n```", windows, re.S)
+    assert blocks, "the Windows section has no pasteable block"
+
+    path_blocks = [b for b in blocks if "SetEnvironmentVariable" in b]
+    assert len(path_blocks) == 1, "the path line is in %d blocks" % len(path_blocks)
+    assert path_blocks[0].strip().count("\n") == 0, (
+        "the path line shares its block with another command:\n%s" % path_blocks[0])
+
+    for block in blocks:
+        joined = [name for name in ("git clone", "install.ps1") if name in block]
+        assert not (joined and "SetEnvironmentVariable" in block), (
+            "the path line is in one block with %s" % ", ".join(joined))
+
+    installer = [b for b in blocks if "install.ps1" in b]
+    assert len(installer) == 1 and installer[0].strip().count("\n") == 0, (
+        "the Claude Code installer shares its block, and a line pasted while it runs "
+        "goes to the installer")
+
+
+def test_block_one_ends_by_sending_the_reader_to_a_new_window():
+    """Windows reads the user path when a window opens and never again.
+
+    The path line is the last thing block 1 writes and it does nothing in the window it
+    was typed in. A reader who goes straight on gets a `claude` that is not found, in a
+    window that was right to not find it.
+    """
+    windows = _run_it_sections()["Windows"]
+    block_one = windows.split("Block 2,", 1)[0]
+    assert "close this window and open a new powershell" in block_one.lower(), (
+        "block 1 does not end by telling the reader to open a new window")
+    assert block_one.index("SetEnvironmentVariable") < block_one.lower().index(
+        "close this window and open a new powershell"), (
+        "the reopen comes before the path line it exists for")
