@@ -47,6 +47,13 @@ protocol; this file restates the parts you act on.
    the IDs it names, the copy on a screen is the copy, and layout is a guide. Nothing
    else in `design/` binds you.
 
+   **The screens are served as drawn, styles included.** Style on the screens is the style: the `<style>` block each file carries and every inline `style=` on its elements are served as drawn, not reimplemented and not dropped. Layout
+   being a guide is about where things sit at a given width; it is not permission to
+   serve the markup bare. On 2026-09-25 a card built the four screens, passed the Gate,
+   reached Review, and served black Times on white with no panel and no cards, because
+   it read "layout is a guide" as covering the stylesheet too. The card was right about
+   every word on the screen and the thing was unrecognisable.
+
 ## Do
 0. An `@covers` mark on a test file carries no promise: the mark goes on the source
    that fulfils the ID, and a test proves an ID by carrying it in the test's name. A

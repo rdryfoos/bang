@@ -79,7 +79,7 @@ unproven.
    `github.com/rdryfoos/specassay` (MIT).
 4. Potato Cannon from `github.com/rdryfoos/potato-cannon`, branch
    `estate/cannon`, commit
-   `ef5087c012f834192484fc114286c55fe0432a81`, and the npm packages its
+   `a5e0a7931fa820c6e483d34879c2b1da28a11942`, and the npm packages its
    build needs, fetched by pnpm from the public npm registry.
 5. If Node is missing, the Node 22 build for this machine from
    `nodejs.org`: a tarball on a Mac, a zip on Windows.
@@ -170,7 +170,17 @@ Where a step says nothing about the machine, the one text is both.
 3. Install uv if missing, into `~/.local/bin`. On a Mac, with the
    installer named above. On Windows, not that one:
 
-       powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+       powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+   `-ExecutionPolicy ByPass` is uv's own documented form and is not
+   optional: a cold Windows user is on the default policy, `Restricted`,
+   and uv's installer checks it and refuses, saying it "requires an
+   execution policy in [Unrestricted, RemoteSigned, Bypass] to run uv".
+   The flag is read by that one process and nothing else. It writes
+   nothing, it is not a setting, it needs no administrator, and the next
+   PowerShell window is on the same policy it was before. Changing the
+   machine's policy instead would be a change to the machine, which this
+   file does not make.
 
    `install.sh` knows what Git Bash is: it reads `MINGW*` out of `uname`
    and picks the Windows build. What it cannot do is unpack it. Every
@@ -233,7 +243,7 @@ Where a step says nothing about the machine, the one text is both.
        mkdir -p ~/.potato-cannon
        curl -fsSL -o ~/.potato-cannon/node22.zip \
          https://nodejs.org/dist/v22.23.2/node-v22.23.2-win-x64.zip
-       powershell -c 'Expand-Archive -Path "$env:USERPROFILE\.potato-cannon\node22.zip" -DestinationPath "$env:USERPROFILE\.potato-cannon" -Force'
+       powershell -ExecutionPolicy ByPass -c 'Expand-Archive -Path "$env:USERPROFILE\.potato-cannon\node22.zip" -DestinationPath "$env:USERPROFILE\.potato-cannon" -Force'
        mv ~/.potato-cannon/node-v22.23.2-win-x64 ~/.potato-cannon/node
        rm ~/.potato-cannon/node22.zip
        export PATH="$HOME/.potato-cannon/node:$PATH"
@@ -242,6 +252,10 @@ Where a step says nothing about the machine, the one text is both.
    Three differences, and each of them bites silently if it is missed.
    `Expand-Archive` unpacks it rather than `tar`, because the Windows
    build is a zip and Git Bash has no `unzip`; the same gap step 3 met.
+   It carries step 3's `-ExecutionPolicy ByPass` for the same reason:
+   `Expand-Archive` lives in `Microsoft.PowerShell.Archive`, which
+   Windows PowerShell ships as a script module, and the default
+   `Restricted` policy refuses to load one.
    The zip unpacks to a folder named for the release, so it is moved to
    `node` rather than stripped in place. And the path line names
    `~/.potato-cannon/node`, not `~/.potato-cannon/node/bin`: the Windows
@@ -383,7 +397,7 @@ Where a step says nothing about the machine, the one text is both.
    told you about and Undo does not remove.
 
    Receipt: `git -C ~/.potato-cannon/app rev-parse HEAD` prints
-   `ef5087c012f834192484fc114286c55fe0432a81`, the commit named above,
+   `a5e0a7931fa820c6e483d34879c2b1da28a11942`, the commit named above,
    character for character, and `pnpm build` ended with no error. The full
    SHA rather than the short one, because the receipt's whole job is to say
    the clone is at the commit this file pinned, and a seven-character

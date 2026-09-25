@@ -99,11 +99,19 @@ until it does.
 Block 2, "Get the rest", in **Git Bash**: it is in the Start menu, and it is where the
 rest of this happens, including every command in `BANG.md`. Clones the project to
 `$HOME\bang`, goes in, and starts Claude Code there with the instruction already in its
-hands. Git Bash writes that folder `~/bang`, and it is the same folder.
+hands.
+
+`$HOME\bang` and not `~/bang`, which is the only line in this block that differs from
+the Mac's. Git Bash expands `~` and git does not: `git clone` on Windows takes the
+tilde as a literal folder name and fails with "could not create leading directories of
+'~/bang': Permission denied", which reads like a permissions problem and is a spelling
+one. `$HOME` is expanded by the shell before git sees it, so git is handed a real path.
+The `cd` would have worked either way; it matches the clone so that the two lines
+cannot drift apart.
 
 ```
-git clone https://github.com/rdryfoos/bang.git ~/bang
-cd ~/bang
+git clone https://github.com/rdryfoos/bang.git $HOME\bang
+cd $HOME\bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
