@@ -70,10 +70,8 @@ def test_the_trust_prompt_is_a_beat_on_both_machines_and_explained_once():
     open will see it, and the reason it matters is in RUN-NOTES.md, which is where the
     sentence went when Run it became pastes and beats.
     """
-    beat = ('Say yes when it asks whether you trust this folder. Then press return for '
-            '"Yes" at each prompt until it prints Bang done.')
     for name, body in _run_it_sections().items():
-        assert beat in body, "%s has no trust-prompt beat, or not this one" % name
+        assert PROMPT_BEAT in body, "%s has no trust-prompt beat, or not this one" % name
 
     why = '"Yes, I trust this folder"; yes is not the default, so pick it.'
     assert why in _flat(NOTES), "RUN-NOTES.md no longer says why that beat is there"
@@ -542,32 +540,38 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
 
 
 # The two beats that tell a reader when to stop typing, and the line they stop on.
+# The two beats that tell a reader when to stop typing, and the line they stop on.
 PROMPT_BEAT = ('Say yes when it asks whether you trust this folder. Then press return for '
-               '"Yes" at each prompt until it prints Bang done.')
-DRAG_BEAT = ('Bang done means go to your browser: the board is open there, and you drag '
+               '"Yes" at each prompt until it prints Bang.')
+DRAG_BEAT = ('Bang means go to your browser: the board is open there, and you drag '
              'BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.')
+
+
+def _printed_closing_line():
+    """Step 11's closing line, flattened, because BANG.md wraps it."""
+    printed = re.search(r"the line `(Bang[^`]*)`", BANG)
+    assert printed, "BANG.md step 11 no longer prints a closing line beginning Bang"
+    return " ".join(printed.group(1).split())
 
 
 def test_the_press_return_beat_says_where_to_stop():
     """"Press return at each prompt" had no end, and a reader did what it said.
 
     On the first Windows cold run to reach the board, Claude Code offered "drag BAN-1
-    to Spec" as a suggested next message after Bang done, and pressing return accepted
-    it: Claude Code then tried to move the card through the API. Nobody typed it. The
-    instruction was open-ended and the reader was following it.
+    to Spec" as a suggested next message after the closing line, and pressing return
+    accepted it: Claude Code then tried to move the card through the API. Nobody typed
+    it. The instruction was open-ended and the reader was following it.
 
     So the beat names the line to stop on, and it is the line BANG.md prints.
     """
     for name, body in _run_it_sections().items():
         assert PROMPT_BEAT in body, "%s's press-return beat has no stopping point" % name
-        assert "until it prints Bang done" in body, (
-            "%s no longer says what to stop at" % name)
 
 
 def test_the_last_beat_sends_the_hand_to_the_browser():
     """The drag is a drag, in a browser, and the tab to do it in is not this one.
 
-    The old beat said "When the board opens, drag BAN-1 to Spec", which is true and
+    An older beat said "When the board opens, drag BAN-1 to Spec", which is true and
     says nothing about where. A reader at a Claude Code prompt with a suggestion in
     front of them has somewhere much nearer to hand.
     """
@@ -578,24 +582,42 @@ def test_the_last_beat_sends_the_hand_to_the_browser():
             "%s's last beat is not the last thing in the section" % name)
 
 
-def test_the_beat_stops_on_the_line_bang_stops_on():
-    """The page tells the reader to stop at `Bang done`; BANG.md is what prints it.
+def test_the_beats_stop_on_the_word_step_eleven_prints():
+    """The page tells the reader to stop at a word; BANG.md is what prints it.
 
-    Two places, and the pair is the whole of the fix: if step 11's string changes and
-    the beat does not, the reader is waiting for a line that never comes and goes on
+    Two places, and the pair is the whole of the fix: if step 11's line changes and the
+    beats do not, the reader is waiting for something that never comes and goes on
     pressing return until something else happens.
+
+    The word is taken out of BANG.md rather than written here, because it is now one
+    short word the page uses in a dozen other sentences. Asserting that "Bang" appears
+    somewhere in Run it would pass on any page at all; asserting that the beats quote
+    whatever step 11 actually prints is the pair.
     """
-    printed = re.search(r"the line `(Bang done[^`]*)`", BANG)
-    assert printed, "BANG.md step 11 no longer prints a Bang done line"
-    line = " ".join(printed.group(1).split())
+    line = _printed_closing_line()
+    word = line.split(".", 1)[0]
+    assert word and " " not in word, "step 11's closing line does not open on one word: %r" % line
 
-    assert line.startswith("Bang done."), line
     for name, body in _run_it_sections().items():
-        assert "Bang done" in body, "%s does not name the line it stops on" % name
+        assert "until it prints %s." % word in body, (
+            "%s does not stop on the word step 11 prints, which is %r" % (name, word))
+        assert "%s means go to your browser" % word in body, (
+            "%s's last beat does not open on that word" % name)
 
-    # And what it prints now says where the hand goes, in the terminal as well as on
-    # the page, because the terminal is where the reader is looking when it appears.
+    # And what it prints says where the hand goes, in the terminal as well as on the
+    # page, because the terminal is where the reader is looking when it appears.
     assert "drag BAN-1 to Spec there by hand" in line, (
         "the printed line no longer says where to drag: %r" % line)
     assert "open in your browser" in line, (
         "the printed line no longer says the board is in the browser: %r" % line)
+
+
+def test_the_notes_stop_on_the_same_word():
+    """A third place, and the reason the note exists at all.
+
+    RUN-NOTES.md is where a reader goes to find out why they are being told to stop. A
+    note that stops on a different word than the beat does is a note about nothing.
+    """
+    word = _printed_closing_line().split(".", 1)[0]
+    assert "stop pressing return at `%s`" % word in _flat(NOTES), (
+        "RUN-NOTES.md does not stop on %r" % word)
