@@ -186,3 +186,91 @@ def test_block_one_ends_by_sending_the_reader_to_a_new_window():
     assert block_one.index("SetEnvironmentVariable") < block_one.lower().index(
         "close this window and open a new powershell"), (
         "the reopen comes before the path line it exists for")
+
+
+def test_block_two_differs_between_the_machines_in_the_home_folder_and_nothing_else():
+    """The whole of block 2, compared line for line, with one substitution allowed.
+
+    The Mac writes the project's folder `~/bang` and Windows writes `$HOME\\bang`,
+    because Git Bash expands the tilde and git does not: `git clone` on Windows takes
+    `~/bang` as a literal folder name and stops with "could not create leading
+    directories of '~/bang': Permission denied", which reads like a permissions
+    problem and is a spelling one.
+
+    That is the only difference either block is allowed. Everything else in the two is
+    one instruction written twice, and the opening line especially: it is the only
+    thing standing between a reader and an agent that improvises.
+    """
+    sections = _run_it_sections()
+    blocks = {}
+    for name, body in sections.items():
+        found = re.findall(r"\n```\n(.*?)\n```", body, re.S)
+        assert found, "%s has no pasteable block" % name
+        blocks[name] = found[-1].strip().splitlines()
+
+    mac, windows = blocks["Mac"], blocks["Windows"]
+    assert len(mac) == len(windows), (
+        "the two block 2s are different lengths.\nMac:     %s\nWindows: %s" % (mac, windows))
+
+    # The one allowed difference, written once and applied to every line.
+    normalised = [line.replace("$HOME\\bang", "~/bang") for line in windows]
+    for number, (m, w) in enumerate(zip(mac, normalised), 1):
+        assert m == w, (
+            "block 2 line %d differs by more than the home folder.\n"
+            "Mac:     %s\nWindows: %s" % (number, m, blocks["Windows"][number - 1]))
+
+    # And the substitution is really used, so this test cannot pass by the two blocks
+    # having quietly become identical again on a tilde that does not work.
+    assert any("$HOME\\bang" in line for line in windows), (
+        "the Windows block no longer uses $HOME, and git on Windows does not expand ~")
+    assert not any("~/bang" in line for line in windows), (
+        "the Windows block still carries a tilde path, which git will not expand")
+
+
+def _eaddrinuse_receipt(tmp_path, log):
+    """Run write-launch-agent.sh's own EADDRINUSE lines, lifted out of the script.
+
+    Lifted rather than restated: a copy of the two lines in this file would go on
+    passing after somebody changed the script, which is the failure this is for.
+    """
+    import subprocess
+    home = tmp_path / "home"
+    (home / ".potato-cannon").mkdir(parents=True)
+    if log is not None:
+        (home / ".potato-cannon" / "daemon.log").write_text(log, encoding="utf-8")
+
+    text = (ROOT / "scripts" / "write-launch-agent.sh").read_text(encoding="utf-8")
+    lifted = re.search(
+        r'^\s*(EADDRINUSE="\$\(grep -c EADDRINUSE.*?\n\s*\[ -n "\$EADDRINUSE" \].*?)$',
+        text, re.S | re.M)
+    assert lifted, "the EADDRINUSE lines are no longer in the shape this test lifts"
+    script = "\n".join(line.strip() for line in lifted.group(1).splitlines())
+    script += '\necho "  EADDRINUSE lines in daemon.log: $EADDRINUSE"'
+    out = subprocess.run(
+        ["/bin/bash", "-c", script], capture_output=True, text=True,
+        env={"HOME": str(home), "PATH": "/usr/bin:/bin"})
+    return out.stdout.rstrip("\n")
+
+
+def test_the_eaddrinuse_receipt_prints_one_number_on_a_clean_run(tmp_path):
+    """It printed "0 0" on exactly the run it was written for.
+
+    `grep -c` prints 0 and exits 1 when nothing matches, so the `|| echo 0` that used
+    to close the line fired on every clean run and appended a second 0. A receipt that
+    is wrong when everything is right is worse than no receipt: the one line a reader
+    checks to see that nothing went wrong is itself the thing that looks wrong.
+    """
+    assert _eaddrinuse_receipt(tmp_path, "started\nlistening on 3131\n") == (
+        "  EADDRINUSE lines in daemon.log: 0")
+
+
+def test_it_still_counts_the_lines_when_there_are_some(tmp_path):
+    log = "boot\nEADDRINUSE 3131\nretry\nEADDRINUSE 3131\n"
+    assert _eaddrinuse_receipt(tmp_path, log) == (
+        "  EADDRINUSE lines in daemon.log: 2")
+
+
+def test_a_log_that_is_not_there_yet_counts_as_none(tmp_path):
+    """The only case with no output at all, and the one the fallback is really for."""
+    assert _eaddrinuse_receipt(tmp_path, None) == (
+        "  EADDRINUSE lines in daemon.log: 0")

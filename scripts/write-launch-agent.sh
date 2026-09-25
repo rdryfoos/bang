@@ -86,12 +86,19 @@ esac
 # id is taken to Win32_Process for the name and to its GetOwner for the user. That
 # last part is why this asks CIM rather than `Get-Process -IncludeUserName`, which
 # wants to be run as an administrator and this step never is.
+#
+# -ExecutionPolicy ByPass is here for the same reason BANG.md steps 3 and 4 carry it,
+# and with less certainty that it is needed: NetTCPIP is a CDXML module and CimCmdlets
+# is a binary one, so neither should be refused by the default Restricted policy the
+# way a script module is. It costs one flag on a process that lives for a second and
+# writes nothing, and the alternative is a cold user stopped at step 8 by a message
+# about policy, so it is carried rather than argued about.
 listener_on_3131() {
   if [ "$MACHINE" = mac ]; then
     lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | tail -n +2
     return
   fi
-  POTATO_PORT="$PORT" powershell -NoProfile -c '
+  POTATO_PORT="$PORT" powershell -NoProfile -ExecutionPolicy ByPass -c '
     Get-NetTCPConnection -LocalPort ([int]$env:POTATO_PORT) -State Listen -ErrorAction SilentlyContinue |
       ForEach-Object {
         $p = Get-CimInstance Win32_Process -Filter "ProcessId = $($_.OwningProcess)"
@@ -278,7 +285,13 @@ for _ in $(seq 1 30); do
       echo "    (nothing reported it, which should not happen while /health answers)"
     fi
 
-    EADDRINUSE="$(grep -c EADDRINUSE "$HOME/.potato-cannon/daemon.log" 2>/dev/null || echo 0)"
+    # `grep -c` prints 0 and exits 1 when nothing matches, so the `|| echo 0` this
+    # used to carry fired on exactly the clean run it was written for and appended a
+    # second 0. The receipt read "EADDRINUSE lines in daemon.log: 0 0". The only case
+    # with no output at all is a log that is not there yet, which is what the test
+    # below covers.
+    EADDRINUSE="$(grep -c EADDRINUSE "$HOME/.potato-cannon/daemon.log" 2>/dev/null)"
+    [ -n "$EADDRINUSE" ] || EADDRINUSE=0
     echo "  EADDRINUSE lines in daemon.log: $EADDRINUSE"
     exit 0
   fi
