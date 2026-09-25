@@ -104,12 +104,31 @@ exist; you never create one. You are inside the card's worktree on the card's br
    spec as work having begun on it, so a sentence deferring an ID moves that ID out
    of reserved backlog and into tracked debt while leaving no task behind to do it.
 
-4. Say what you did, in your own words, through `chat_notify`. Two lines, no more:
+4. The last task on the list is the gate, and it is the builder's. Write it, once,
+   last, carrying every ID the card carries, in these words:
+
+       - [ ] T<n> Run the SpecAssay Check Gate locally and report its verdict on the
+         card. **Carries**: <every ID on the card>
+
+   You are writing it, and you are not doing it: running the gate green is a promise
+   the card makes and a promise is kept by the hand that finishes the work. Build
+   ticks this one, in the commit that finishes the card, and says the verdict where a
+   reader can see it.
+
+   The wording is given rather than left to you because it was left to you. Until
+   2026-09-25 this line said "paste its result on the card", which reads as the
+   runner's job, and no worker owned ticking it. It was written into every card's
+   `tasks.md` and ticked on none of them. On the tenth cold run a card went through
+   Spec with no question, green on Build's first iteration, GREEN at the Gate, and was
+   refused at the door into Review by its own unticked gate task. The door was right.
+   The line was what nobody owned.
+
+5. Say what you did, in your own words, through `chat_notify`. Two lines, no more:
    what the spec claims, naming the IDs; and which task closes the reservation for
    them in `specs/backlog/tasks.md`, or that none was open. A card's reader sees only
    what you say here: the rest of your work is in the commit, and nobody opens a
    commit to find out whether anything happened.
-5. Commit the spec on the card branch. Your commit identity is set by the daemon; do
+6. Commit the spec on the card branch. Your commit identity is set by the daemon; do
    not set one. Every commit carries three trailers: `Card:` with the card id, `Ids:`
    with the card's `ids:` line verbatim, and `Session:` with your Cannon session id,
    read from the daemon's session list for the active session on this card.

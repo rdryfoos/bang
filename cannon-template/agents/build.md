@@ -92,6 +92,29 @@ protocol; this file restates the parts you act on.
    finish an attempt. Red is information; fix it or record it as tracked debt on an
    open task, never hide it.
 
+   **The gate task on the list is yours, and it is your last one.** Every card's
+   `tasks.md` ends with a line reading
+   `Run the SpecAssay Check Gate locally and report its verdict on the card`,
+   carrying every ID the card carries. You are already running the gate; this is the
+   same run, written down. Three things, in this order, and the first two go in one
+   commit:
+
+   - Run the gate. That is the run above, not a second one.
+   - **Tick that line in `tasks.md`, in the commit that finishes the card.** The same
+     commit, because a card whose work is committed and whose gate task is open says
+     the gate is owed on a branch where it is already green.
+   - Put the gate's verdict line in the card message at step 7, in the gate's own
+     words: the word GREEN or RED and the SHA it ran on.
+
+   If the gate is red, the line stays open and you say why on it, exactly as any other
+   task. Open is an honest state; a ticked gate task over a red gate is the one nobody
+   can read.
+
+   This task used to say "paste its result on the card", which described the runner
+   rather than a worker, so nobody owned it. Every card reached the door into Review
+   with it open and was refused there, correctly, by a check that had no way to know
+   the gate had in fact been run.
+
    **If the checker is missing from the worktree, stop and say so; do not copy it in.**
    On 2026-09-24 a worker met MISSING TOOL, found the checker three folders away in the
    project's own checkout and copied it into the worktree, and the attempt went green.
@@ -160,11 +183,12 @@ protocol; this file restates the parts you act on.
    same call, on its own line, so the reader knows why they are reading a transcript
    instead of looking at the thing.
 
-7. Say what you wrote, in your own words, through `chat_notify`. Two lines, no more:
+7. Say what you wrote, in your own words, through `chat_notify`. Three lines, no more:
    what the build now does that it did not before, in a sentence a reader who has not
-   seen the diff can follow; and which test names which ID, one pair per ID the card
-   carries. If an ID has no test yet, say which and why. A card's reader sees only
-   what you say here.
+   seen the diff can follow; which test names which ID, one pair per ID the card
+   carries; and the gate's verdict, its own word and the SHA it ran on, as step 3's
+   last task asks. If an ID has no test yet, say which and why. A card's reader sees
+   only what you say here.
 8. If implementing shows the promise itself is wrong or incomplete: stop building.
    Block the card with `update_ticket`, in one call: `blocked: true` together with
    `lines: [{name: "blocked-reason", value: <the ID and what is wrong>}]`. One call,

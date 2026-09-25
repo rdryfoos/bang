@@ -138,3 +138,57 @@ def test_the_refusal_names_the_lines():
     found = module.open_tasks_carrying(tasks, CARD_IDS)
     assert "T211" in found[0]
     assert "Mark returned on the screen" in found[0]
+
+
+# The gate task: written by Spec, ticked by Build, and reworded on 2026-09-25 because
+# its old words described the runner. Three files must say it the same way, and one of
+# them is not a template at all: the shipped specs are what a Spec worker copies from.
+SPEC_MD = ROOT / "cannon-template" / "agents" / "spec.md"
+GATE_TASK = "Run the SpecAssay Check Gate locally and report its verdict on the card"
+
+
+def test_spec_md_and_build_md_word_the_gate_task_the_same_way():
+    """One writes the line, the other has to find it. They are one string or neither.
+
+    Build looks for this task among the ones Spec wrote. A word of drift between the
+    two and Build ticks nothing, the door into Review refuses the card, and the card is
+    right: its own file says the gate is owed on a branch where the gate is green.
+    """
+    written = _flat(SPEC_MD.read_text(encoding="utf-8"))
+    ticked = _flat(BUILD_MD.read_text(encoding="utf-8"))
+    assert GATE_TASK in written, "spec.md no longer gives the gate task's wording"
+    assert GATE_TASK in ticked, "build.md no longer names the gate task it must tick"
+
+
+def test_no_shipped_task_list_still_says_paste_its_result():
+    """The wording a Spec worker actually copies is the shipped specs, not a template.
+
+    On 2026-09-25 this line was hunted for in `spec.md`, in Spec Kit's tasks template
+    under `.specify/`, and in the constitution. It is in none of them. It was in the
+    three `specs/*/tasks.md` files this repository ships, which are the only worked
+    examples a Spec worker has in front of it, and every new card's list was a copy of
+    them. An exemplar is a template that nobody remembers to change.
+    """
+    offenders = {}
+    for tasks in sorted((ROOT / "specs").glob("*/tasks.md")):
+        text = tasks.read_text(encoding="utf-8")
+        if "paste its result" in text:
+            offenders[str(tasks.relative_to(ROOT))] = "still says 'paste its result'"
+        if "SpecAssay Check Gate" in text and GATE_TASK not in _flat(text):
+            offenders[str(tasks.relative_to(ROOT))] = "words the gate task some other way"
+    assert not offenders, (
+        "a shipped task list is what the next card copies: %s" % offenders)
+
+
+def test_build_md_says_the_tick_and_the_finishing_commit_are_one_commit():
+    """Two commits is the same defect with an extra step.
+
+    A card whose work lands in one commit and whose gate task is ticked in the next is
+    a card that, for the length of one commit, says the gate is owed on a branch where
+    it is green. The door reads whatever is there when the card arrives.
+    """
+    text = _flat(BUILD_MD.read_text(encoding="utf-8"))
+    assert "in the commit that finishes the card" in text, (
+        "build.md no longer says the tick goes in the finishing commit")
+    assert "verdict" in text and "GREEN or RED" in text, (
+        "build.md no longer asks for the gate's own verdict on the card")
