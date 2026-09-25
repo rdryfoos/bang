@@ -3,6 +3,15 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-25, parrot, fresh standard user, Bang at `065afab`: stopped at step 8. Steps 1
+  to 7 were clean and every receipt matched. Step 8 found a daemon already holding
+  127.0.0.1:3131, belonging to a previous test user on the same machine; `/health`
+  answered ok with nine and a half hours of uptime on a daemon installed minutes
+  earlier, and the worker refused to treat that as its own. It was right to. Nobody
+  outside a shared test bench will meet this, but three things came out of it: the
+  script now checks the port before it writes anything, step 8's receipt proves the
+  listener is ours, and BANG.md stopped claiming the clone has no origin.
+
 - 2026-09-24, MacBook Pro (Apple silicon, fresh standard user), about ten minutes to
   install, Bang at `302a5fd`: the fourth cold run, by Rik, and the first that reached a
   board and then ran a card on it. BAN-1 went through Spec with no question asked, Build
