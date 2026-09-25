@@ -58,18 +58,21 @@ and never ran.
 machine's, so it needs no administrator and touches nothing another user of this PC
 would see.
 
-**6. Reopen, as Git Bash.** For the path again, and because Git Bash is where the rest
-of this happens, including every command in `BANG.md`. In the new window
+**6. Reopen.** For the path again: the window you typed beat 5 into cannot see it. A
+new PowerShell, and not Git Bash. Claude Code's own shell on Windows is Git Bash
+whatever window launched it, so every command in `BANG.md` runs in bash regardless,
+and the window you start it from only has to be one that can see the path. Every
+Windows run so far has done beat 7 in PowerShell and it worked. In the new window
 `claude --version` should answer; if it does not, beat 5 is what to look at, and
 nothing below will work until it does.
 
 **7. Get the rest.** `$HOME\bang` and not `~/bang`, which is the only line in this
-paste that differs from the Mac's. Git Bash expands `~` and git does not: `git clone`
-on Windows takes the tilde as a literal folder name and fails with "could not create
-leading directories of '~/bang': Permission denied", which reads like a permissions
-problem and is a spelling one. `$HOME` is expanded by the shell before git sees it, so
-git is handed a real path. The `cd` would have worked either way; it matches the clone
-so that the two lines cannot drift apart.
+paste that differs from the Mac's. On the Dell, `git clone` with `~/bang` stopped with
+"could not create leading directories of '~/bang': Permission denied", which reads
+like a permissions problem and is a spelling one: git was handed a tilde and made a
+folder named for it. `$HOME` is expanded before git sees it, in either shell, so git
+is handed a real path. The `cd` would have worked either way; it matches the clone so
+that the two lines cannot drift apart.
 
 ## What the prompts mean
 

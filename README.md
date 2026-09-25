@@ -66,7 +66,7 @@ irm https://claude.ai/install.ps1 | iex
 [Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.local\bin", 'User')
 ```
 
-6. Close this window and open Git Bash, from the Start menu.
+6. Close this window and open a new PowerShell.
 
 7. Get the rest.
 

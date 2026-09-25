@@ -257,7 +257,10 @@ def test_the_reopens_are_beats_of_their_own_and_sit_after_what_they_are_for():
                if re.match(r"^\d+\. Close this window and open", line)]
     assert len(reopens) == 2, (
         "Windows should reopen twice, after git and after the path line: %s" % reopens)
-    assert "Git Bash" in reopens[1], "the second reopen does not name Git Bash"
+    assert "PowerShell" in reopens[1], (
+        "the second reopen does not name PowerShell. Claude Code's own shell on Windows "
+        "is Git Bash whatever window launched it, so the launching window only has to "
+        "be one that can see the path, and beat 7 is PowerShell syntax.")
 
     # And the second one comes after the path line it exists for.
     assert windows.index("SetEnvironmentVariable") < windows.index(reopens[1]), (
@@ -271,11 +274,11 @@ def test_the_reopens_are_beats_of_their_own_and_sit_after_what_they_are_for():
 def test_block_two_differs_between_the_machines_in_the_home_folder_and_nothing_else():
     """The whole of block 2, compared line for line, with one substitution allowed.
 
-    The Mac writes the project's folder `~/bang` and Windows writes `$HOME\\bang`,
-    because Git Bash expands the tilde and git does not: `git clone` on Windows takes
-    `~/bang` as a literal folder name and stops with "could not create leading
+    The Mac writes the project's folder `~/bang` and Windows writes `$HOME\\bang`.
+    On the Dell, `git clone` with `~/bang` stopped with "could not create leading
     directories of '~/bang': Permission denied", which reads like a permissions
-    problem and is a spelling one.
+    problem and is a spelling one: git was handed a tilde and made a folder named for
+    it. `$HOME` is expanded before git sees it, in either shell.
 
     That is the only difference either block is allowed. Everything else in the two is
     one instruction written twice, and the opening line especially: it is the only
