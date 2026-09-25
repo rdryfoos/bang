@@ -92,7 +92,7 @@ Claude Code says auto mode, press shift+tab until it says manual mode; auto mode
 steps 6 and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The
 board opens in your browser when it finishes; the last line is in Git Bash.
 
-Windows is new here and nothing on this page claims it works yet. One walk on one Lenovo
+Windows is new here and nothing on this page claims it works yet. One walk on one Dell
 is what `RUNS.md` has; yours is the next one, and the line you add to `RUNS.md` is worth
 more than the line above it.
 

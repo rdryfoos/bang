@@ -24,17 +24,24 @@ stumbled, in your own words. Add yours and open a pull request; that is the whol
   and the guard is what was wrong: it was written as a statement about the T904 line
   when it is a statement about the seed. Fixed here.
 
-- 2026-09-25, Lenovo, rik, Bang at `a31d799`: the Windows walk, and the first run of
-  this on anything that is not a Mac. Steps 1 and 2 went through in Git Bash. The worker
-  then stopped before step 3 and said why, which is the right thing to do with a file it
-  cannot carry out: it named four parts of `BANG.md` written for a Mac and only a Mac.
-  Step 3's `install.sh`, step 4's darwin tarball, step 8's launch agent, and step 11's
-  `open`. Nothing was installed past step 2.
+- 2026-09-25, Dell 7420, rik, Bang at `a31d799`: the Windows walk, and the first run of
+  this on anything that is not a Mac. Fresh Windows 11 has no git at all. `winget`
+  installed Git 2.55, and the window had to be closed and reopened before its path knew
+  about it. `irm https://claude.ai/install.ps1 | iex` installed Claude Code 2.1.282 with
+  the same path gap the Mac installer has, and the PowerShell path line closed it.
+  Clone, then the opening line.
 
-  That refusal is what this change is. `BANG.md` now reads `uname -s` at step 2 and
-  carries a Windows text for each of those four, and for two more the walk did not reach:
-  the Microsoft Store stub that answers to `python3`, and the zip that Git Bash cannot
-  unpack. None of it has been walked yet. The next run on that Lenovo is the test.
+  Claude Code's Bash tool on Windows runs in Git Bash, so steps 1 and 2 of `BANG.md` ran
+  as written and printed their receipts. The worker then read ahead and stopped before
+  step 3, which is the right thing to do with a file it cannot carry out, and named four
+  parts written for a Mac and only a Mac: `python3` on Windows is a Microsoft Store
+  placeholder rather than an interpreter; step 4's Node download is darwin-only; step 3's
+  uv line is `install.sh`; step 8 is a LaunchAgent. The Cannon was never reached.
+
+  That refusal is what PR #19 was. `BANG.md` now reads `uname -s` at step 2 and carries a
+  Windows text for each of those four. None of it has been walked yet. The next run on
+  that Dell is the test. (This line went in naming the wrong machine and a thinner
+  account of the walk; corrected the same day.)
 
 - 2026-09-25, shark, fresh user, Bang at `7b386ef`, pin `cb39b5b`, blind return at every
   prompt: **the first run to reach the review column.** Install clean, board showing only

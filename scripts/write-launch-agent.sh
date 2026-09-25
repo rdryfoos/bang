@@ -81,21 +81,22 @@ esac
 # answered" are different facts and only the second one is a receipt.
 #
 # Two ways to ask, because the machines answer to different tools. lsof gives the
-# command and the user in one line. Windows gives them in two: netstat -ano has the
-# port and the process id, tasklist turns that id into a name and an owner.
+# command and the user in one line. Get-NetTCPConnection gives the listening socket
+# and the process id that holds it, and nothing about whose process that is, so the
+# id is taken to Win32_Process for the name and to its GetOwner for the user. That
+# last part is why this asks CIM rather than `Get-Process -IncludeUserName`, which
+# wants to be run as an administrator and this step never is.
 listener_on_3131() {
   if [ "$MACHINE" = mac ]; then
     lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | tail -n +2
     return
   fi
-  local pids pid
-  pids="$(netstat -ano 2>/dev/null | tr -d '\r' \
-            | awk -v p=":$PORT\$" '$1 == "TCP" && $4 == "LISTENING" && $2 ~ p { print $5 }' \
-            | sort -u)"
-  [ -n "$pids" ] || return 0
-  for pid in $pids; do
-    tasklist //FI "PID eq $pid" //FO CSV //V 2>/dev/null | tr -d '\r' | tail -n +2
-  done
+  POTATO_PORT="$PORT" powershell -NoProfile -c '
+    Get-NetTCPConnection -LocalPort ([int]$env:POTATO_PORT) -State Listen -ErrorAction SilentlyContinue |
+      ForEach-Object {
+        $p = Get-CimInstance Win32_Process -Filter "ProcessId = $($_.OwningProcess)"
+        "{0}  pid {1}  owner {2}" -f $p.Name, $p.ProcessId, (Invoke-CimMethod -InputObject $p -MethodName GetOwner).User
+      }' 2>/dev/null | tr -d '\r' | sed '/^[[:space:]]*$/d'
 }
 
 # The command the daemon runs, on one line and staying on one line. Keeping it in a
