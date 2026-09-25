@@ -26,47 +26,44 @@ worth more than the line above it.
 
 ### On a Mac
 
-**1. Get Claude.** Skip it if you already have Claude Code. If git asks to install the
-command line developer tools first, let it; that is Apple's, not ours. The second and
-third lines put Claude Code on your path, and the installer prints the same
-instruction.
-
-**3. Get the rest.** Clones the project to `~/bang`, goes in, and starts Claude Code
-there with the instruction already in its hands. That last line is the whole of what
-Bang is told to do, and it is the same line on both machines.
+**1. Get Claude and the rest.** Skip the first three lines if you already have Claude
+Code. If git asks to install the command line developer tools first, let it; that is
+Apple's, not ours. Lines two and three put Claude Code on your path, and the installer
+prints the same instruction; `source ~/.zshrc` is why there is no window to reopen.
+The last three clone the project to `~/bang`, go in, and start Claude Code there with
+the instruction already in its hands. That last line is the whole of what Bang is told
+to do, and it is the same line on both machines.
 
 ### On Windows
 
 Each paste on its own, and each one finished before the next means anything. That is
-why they are nine beats rather than two blocks: a line pasted into a window that is
+why they are seven beats rather than two blocks: a line pasted into a window that is
 still busy goes to whatever is running there, not to the shell.
 
 **1. Get git,** in PowerShell, which Windows already has.
 
-**2. Reopen.** Windows reads the user path when a window opens and never again, so the
-window you typed that in cannot see git yet.
+**2. Reopen, then get Python.** Windows reads the user path when a window opens and
+never again, so the window you typed beat 1 into cannot see git yet. `BANG.md` needs
+Python from step 2 and the project's own scripts need it throughout, and a fresh
+Windows has none.
 
-**3. Get Python.** `BANG.md` needs it from step 2 and the project's own scripts need it
-throughout, and a fresh Windows has none.
+**3. Get Claude Code.** It is an installer, and a line pasted while it is still
+running goes to the installer rather than to PowerShell. On the second Windows walk
+that is how the path line below was swallowed and never ran.
 
-**4. Get Claude Code,** and wait for it to come back to a prompt. It is an installer,
-and a line pasted while it is still running goes to the installer rather than to
-PowerShell. On the second Windows walk that is how the path line below was swallowed
-and never ran.
+**4. Wait for it to finish, then put Claude Code on your path.** It writes your own
+path setting and not the machine's, so it needs no administrator and touches nothing
+another user of this PC would see.
 
-**5. Put Claude Code on your path.** It writes your own path setting and not the
-machine's, so it needs no administrator and touches nothing another user of this PC
-would see.
+**5. Reopen, and get the rest.** For the path again: the window you typed beat 4 into
+cannot see it. A new PowerShell, and not Git Bash. Claude Code's own shell on Windows
+is Git Bash whatever window launched it, so every command in `BANG.md` runs in bash
+regardless, and the window you start it from only has to be one that can see the path.
+Every Windows run so far has done this paste in PowerShell and it worked. In the new
+window `claude --version` should answer; if it does not, beat 4 is what to look at,
+and nothing below will work until it does.
 
-**6. Reopen.** For the path again: the window you typed beat 5 into cannot see it. A
-new PowerShell, and not Git Bash. Claude Code's own shell on Windows is Git Bash
-whatever window launched it, so every command in `BANG.md` runs in bash regardless,
-and the window you start it from only has to be one that can see the path. Every
-Windows run so far has done beat 7 in PowerShell and it worked. In the new window
-`claude --version` should answer; if it does not, beat 5 is what to look at, and
-nothing below will work until it does.
-
-**7. Get the rest.** `$HOME\bang` and not `~/bang`, which is the only line in this
+  `$HOME\bang` and not `~/bang`, which is the only line in this
 paste that differs from the Mac's. On the Dell, `git clone` with `~/bang` stopped with
 "could not create leading directories of '~/bang': Permission denied", which reads
 like a permissions problem and is a spelling one: git was handed a tilde and made a
