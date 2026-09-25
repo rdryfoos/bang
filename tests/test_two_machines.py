@@ -70,9 +70,10 @@ def test_the_trust_prompt_is_a_beat_on_both_machines_and_explained_once():
     open will see it, and the reason it matters is in RUN-NOTES.md, which is where the
     sentence went when Run it became pastes and beats.
     """
-    beat = "Say yes when it asks whether you trust this folder."
+    beat = ('Say yes when it asks whether you trust this folder. Then press return for '
+            '"Yes" at each prompt until it prints Bang done.')
     for name, body in _run_it_sections().items():
-        assert beat in body, "%s has no trust-prompt beat" % name
+        assert beat in body, "%s has no trust-prompt beat, or not this one" % name
 
     why = '"Yes, I trust this folder"; yes is not the default, so pick it.'
     assert why in _flat(NOTES), "RUN-NOTES.md no longer says why that beat is there"
@@ -435,10 +436,10 @@ def test_run_it_is_pastes_and_beats_and_carries_no_explanation():
 
     Above the first machine heading is a preamble, and it is allowed to be prose: what
     you need before you start, and where the explanation went. A reader meets it once,
-    before they have a terminal open, rather than between two things to paste. What the
-    Sites room found when it cut the page at 880cc4c was that the account requirement
-    had gone with everything else, and it is not an explanation of a paste: it is the
-    one thing the pastes cannot install for you.
+    before they have a terminal open, rather than between two things to paste. Cutting
+    the page at 880cc4c turned up that the account requirement had gone with
+    everything else, and it is not an explanation of a paste: it is the one thing the
+    pastes cannot install for you.
     """
     run_it = README.split("\n## Run it\n", 1)[1].split("\n## ", 1)[0]
     preamble, _, beats = run_it.partition("### ")
@@ -538,3 +539,63 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
         block = "\n".join(rest[: closing[1] + 1])
         assert "claude --permission-mode manual" in block, (
             "%s's beat %d is not the one that starts Claude Code" % (name, beat))
+
+
+# The two beats that tell a reader when to stop typing, and the line they stop on.
+PROMPT_BEAT = ('Say yes when it asks whether you trust this folder. Then press return for '
+               '"Yes" at each prompt until it prints Bang done.')
+DRAG_BEAT = ('Bang done means go to your browser: the board is open there, and you drag '
+             'BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.')
+
+
+def test_the_press_return_beat_says_where_to_stop():
+    """"Press return at each prompt" had no end, and a reader did what it said.
+
+    On the first Windows cold run to reach the board, Claude Code offered "drag BAN-1
+    to Spec" as a suggested next message after Bang done, and pressing return accepted
+    it: Claude Code then tried to move the card through the API. Nobody typed it. The
+    instruction was open-ended and the reader was following it.
+
+    So the beat names the line to stop on, and it is the line BANG.md prints.
+    """
+    for name, body in _run_it_sections().items():
+        assert PROMPT_BEAT in body, "%s's press-return beat has no stopping point" % name
+        assert "until it prints Bang done" in body, (
+            "%s no longer says what to stop at" % name)
+
+
+def test_the_last_beat_sends_the_hand_to_the_browser():
+    """The drag is a drag, in a browser, and the tab to do it in is not this one.
+
+    The old beat said "When the board opens, drag BAN-1 to Spec", which is true and
+    says nothing about where. A reader at a Claude Code prompt with a suggestion in
+    front of them has somewhere much nearer to hand.
+    """
+    for name, body in _run_it_sections().items():
+        assert DRAG_BEAT in body, "%s's last beat does not say where to drag" % name
+        assert body.rstrip().splitlines()[-1].endswith(
+            "Ignore anything Claude Code suggests typing next."), (
+            "%s's last beat is not the last thing in the section" % name)
+
+
+def test_the_beat_stops_on_the_line_bang_stops_on():
+    """The page tells the reader to stop at `Bang done`; BANG.md is what prints it.
+
+    Two places, and the pair is the whole of the fix: if step 11's string changes and
+    the beat does not, the reader is waiting for a line that never comes and goes on
+    pressing return until something else happens.
+    """
+    printed = re.search(r"the line `(Bang done[^`]*)`", BANG)
+    assert printed, "BANG.md step 11 no longer prints a Bang done line"
+    line = " ".join(printed.group(1).split())
+
+    assert line.startswith("Bang done."), line
+    for name, body in _run_it_sections().items():
+        assert "Bang done" in body, "%s does not name the line it stops on" % name
+
+    # And what it prints now says where the hand goes, in the terminal as well as on
+    # the page, because the terminal is where the reader is looking when it appears.
+    assert "drag BAN-1 to Spec there by hand" in line, (
+        "the printed line no longer says where to drag: %r" % line)
+    assert "open in your browser" in line, (
+        "the printed line no longer says the board is in the browser: %r" % line)

@@ -84,6 +84,10 @@ to auto mode, say no.
 
 The board opens in your browser when it finishes. The last line is in the terminal.
 
+When it is done, Claude Code offers a suggested next message, and pressing return
+accepts it rather than dismissing it. So stop pressing return at `Bang done`: the
+board is open in your browser and the drag is yours to do there.
+
 ## If Claude Code refuses a command as untrusted
 
 It prints the line it wanted to run. Type `!` at its prompt followed by that line,
