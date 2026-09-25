@@ -38,8 +38,9 @@ case "$PHASE" in
     python3 "$HERE/column-check.py" --has-commits > "$out" 2>&1; code=$?
     ;;
   Align|Review)
-    # Align is this project's name for the human column; Review is the stock
-    # template's, and four of this board's history entries still say it.
+    # Review is the human column. This project called it Align until 2026-09-25 and
+    # some of its history entries still say so, so both names are matched: a board
+    # that was never renamed keeps working, which is the whole rule.
     bash "$HERE/review-packet.sh" > "$out" 2>&1; code=$?
     ;;
   Done)

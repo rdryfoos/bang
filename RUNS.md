@@ -3,6 +3,17 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-25, shark, fresh user, Bang at `7b386ef`, pin `cb39b5b`, blind return at every
+  prompt: **the first run to reach the review column.** Install clean, board showing only
+  Bang, the daemon shark's own. BAN-1 dragged, and the board ran it: Spec with no
+  question asked, Build writing five tests named for their ids, the Build runner GREEN
+  and the Gate runner GREEN, then promoted. About twenty-five minutes from the drag.
+
+  `potato/BAN-1` was cut from `main` at `63a2629`, the tip after both install commits,
+  and ended at `ebbefb5` with spec `006-browser-screens` and forty tests. That is fork
+  #19 proven on a cold user rather than on a fixture: the base was the branch the
+  project was actually on, which is what ginger's run could not get.
+
 - 2026-09-25, ginger, fresh user, Bang at `065afab`, blind return at every prompt:
   install clean, board open showing only Bang, and step 8's health check was ginger's
   own daemon. BAN-1 dragged to Spec at 11:43:39Z. The Spec worker refused, correctly:

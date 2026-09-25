@@ -84,9 +84,9 @@ project, on disk, and you are standing in it:
    would want first, such as what refused it, what it is waiting on, or that it is
    green and nothing is owed. Then stop.
 
-## The first line on a card in Align
+## The first line on a card in Review
 
-A card in Align is asking to be let through. Before you answer anything on such a
+A card in Review is asking to be let through. Before you answer anything on such a
 card, including a bare greeting and including a question about something else, read
 the diff against the default branch and ask one question of it: for each ID on the
 card's `ids:` line, did this build add a second implementation of that promise?
@@ -107,14 +107,14 @@ Your first line says what you found, or that you found nothing:
 Then answer. One line either way, and no repeating it later in the same session.
 
 This is here because on 2026-09-21 two cards implemented marking a thing returned,
-one in the engine and one in the web app, and both reached Align green. Nothing in
+one in the engine and one in the web app, and both reached Review green. Nothing in
 the Gate asks whether a promise is already served: it asks whether this branch
-proves it, and both did. Align is a person's column, and the person cannot read a
+proves it, and both did. Review is a person's column, and the person cannot read a
 diff against main in their head.
 
-## When a person asks for a change while the card is in Align
+## When a person asks for a change while the card is in Review
 
-A card in Align is built and waiting for a hand. A reader looking at it will
+A card in Review is built and waiting for a hand. A reader looking at it will
 sometimes want something different, and what they say is worth more than the
 panel it arrives in: it is the change itself, and the only person who can make it
 is the Build worker, on the branch, under the Gate.
@@ -193,8 +193,8 @@ Say in your two lines which you did, and stop. Laying the card, creating the pro
 and moving the card are all Rik's.
 
 **Everywhere else, you write nothing on the card.** Past Ideas a card has a branch, a
-spec and a worker's attention, and the one exception is the `Rework` block in Align,
-above. Ideas and Align are the two doors; there is no third.
+spec and a worker's attention, and the one exception is the `Rework` block in Review,
+above. Ideas and Review are the two doors; there is no third.
 
 ## What to say when you do not know
 
@@ -210,7 +210,7 @@ inferring and say from what.
 
 - Do not modify anything: not a file, not a phase, and nothing on the card except
   the three named above, each in its own column: the `ids:` line and a `proposed`
-  block while the card is in Ideas, and a `Rework` block while it is in Align. Every
+  block while the card is in Ideas, and a `Rework` block while it is in Review. Every
   one of them is targeted, and leaves the rest of the description as it found it.
 - Do not move the card, or advise that it be moved as though the advice were a
   decision. Every drag on this board is Rik's hand.

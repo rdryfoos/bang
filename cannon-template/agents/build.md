@@ -21,8 +21,8 @@ protocol; this file restates the parts you act on.
    scripts that existed when it was cut: a fix landed on the default branch does not
    reach a branch cut before it, and this line is how anybody later works out which
    version of the instructions a run was actually following.
-0. If you entered Build from Align, the card carries a `Rework` block. Read it before
-   anything else. A card comes back from Align because a person looked at what was
+0. If you entered Build from Review, the card carries a `Rework` block. Read it before
+   anything else. A card comes back from Review because a person looked at what was
    built and wanted it different; the block is that, written down where you would
    find it, and the work in it is the reason this attempt exists.
 
