@@ -9,17 +9,19 @@ and person in this repository is invented.
 
 ## Run it
 
-Bang needs a Mac, an Anthropic account, and two clocks. About ten minutes to install,
-most of it saying yes. Then the first card takes the board about twenty-five minutes on
-its own; you can watch, or come back.
+Bang needs a Mac or a Windows PC, an Anthropic account, and two clocks. About ten
+minutes to install, most of it saying yes. Then the first card takes the board about
+twenty-five minutes on its own; you can watch, or come back.
 
 It writes to five places in your home folder and nowhere else; `BANG.md` lists them, and
 lists what it fetches and what it will not do. Read `BANG.md` before you run it, and read
 its paragraph that begins "Read this one twice" twice.
 
-Two blocks, in order, both pasted into Terminal.
+Mac and Windows.
 
-Mac only, for now.
+### On a Mac
+
+Two blocks, in order, both pasted into Terminal.
 
 Block 1, "Get Claude". Skip it if you already have Claude Code. If git asks to install
 the command line developer tools first, let it; that is Apple's, not ours.
@@ -42,11 +44,59 @@ cd ~/bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-Sign in when it asks. Choose "Yes, I trust this folder" when Claude Code asks; that is
-Claude Code's own question about the folder you just cloned. If the bottom line of Claude
-Code says auto mode, press shift+tab until it says manual mode; auto mode refuses steps 6
-and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The board
-opens in your browser when it finishes; the last line is in Terminal.
+Sign in when it asks. After the "Claude can make mistakes" screen, the next prompt is
+"Yes, I trust this folder"; yes is not the default, so pick it. If the bottom line of
+Claude Code says auto mode, press shift+tab until it says manual mode; auto mode refuses
+steps 6 and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The
+board opens in your browser when it finishes; the last line is in Terminal.
+
+### On Windows
+
+Two blocks, in order. Block 1 is pasted into PowerShell, which Windows already has.
+Block 2 is pasted into Git Bash, which block 1 installs, and every command in `BANG.md`
+after that is pasted there too.
+
+Block 1, "Get Claude", in three parts, because two of them only take effect in a window
+opened afterwards. First, in PowerShell:
+
+```
+winget install --id Git.Git -e --source winget
+```
+
+Close that PowerShell window and open a new one, so it reads the path Git just added.
+Then, in the new one:
+
+```
+irm https://claude.ai/install.ps1 | iex
+[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.local\bin", 'User')
+```
+
+The second line puts Claude Code on your path, the way the Mac block's two lines do. It
+writes your own path setting and not the machine's, so it needs no administrator and
+touches nothing another user of this PC would see. Now close that window too and open
+**Git Bash**: it is in the Start menu, and it is where the rest of this happens.
+
+Block 2, "Get the rest". Clones the project to `$HOME\bang`, goes in, and starts Claude
+Code there with the instruction already in its hands. Git Bash writes that folder
+`~/bang`, and it is the same folder.
+
+```
+git clone https://github.com/rdryfoos/bang.git ~/bang
+cd ~/bang
+claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
+```
+
+Sign in when it asks. After the "Claude can make mistakes" screen, the next prompt is
+"Yes, I trust this folder"; yes is not the default, so pick it. If the bottom line of
+Claude Code says auto mode, press shift+tab until it says manual mode; auto mode refuses
+steps 6 and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The
+board opens in your browser when it finishes; the last line is in Git Bash.
+
+Windows is new here and nothing on this page claims it works yet. One walk on one Lenovo
+is what `RUNS.md` has; yours is the next one, and the line you add to `RUNS.md` is worth
+more than the line above it.
+
+### Either way
 
 When it finishes, or when it stops, add one line to `RUNS.md` saying what happened and
 open a pull request. `CONTRIBUTING.md` says how; it is three sentences.
