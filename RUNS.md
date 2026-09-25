@@ -3,6 +3,18 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-25, Lenovo, rik, Bang at `a31d799`: the Windows walk, and the first run of
+  this on anything that is not a Mac. Steps 1 and 2 went through in Git Bash. The worker
+  then stopped before step 3 and said why, which is the right thing to do with a file it
+  cannot carry out: it named four parts of `BANG.md` written for a Mac and only a Mac.
+  Step 3's `install.sh`, step 4's darwin tarball, step 8's launch agent, and step 11's
+  `open`. Nothing was installed past step 2.
+
+  That refusal is what this change is. `BANG.md` now reads `uname -s` at step 2 and
+  carries a Windows text for each of those four, and for two more the walk did not reach:
+  the Microsoft Store stub that answers to `python3`, and the zip that Git Bash cannot
+  unpack. None of it has been walked yet. The next run on that Lenovo is the test.
+
 - 2026-09-25, shark, fresh user, Bang at `7b386ef`, pin `cb39b5b`, blind return at every
   prompt: **the first run to reach the review column.** Install clean, board showing only
   Bang, the daemon shark's own. BAN-1 dragged, and the board ran it: Spec with no
