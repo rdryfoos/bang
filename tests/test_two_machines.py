@@ -12,6 +12,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 README = (ROOT / "README.md").read_text(encoding="utf-8")
 BANG = (ROOT / "BANG.md").read_text(encoding="utf-8")
 SCRIPT = (ROOT / "scripts" / "write-launch-agent.sh").read_text(encoding="utf-8")
+NOTES = (ROOT / "RUN-NOTES.md").read_text(encoding="utf-8")
+
+
+def _flat(text):
+    """The prose as one line, because these files are wrapped.
+
+    A sentence that moved off the page and into RUN-NOTES.md was re-wrapped on the way,
+    so a literal substring is asserting about where the line breaks fell rather than
+    about what the file says.
+    """
+    return " ".join(text.split())
 
 
 def _run_it_sections():
@@ -50,20 +61,36 @@ def test_both_machines_start_claude_code_with_the_same_line():
         % (lines["Mac"], lines["Windows"]))
 
 
-def test_both_machines_are_told_the_trust_prompt_is_not_the_default():
-    """Said twice because it is read once, in whichever section the reader is in.
+def test_the_trust_prompt_is_a_beat_on_both_machines_and_explained_once():
+    """It was said twice, because Run it explained itself twice. Now it is said once.
 
     The prompt comes after a screen that looks like the end of the setup, and no is the
-    default. A reader who presses return at it has said no to the folder they cloned
-    thirty seconds earlier.
+    default: a reader who presses return at it has said no to the folder they cloned
+    thirty seconds earlier. So the beat is on the page, where a reader with a terminal
+    open will see it, and the reason it matters is in RUN-NOTES.md, which is where the
+    sentence went when Run it became pastes and beats.
     """
-    trust = '"Yes, I trust this folder"; yes is not the default, so pick it.'
+    beat = "Say yes when it asks whether you trust this folder."
     for name, body in _run_it_sections().items():
-        assert trust in body, "%s's section does not carry the trust-prompt line" % name
+        assert beat in body, "%s has no trust-prompt beat" % name
+
+    why = '"Yes, I trust this folder"; yes is not the default, so pick it.'
+    assert why in _flat(NOTES), "RUN-NOTES.md no longer says why that beat is there"
+    assert why not in _flat(README), (
+        "the explanation is back on the page; Run it is pastes and beats")
 
 
 def test_the_page_still_says_which_machines_it_runs_on():
-    assert "Mac and Windows." in README, "README no longer says which machines it runs on"
+    """It said so in a standalone line above the blocks, which was a third copy.
+
+    The first line says it, and Run it has a section per machine. The line that sat
+    between them saying "Mac and Windows." was a sentence of explanation, and Run it
+    has none now.
+    """
+    assert "### On a Mac" in README and "### On Windows" in README, (
+        "Run it no longer has one section per machine")
+    assert "Mac or Windows" in README.strip().splitlines()[0], (
+        "the first line no longer names the machines")
     assert "Mac only" not in README, "README still says Mac only"
 
 
@@ -114,17 +141,18 @@ def test_the_script_says_which_of_the_two_routes_it_used():
         "the script no longer prints which route it used")
 
 
-def test_both_machines_are_told_what_to_do_when_claude_code_refuses_a_command():
-    """Said twice because it is read once, in whichever section the reader is in.
+def test_what_to_do_when_claude_code_refuses_a_command_is_written_down_once():
+    """It was on the page twice, once per machine. It is in RUN-NOTES.md now, once.
 
     Zebra met this on a Mac on 2026-09-23 and the Dell met it on 2026-09-25, and
     between the two nothing had been written down, so the second reader worked it out
     again. It is not a Windows thing and it is not rare: the session refuses a script
-    it installed a moment earlier, because it has no history with it.
+    it installed a moment earlier, because it has no history with it. Which is why it
+    is checked here rather than left to whoever next moves a paragraph.
     """
     line = "Type `!` at its prompt followed by that line, exactly as printed"
-    for name, body in _run_it_sections().items():
-        assert line in body, "%s's section does not say what to do with a refusal" % name
+    assert line in _flat(NOTES), "RUN-NOTES.md no longer says what to do with a refusal"
+    assert "do not switch to auto mode" in _flat(NOTES)
     assert "as untrusted" in BANG, "BANG.md no longer covers the refusal either"
 
 
@@ -216,20 +244,28 @@ def test_no_windows_paste_joins_the_path_line_to_another_command():
         "goes to the installer")
 
 
-def test_block_one_ends_by_sending_the_reader_to_a_new_window():
+def test_the_reopens_are_beats_of_their_own_and_sit_after_what_they_are_for():
     """Windows reads the user path when a window opens and never again.
 
-    The path line is the last thing block 1 writes and it does nothing in the window it
-    was typed in. A reader who goes straight on gets a `claude` that is not found, in a
-    window that was right to not find it.
+    Each reopen exists because of the paste above it, and a reader who goes straight on
+    gets a command that is not found in a window that was right not to find it. They
+    are numbered beats now rather than sentences after a fence, which is the whole
+    shape of this page: one thing to do per number.
     """
     windows = _run_it_sections()["Windows"]
-    block_one = windows.split("Block 2,", 1)[0]
-    assert "close this window and open a new powershell" in block_one.lower(), (
-        "block 1 does not end by telling the reader to open a new window")
-    assert block_one.index("SetEnvironmentVariable") < block_one.lower().index(
-        "close this window and open a new powershell"), (
+    reopens = [line for line in windows.splitlines()
+               if re.match(r"^\d+\. Close this window and open", line)]
+    assert len(reopens) == 2, (
+        "Windows should reopen twice, after git and after the path line: %s" % reopens)
+    assert "Git Bash" in reopens[1], "the second reopen does not name Git Bash"
+
+    # And the second one comes after the path line it exists for.
+    assert windows.index("SetEnvironmentVariable") < windows.index(reopens[1]), (
         "the reopen comes before the path line it exists for")
+
+    mac = _run_it_sections()["Mac"]
+    assert any(re.match(r"^\d+\. Close this window and open a new Terminal", line)
+               for line in mac.splitlines()), "the Mac has no reopen beat"
 
 
 def test_block_two_differs_between_the_machines_in_the_home_folder_and_nothing_else():
@@ -370,8 +406,114 @@ def test_the_readmes_first_line_and_its_run_it_section_agree_about_the_machines(
     first = README.strip().splitlines()
     opening = " ".join(first[:5])
     assert "Mac or Windows" in opening, "the first line no longer names the machines"
-    assert "Mac and Windows." in README, "Run it no longer says which machines it runs on"
+    assert "### On a Mac" in README and "### On Windows" in README, (
+        "Run it no longer has one section per machine")
     # Linux is named as coming, and nowhere claimed as working.
     assert "Omarchy Linux soon" in opening
     assert "Linux is not supported yet" in BANG, (
         "BANG.md no longer says Linux is not supported, while the page says soon")
+
+
+def test_run_it_is_pastes_and_beats_and_carries_no_explanation():
+    """The shape of the page, which is the whole of what it is for.
+
+    Run it is read with a terminal open beside it, which means it is scanned and not
+    read. Every sentence between the fences was a sentence somebody had to skip past
+    to find the next thing to paste, and every one of them is now in RUN-NOTES.md,
+    where a reader who wants it goes on purpose.
+
+    So a line in Run it is one of four things: a heading, a numbered beat, a fence or
+    what is inside one, or the one line that links the notes. Anything else is prose
+    that has crept back, and prose creeps back a sentence at a time.
+    """
+    run_it = README.split("\n## Run it\n", 1)[1].split("\n## ", 1)[0]
+
+    stray, in_fence = [], False
+    for number, line in enumerate(run_it.splitlines(), 1):
+        if line.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence or not line.strip():
+            continue
+        if line.startswith("#"):
+            continue
+        if re.match(r"^\d+\. ", line):
+            continue
+        if "RUN-NOTES.md" in line or line.startswith("prompts mean"):
+            continue
+        stray.append("%d: %s" % (number, line.strip()))
+    assert not stray, (
+        "Run it has prose in it again; it belongs in RUN-NOTES.md:\n%s" % "\n".join(stray))
+
+
+def test_every_beat_is_one_line_and_every_fence_has_a_beat_over_it():
+    """One thing to do per number, and no fence a reader meets unannounced."""
+    for name, body in _run_it_sections().items():
+        lines = body.splitlines()
+        beats = [(i, l) for i, l in enumerate(lines) if re.match(r"^\d+\. ", l)]
+        assert beats, "%s has no beats" % name
+
+        # The numbers run 1..n with nothing missing, so a reader can follow them.
+        numbers = [int(l.split(".", 1)[0]) for _, l in beats]
+        assert numbers == list(range(1, len(numbers) + 1)), (
+            "%s's beats are numbered %s" % (name, numbers))
+
+        # A beat is one line: the line after it is blank, a fence, or the next beat.
+        for i, beat in beats:
+            nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+            assert nxt == "" or nxt.startswith("```"), (
+                "%s's beat %r runs on into %r" % (name, beat, nxt))
+
+        # Every fence that opens a block opens under a beat, so a reader never meets
+        # a paste without having been told what it is for. Tracked with a toggle: the
+        # line above a closing fence is the last line of the paste, not a beat.
+        opening = True
+        for i, line in enumerate(lines):
+            if not line.startswith("```"):
+                continue
+            if opening:
+                above = [l for l in lines[:i] if l.strip()]
+                assert above and re.match(r"^\d+\. ", above[-1]), (
+                    "%s has a paste under %r, which is not a beat" % (name, above[-1:]))
+            opening = not opening
+        assert opening, "%s has an unclosed fence" % name
+
+
+def test_the_notes_are_linked_from_run_it_exactly_once():
+    """Once, because a page of beats with a link on every beat is a page of prose."""
+    run_it = README.split("\n## Run it\n", 1)[1].split("\n## ", 1)[0]
+    assert run_it.count("RUN-NOTES.md") == 1, (
+        "Run it links the notes %d times" % run_it.count("RUN-NOTES.md"))
+    assert (ROOT / "RUN-NOTES.md").exists()
+
+
+def test_the_notes_say_which_file_they_are_not():
+    """RUN-NOTES.md and RUNS.md are one letter and a hyphen apart.
+
+    One is what to read before you paste; the other is the log of who ran it and what
+    happened. A reader who opens the wrong one finds a list of other people's runs
+    where they expected the instructions.
+    """
+    assert "RUNS.md" in _flat(NOTES), "RUN-NOTES.md does not say what RUNS.md is"
+
+
+def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
+    """BANG.md's first sentence points at the page, and the page was renumbered.
+
+    It said "block 2", which was true while Run it had two blocks. Run it has beats
+    now, and a reader sent to a block they cannot find on the page is a reader who
+    starts by doubting the file.
+    """
+    opening = _flat(BANG.split("## What this writes", 1)[0])
+    assert "block 2" not in opening, "BANG.md still sends the reader to a block"
+    assert "beat 3 on a Mac, beat 7 on Windows" in opening, (
+        "BANG.md does not name the beat that starts it")
+
+    # And those two beats are the ones that actually start Claude Code.
+    for name, beat in (("Mac", 3), ("Windows", 7)):
+        body = _run_it_sections()[name]
+        lines = body.splitlines()
+        where = next(i for i, l in enumerate(lines) if l.startswith("%d. " % beat))
+        block = "\n".join(lines[where:where + 8])
+        assert "claude --permission-mode manual" in block, (
+            "%s's beat %d is not the one that starts Claude Code" % (name, beat))
