@@ -3,6 +3,32 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-25, Dell 7420, 2ndColdWinUser, Bang at `880cc4c`, pin `a5e0a79`: **the first
+  Windows run to reach the board.** All eleven steps ran and the browser opened on it.
+  Five of them needed a hand from Rik, and every one of the five is a gap in `BANG.md`
+  rather than a surprise about Windows:
+
+  - Step 3: uv's Windows installer writes `~/AppData/Local/uv/uv-receipt.json`, which
+    the places list did not name and the receipt did not expect.
+  - Step 5: the account had no git identity and Git for Windows does not invent one, so
+    the commit failed on git's own refusal about `user.email`.
+  - Step 6: Claude Code refused to run the Gate script it had just installed, as
+    untrusted. Run by hand with `!`, it matched. Zebra hit the same block on a Mac on
+    2026-09-23 and nothing had been written down about it.
+  - Step 7: `pnpm build` ended with "The system cannot find the path specified.", from a
+    `chmod` in the fork's own build script that only means anything on a Mac.
+  - Step 8: `schtasks /Create /SC ONLOGON` was refused with "Access is denied", because
+    a task that fires for whoever logs on is an act on the machine and this was a plain
+    user.
+  - Step 9: the registration failed with `ENOENT` on `C:\c\Users\...`. Git Bash spells
+    home `/c/Users/you`; the daemon is native Windows node and resolved that against the
+    current drive.
+
+  Then the board, and then the card would not move. Dragging BAN-1 to Spec was refused
+  with `spawn EFTYPE` in the board's corner and the card stayed in Ideas. That is Node
+  refusing to execute a file that is not a Windows executable, and it is the fork's, not
+  this file's. Everything above is fixed here; the spawn is fixed in the fork.
+
 - 2026-09-25, puppy, fresh user, Bang at `96dac1c`, pin `ef5087c`: **all eleven steps,
   every receipt matched, and BAN-1 through to Review in about twenty minutes.** The
   first run to get to the end of `BANG.md` with nothing to report against it: uv and

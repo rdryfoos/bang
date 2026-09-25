@@ -77,11 +77,55 @@ def test_undo_removes_the_task_the_script_registers_by_the_name_it_registers_it_
     registered = re.search(r'^TASK="([^"]+)"', SCRIPT, re.M)
     assert registered, "write-launch-agent.sh no longer has a TASK= line"
     name = registered.group(1)
-    assert 'schtasks //Create //TN "$TASK"' in SCRIPT, (
+    assert "Register-ScheduledTask -TaskName $env:BANG_TASK" in SCRIPT, (
         "the script no longer registers the task under $TASK")
+    assert 'export BANG_TASK="$TASK"' in SCRIPT, (
+        "$BANG_TASK is what the PowerShell block reads; it must come from $TASK")
     undo = BANG.split("## Undo, in full", 1)[1]
     assert 'schtasks //Delete //TN "%s"' % name in undo, (
         "Undo does not remove the task the script registers, which is %r" % name)
+
+
+def test_undo_removes_the_startup_launcher_the_script_falls_back_to():
+    """The second route, and the one with no record of itself.
+
+    A scheduled task can be asked about afterwards; a file in the Startup folder
+    cannot. If its name here and its name in Undo drift, Undo runs, prints nothing
+    wrong, and leaves something starting a daemon at every logon on a machine the
+    person believes they have cleaned. That is the same failure the task pair has and
+    it is quieter, because nothing will ever list it.
+    """
+    written = re.search(r'^STARTUP_CMD="([^"]+)"', SCRIPT, re.M)
+    assert written, "write-launch-agent.sh no longer has a STARTUP_CMD= line"
+    name = written.group(1)
+    assert '"$STARTUP/$STARTUP_CMD"' in SCRIPT, (
+        "the script no longer writes the launcher under $STARTUP_CMD")
+    undo = BANG.split("## Undo, in full", 1)[1]
+    assert name in undo, "Undo does not remove %r" % name
+    assert name in BANG.split("## What this fetches", 1)[0], (
+        "the places list does not name %r, which this file writes" % name)
+
+
+def test_the_script_says_which_of_the_two_routes_it_used():
+    """Undo cannot remove the right one unless the run said which it was."""
+    assert 'REGISTERED="task"' in SCRIPT and 'REGISTERED="startup"' in SCRIPT, (
+        "the script no longer records which route took")
+    assert 'say "started the daemon by the $REGISTERED route"' in SCRIPT, (
+        "the script no longer prints which route it used")
+
+
+def test_both_machines_are_told_what_to_do_when_claude_code_refuses_a_command():
+    """Said twice because it is read once, in whichever section the reader is in.
+
+    Zebra met this on a Mac on 2026-09-23 and the Dell met it on 2026-09-25, and
+    between the two nothing had been written down, so the second reader worked it out
+    again. It is not a Windows thing and it is not rare: the session refuses a script
+    it installed a moment earlier, because it has no history with it.
+    """
+    line = "Type `!` at its prompt followed by that line, exactly as printed"
+    for name, body in _run_it_sections().items():
+        assert line in body, "%s's section does not say what to do with a refusal" % name
+    assert "as untrusted" in BANG, "BANG.md no longer covers the refusal either"
 
 
 def test_bang_names_the_daemon_script_the_script_actually_writes():
@@ -274,3 +318,60 @@ def test_a_log_that_is_not_there_yet_counts_as_none(tmp_path):
     """The only case with no output at all, and the one the fallback is really for."""
     assert _eaddrinuse_receipt(tmp_path, None) == (
         "  EADDRINUSE lines in daemon.log: 0")
+
+
+def test_nothing_states_a_count_of_the_places_this_file_writes_to():
+    """The list grows; a number written beside it does not.
+
+    It said "five places" in three sentences across two files, and the list became six
+    when uv's Windows receipt was added to it. A count is a copy of the list, kept in
+    prose, which nobody updates because nobody is looking at the list when they write
+    the sentence. The list is the record; the sentences point at it.
+    """
+    # Only a count of *this* list. "three places this file never told you about",
+    # naming ~/.cache, ~/Library/pnpm and ~/.npm, is a count of somewhere else and is
+    # the sentence that makes the point, so it is not one of these.
+    numbered = re.compile(
+        r"\b(two|three|four|five|six|seven|eight|nine|ten|\d+)\s+places\b"
+        r"(?=\s+(above|in your home)\b)", re.I)
+    offenders = {}
+    for name, text in (("BANG.md", BANG), ("README.md", README)):
+        for number, line in enumerate(text.splitlines(), 1):
+            if numbered.search(line):
+                offenders.setdefault(name, []).append("%d: %s" % (number, line.strip()))
+    assert not offenders, (
+        "a count of the places is a second copy of the list: %s" % offenders)
+
+
+def test_nothing_still_calls_bang_one_command():
+    """It has been two pastes since the README grew two blocks, and three on Windows.
+
+    The sentence outlived the thing it described because it is the first line, which
+    is the line nobody re-reads. It is also the line the Sites page is to take its own
+    first sentence from, so a false one here would have become a false one in public.
+    """
+    claim = re.compile(r"\bone command\b", re.I)
+    offenders = {}
+    for name, text in (("README.md", README), ("BANG.md", BANG)):
+        for number, line in enumerate(text.splitlines(), 1):
+            if claim.search(line):
+                offenders.setdefault(name, []).append("%d: %s" % (number, line.strip()))
+    assert not offenders, (
+        "Bang is not one command and has not been since block 2: %s" % offenders)
+
+
+def test_the_readmes_first_line_and_its_run_it_section_agree_about_the_machines():
+    """The first line names the machines; Run it is where a reader acts on that.
+
+    Two sentences about the same fact, forty lines apart, and the first is the one
+    quoted elsewhere. If a third machine lands in one and not the other, the page
+    promises what its own instructions do not carry.
+    """
+    first = README.strip().splitlines()
+    opening = " ".join(first[:5])
+    assert "Mac or Windows" in opening, "the first line no longer names the machines"
+    assert "Mac and Windows." in README, "Run it no longer says which machines it runs on"
+    # Linux is named as coming, and nowhere claimed as working.
+    assert "Omarchy Linux soon" in opening
+    assert "Linux is not supported yet" in BANG, (
+        "BANG.md no longer says Linux is not supported, while the page says soon")

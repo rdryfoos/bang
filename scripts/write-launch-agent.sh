@@ -61,10 +61,18 @@ LABEL="com.dryfoos.bang.cannon"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 TASK="Bang Potato Cannon"
 DAEMON_SH="$HOME/.potato-cannon/cannon-daemon.sh"
+# The Startup-folder fallback's launcher, named so Undo can find it without guessing.
+STARTUP_CMD="bang-potato-cannon.cmd"
+STARTUP_CMD_TMP="$HOME/.potato-cannon/$STARTUP_CMD.new"
 PORT="3131"
 HEALTH="http://127.0.0.1:$PORT/health"
 DRY_RUN=0
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=1
+
+# The PowerShell blocks below are single-quoted so that Git Bash hands them over
+# unmangled, which means they cannot carry a shell variable. They read these instead.
+export BANG_TASK="$TASK"
+export BANG_SH="$DAEMON_SH"
 
 say() { printf '  %s\n' "$*"; }
 stop() { printf 'write-launch-agent: STOPPED. %s\n' "$*" >&2; exit 1; }
@@ -246,27 +254,68 @@ else
   # The task runs Git Bash on that file. Which bash, asked rather than assumed: Git
   # for Windows is not always under C:\Program Files, and the one running this script
   # is by definition the one that works. cygpath turns it into the spelling Task
-  # Scheduler understands, since the task is not run from a shell.
+  # Scheduler and the Startup folder understand, since neither runs it from a shell.
   BASH_EXE="$(cygpath -w "$(command -v bash)" 2>/dev/null)"
   [ -n "$BASH_EXE" ] || stop "could not work out where bash.exe is; cygpath found nothing"
+  # It is worked out here rather than at the top, so it is exported here too: the
+  # PowerShell block below is single-quoted and reads it out of the environment.
+  export BANG_BASH="$BASH_EXE"
 
-  # The doubled slashes are not a typo. Git Bash rewrites an argument beginning with a
-  # single slash into a Windows path before the program is started, so a plain /Create
-  # reaches schtasks as C:/Program Files/Git/Create and is refused. // is how you say
-  # you meant a switch.
-  if schtasks //Query //TN "$TASK" >/dev/null 2>&1; then
-    schtasks //Delete //TN "$TASK" //F >/dev/null 2>&1
-    say "an earlier \"$TASK\" was registered; removed it first"
+  # Two ways to be started at logon, and the reason there are two is that the first
+  # one is refused for a plain user.
+  #
+  # `schtasks /Create /SC ONLOGON` writes a task that fires for *whoever* logs on,
+  # which is an act on the machine, so Windows wants an administrator and answers a
+  # standard account with "Access is denied". That is what the Dell met on
+  # 2026-09-25. PowerShell's Register-ScheduledTask with a trigger scoped to one
+  # user is the same idea asked for properly: a task about this account, registered
+  # by this account, which does not need the machine's permission. Neither can be
+  # tried from the Mac this was written on, so both are here.
+  #
+  # Task Scheduler is tried first, and the Startup folder is the fallback, because a
+  # task is a thing the script can ask about afterwards. `Get-ScheduledTask` says
+  # whether it is registered, what it runs and whether it last started; Undo removes
+  # it by name; and nothing a reader does to their own files disturbs it. A shortcut
+  # in the Startup folder is a file in a folder people tidy, with no record anywhere
+  # that it was meant to be there. It always works, which is why it is the fallback,
+  # and it knows nothing about itself, which is why it is not the first choice.
+  REGISTERED=""
+
+  if powershell -NoProfile -ExecutionPolicy ByPass -c '
+      $ErrorActionPreference = "Stop"
+      try {
+        Unregister-ScheduledTask -TaskName $env:BANG_TASK -Confirm:$false -ErrorAction SilentlyContinue
+        $action  = New-ScheduledTaskAction -Execute $env:BANG_BASH -Argument ("-l `"" + $env:BANG_SH + "`"")
+        $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+        Register-ScheduledTask -TaskName $env:BANG_TASK -Action $action -Trigger $trigger -Force | Out-Null
+        exit 0
+      } catch { exit 1 }' >/dev/null 2>&1; then
+    REGISTERED="task"
+    say "registered the scheduled task \"$TASK\", at logon, for this account"
+    powershell -NoProfile -ExecutionPolicy ByPass \
+      -c 'Start-ScheduledTask -TaskName $env:BANG_TASK' >/dev/null 2>&1 \
+      || stop "\"$TASK\" is registered but would not start. Task Scheduler has the reason."
+  else
+    # No privilege of any kind: a .cmd in this account's own Startup folder, which
+    # Windows runs at logon because it is there and for no other reason.
+    STARTUP="$(cygpath "$(powershell -NoProfile -ExecutionPolicy ByPass \
+      -c '[Environment]::GetFolderPath("Startup")' 2>/dev/null | tr -d '\r')" 2>/dev/null)"
+    [ -n "$STARTUP" ] && [ -d "$STARTUP" ] \
+      || stop "Task Scheduler refused and the Startup folder could not be found; nothing was registered."
+    printf '@echo off\r\nstart "" /b "%s" -l "%s"\r\n' "$BASH_EXE" "$DAEMON_SH" > "$STARTUP_CMD_TMP" 2>/dev/null \
+      || stop "could not write into the Startup folder"
+    mv "$STARTUP_CMD_TMP" "$STARTUP/$STARTUP_CMD" || stop "could not move the launcher into the Startup folder"
+    REGISTERED="startup"
+    say "Task Scheduler refused; wrote $STARTUP/$STARTUP_CMD instead"
+    say "that folder is run at logon and needs no privilege"
+    ( cd "$HOME" && "$DAEMON_SH" & ) >/dev/null 2>&1
   fi
-  schtasks //Create //TN "$TASK" //SC ONLOGON //TR "\"$BASH_EXE\" -l \"$DAEMON_SH\"" //F >/dev/null \
-    || stop "schtasks refused to register \"$TASK\". The script is at $DAEMON_SH and parses; the reason is Task Scheduler's."
-  say "registered \"$TASK\" at logon"
 
-  # A logon task starts at the next logon, and you logged in before you read this. So
-  # it is started once here, which is what launchctl bootstrap does on the Mac side.
-  schtasks //Run //TN "$TASK" >/dev/null \
-    || stop "\"$TASK\" is registered but would not start. Task Scheduler has the reason."
-  say "started \"$TASK\""
+  # A logon task starts at the next logon, and you logged in before you read this, so
+  # whichever one took is started once here. That is what launchctl bootstrap does on
+  # the Mac side, and it is why the receipt below can be read now rather than after a
+  # reboot.
+  say "started the daemon by the $REGISTERED route"
 fi
 
 for _ in $(seq 1 30); do

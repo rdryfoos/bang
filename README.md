@@ -1,6 +1,8 @@
-Bang is one command that leaves you with a working project on your own machine: a
-small lending tracker, its specification with durable IDs, the checks that refuse
-unfinished work, and a board in your browser with the first cards already on it.
+Bang takes a bare Mac or Windows machine (Omarchy Linux soon) to a working,
+"born-threaded" project with a board in your browser: a couple of pastes, about ten
+minutes, then your first card. What you are left with is a small lending tracker, its
+specification with durable IDs, the checks that refuse unfinished work, and the first
+cards already on the board.
 `BANG.md` is the whole instruction, and it is meant to be read before you paste
 anything: it lists every folder that will be written, everything fetched from the
 network, and how to undo all of it. The application the project builds is a personal
@@ -13,7 +15,8 @@ Bang needs a Mac or a Windows PC, an Anthropic account, and two clocks. About te
 minutes to install, most of it saying yes. Then the first card takes the board about
 twenty-five minutes on its own; you can watch, or come back.
 
-It writes to five places in your home folder and nowhere else; `BANG.md` lists them, and
+It writes to a handful of places in your home folder and nowhere else; `BANG.md` lists
+them, and
 lists what it fetches and what it will not do. Read `BANG.md` before you run it, and read
 its paragraph that begins "Read this one twice" twice.
 
@@ -49,6 +52,11 @@ Sign in when it asks. After the "Claude can make mistakes" screen, the next prom
 Claude Code says auto mode, press shift+tab until it says manual mode; auto mode refuses
 steps 6 and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The
 board opens in your browser when it finishes; the last line is in Terminal.
+
+If Claude Code refuses a command as untrusted, it prints the line it wanted to run.
+Type `!` at its prompt followed by that line, exactly as printed, which runs it here
+and puts the output in the conversation; then tell it to carry on. Nothing else: do not
+reword the line, do not turn the permission check off, and do not switch to auto mode.
 
 ### On Windows
 
@@ -120,6 +128,11 @@ Sign in when it asks. After the "Claude can make mistakes" screen, the next prom
 Claude Code says auto mode, press shift+tab until it says manual mode; auto mode refuses
 steps 6 and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The
 board opens in your browser when it finishes; the last line is in Git Bash.
+
+If Claude Code refuses a command as untrusted, it prints the line it wanted to run.
+Type `!` at its prompt followed by that line, exactly as printed, which runs it here
+and puts the output in the conversation; then tell it to carry on. Nothing else: do not
+reword the line, do not turn the permission check off, and do not switch to auto mode.
 
 Windows is new here and nothing on this page claims it works yet. One walk on one Dell
 is what `RUNS.md` has; yours is the next one, and the line you add to `RUNS.md` is worth
