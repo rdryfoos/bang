@@ -1,7 +1,7 @@
 # BANG.md
 
 This file is what your Claude Code session is told to carry out when you
-paste the last command in README.md's "Run it": beat 3 on a Mac, beat 7 on
+paste the last command in README.md's "Run it": beat 1 on a Mac, beat 5 on
 Windows, the one that ends by starting Claude Code. Read it before you
 paste. The agent reads the
 same file, in this order, and does nothing that is not written here.

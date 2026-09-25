@@ -244,31 +244,33 @@ def test_no_windows_paste_joins_the_path_line_to_another_command():
         "goes to the installer")
 
 
-def test_the_reopens_are_beats_of_their_own_and_sit_after_what_they_are_for():
+def test_the_windows_reopens_sit_on_the_beat_after_what_they_are_for():
     """Windows reads the user path when a window opens and never again.
 
-    Each reopen exists because of the paste above it, and a reader who goes straight on
-    gets a command that is not found in a window that was right not to find it. They
-    are numbered beats now rather than sentences after a fence, which is the whole
-    shape of this page: one thing to do per number.
+    Each reopen exists because of the paste above it, and a reader who goes straight
+    on gets a command that is not found in a window that was right not to find it. The
+    reopens used to be beats of their own; they are the first half of the beat that
+    needs them now, which keeps a paste under every number.
+
+    The Mac has none, and that is not an oversight: `source ~/.zshrc` is the last line
+    of its one paste, so the window it was typed in can already see what it installed.
     """
     windows = _run_it_sections()["Windows"]
     reopens = [line for line in windows.splitlines()
-               if re.match(r"^\d+\. Close this window and open", line)]
+               if re.match(r"^\d+\. Close that window and open a new PowerShell", line)]
     assert len(reopens) == 2, (
         "Windows should reopen twice, after git and after the path line: %s" % reopens)
-    assert "PowerShell" in reopens[1], (
-        "the second reopen does not name PowerShell. Claude Code's own shell on Windows "
-        "is Git Bash whatever window launched it, so the launching window only has to "
-        "be one that can see the path, and beat 7 is PowerShell syntax.")
 
-    # And the second one comes after the path line it exists for.
+    # The second one is on the beat that clones, and comes after the path line it is for.
     assert windows.index("SetEnvironmentVariable") < windows.index(reopens[1]), (
         "the reopen comes before the path line it exists for")
+    assert "get the rest" in reopens[1], (
+        "the second reopen is not the beat that gets the rest: %r" % reopens[1])
 
     mac = _run_it_sections()["Mac"]
-    assert any(re.match(r"^\d+\. Close this window and open a new Terminal", line)
-               for line in mac.splitlines()), "the Mac has no reopen beat"
+    assert not any(re.match(r"^\d+\. Close ", line) for line in mac.splitlines()), (
+        "the Mac has a reopen beat, and source ~/.zshrc makes one unnecessary")
+    assert "source ~/.zshrc" in mac, "the Mac paste no longer sources the profile"
 
 
 def test_block_two_differs_between_the_machines_in_the_home_folder_and_nothing_else():
@@ -291,9 +293,11 @@ def test_block_two_differs_between_the_machines_in_the_home_folder_and_nothing_e
         assert found, "%s has no pasteable block" % name
         blocks[name] = found[-1].strip().splitlines()
 
-    mac, windows = blocks["Mac"], blocks["Windows"]
+    # The Mac's two pastes are one now, so the three lines that clone and start
+    # Claude Code are its tail. Windows still keeps them in a paste of their own.
+    mac, windows = blocks["Mac"][-len(blocks["Windows"]):], blocks["Windows"]
     assert len(mac) == len(windows), (
-        "the two block 2s are different lengths.\nMac:     %s\nWindows: %s" % (mac, windows))
+        "the two clone pastes are different lengths.\nMac:     %s\nWindows: %s" % (mac, windows))
 
     # The one allowed difference, written once and applied to every line.
     normalised = [line.replace("$HOME\\bang", "~/bang") for line in windows]
@@ -509,14 +513,18 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
     """
     opening = _flat(BANG.split("## What this writes", 1)[0])
     assert "block 2" not in opening, "BANG.md still sends the reader to a block"
-    assert "beat 3 on a Mac, beat 7 on Windows" in opening, (
+    assert "beat 1 on a Mac, beat 5 on Windows" in opening, (
         "BANG.md does not name the beat that starts it")
 
     # And those two beats are the ones that actually start Claude Code.
-    for name, beat in (("Mac", 3), ("Windows", 7)):
-        body = _run_it_sections()[name]
-        lines = body.splitlines()
+    for name, beat in (("Mac", 1), ("Windows", 5)):
+        lines = _run_it_sections()[name].splitlines()
         where = next(i for i, l in enumerate(lines) if l.startswith("%d. " % beat))
-        block = "\n".join(lines[where:where + 8])
+        # To the end of that beat's paste, however long it is: the Mac's is six lines
+        # now and was three, and a fixed window would be a guess about the next edit.
+        rest = lines[where:]
+        closing = [i for i, l in enumerate(rest) if l.startswith("```")]
+        assert len(closing) >= 2, "%s's beat %d has no paste under it" % (name, beat)
+        block = "\n".join(rest[: closing[1] + 1])
         assert "claude --permission-mode manual" in block, (
             "%s's beat %d is not the one that starts Claude Code" % (name, beat))

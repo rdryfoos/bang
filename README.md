@@ -16,27 +16,20 @@ prompts mean, and what to do when it stops.
 
 ### On a Mac
 
-1. Get Claude.
+1. Get Claude and the rest.
 
 ```
 curl -fsSL https://claude.ai/install.sh | bash
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
-```
-
-2. Close this window and open a new Terminal.
-
-3. Get the rest.
-
-```
 git clone https://github.com/rdryfoos/bang.git ~/bang
 cd ~/bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-4. Say yes when it asks whether you trust this folder. Then press return at each prompt.
+2. Say yes when it asks whether you trust this folder. Then press return for "Yes" at each prompt.
 
-5. When the board opens, drag BAN-1 to Spec.
+3. When the board opens, drag BAN-1 to Spec.
 
 ### On Windows
 
@@ -46,29 +39,25 @@ claude --permission-mode manual "Read BANG.md in this folder from top to bottom.
 winget install --id Git.Git -e --source winget
 ```
 
-2. Close this window and open a new PowerShell.
-
-3. Get Python.
+2. Close that window and open a new PowerShell. Get Python.
 
 ```
 winget install --id Python.Python.3.12 -e --source winget
 ```
 
-4. Get Claude Code. Wait for it to finish.
+3. Get Claude Code.
 
 ```
 irm https://claude.ai/install.ps1 | iex
 ```
 
-5. Put Claude Code on your path.
+4. Wait for it to finish. Put Claude Code on your path.
 
 ```
 [Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.local\bin", 'User')
 ```
 
-6. Close this window and open a new PowerShell.
-
-7. Get the rest.
+5. Close that window and open a new PowerShell, and get the rest.
 
 ```
 git clone https://github.com/rdryfoos/bang.git $HOME\bang
@@ -76,9 +65,9 @@ cd $HOME\bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-8. Say yes when it asks whether you trust this folder. Then press return at each prompt.
+6. Say yes when it asks whether you trust this folder. Then press return for "Yes" at each prompt.
 
-9. When the board opens, drag BAN-1 to Spec.
+7. When the board opens, drag BAN-1 to Spec.
 
 ## What you were handed
 
