@@ -71,7 +71,7 @@ unproven.
 3. SpecAssay's Spec Kit catalogs and release files from
    `github.com/rdryfoos/specassay` (MIT).
 4. Potato Cannon from `github.com/rdryfoos/potato-cannon`, branch
-   `estate/cannon`, commit `5a5404c`, and the npm packages its build needs,
+   `estate/cannon`, commit `961977a`, and the npm packages its build needs,
    fetched by pnpm from the public npm registry.
 5. If Node is missing, the Node 22 tarball from `nodejs.org`.
 6. Nothing else. No telemetry, no account, no message to anyone.
@@ -86,8 +86,10 @@ is MIT.
 
 - Read, write, or list any folder outside the five places above.
 - Touch any other repository, project, or file of yours.
-- Push anything anywhere. There is no remote; the project's promotions are
-  local merges into its own main branch.
+- Push anything anywhere. `git clone` gave this folder an `origin`, because
+  every clone from GitHub has one, and nothing here ever pushes to it: the
+  project's promotions are local merges into its own main branch. `git fetch`
+  is not run either. The remote exists and is never used.
 - Install anything system-wide or ask for your password.
 - Run a worker session outside ~/bang.
 
@@ -284,7 +286,7 @@ given. If a receipt does not match, it stops and prints what it saw.
    told you about and Undo does not remove.
 
    Receipt: `git -C ~/.potato-cannon/app rev-parse --short HEAD` prints
-   5a5404c and `pnpm build` ended with no error.
+   961977a and `pnpm build` ended with no error.
 
 8. The daemon. Run the script this repository ships:
 
@@ -304,8 +306,22 @@ given. If a receipt does not match, it stops and prints what it saw.
    the middle of it and a daemon that never started. Nothing in this file
    is now typeset in a way that changes what it means.
 
-   Receipt: `curl -s http://127.0.0.1:3131/health` returns a response
-   whose status is ok.
+   **If it refuses because something already listens on 3131, stop.** Another
+   Cannon is running, and it is not yours: everything after this step would be
+   judged against somebody else's board. The script prints which process holds
+   the port and which user owns it. Stop that daemon, or log in as that user
+   and stop it there, before running this again. Nothing was written.
+
+   Receipt, all three: `curl -s http://127.0.0.1:3131/health` returns a
+   response whose status is ok; the listener the script prints is a `node`
+   process owned by the user you are logged in as; and the count of
+   `EADDRINUSE` lines in `~/.potato-cannon/daemon.log` is 0.
+
+   The health line alone is not a receipt. It says a daemon is there, not that
+   it is the one you just built. On the sixth cold run a previous test user's
+   daemon was still holding the port: `/health` answered ok, with nine and a
+   half hours of uptime on a daemon installed minutes earlier. The other two
+   lines are what tell those apart.
 
 9. Register the project. The daemon can only name a template that lives in
    its own templates folder, so copy this project's template there first,

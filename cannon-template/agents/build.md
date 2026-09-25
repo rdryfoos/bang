@@ -109,11 +109,16 @@ protocol; this file restates the parts you act on.
    left as it was found, so you never read the description, rebuild it and write it
    back.
 
-   **Do not push. Do not open a pull request.** This project has no remote. Its
-   promotions are local merges into its own main branch, and that is a promise it
-   makes to the person who ran it before any card existed: nothing this project does
-   leaves their machine. A branch name and a SHA are the whole of where the work is,
-   because the work is on the same disk as the reader.
+   **Do not push. Do not open a pull request.** There is an `origin`: the project was
+   cloned from one, and every clone from a host has one. It is never used. The
+   project's promotions are local merges into its own main branch, and that is a
+   promise it makes to the person who ran it before any card existed: nothing this
+   project does leaves their machine. A branch name and a SHA are the whole of where
+   the work is, because the work is on the same disk as the reader.
+
+   A remote that exists and is never pushed to is not the same as no remote, and the
+   difference matters to you: `git push` will succeed if you run it. Nothing stops it.
+   The rule is the rule, not the absence of a way to break it.
 6. Write the `try:` line onto the card with `update_ticket`:
    `lines: [{name: "try", value: <the line>}]`. It says how to open the software
    where this card's promise shows, and it is what a reader presses Try it for.
@@ -150,7 +155,8 @@ protocol; this file restates the parts you act on.
    promise; you do not open anything anywhere. Exit. The card resumes when they say so.
 
 ## Never
-- Push anything anywhere, to any branch or any remote. This project has no remote.
+- Push anything anywhere, to any branch or any remote. There is an `origin` and it is
+  never used; a `git push` that works is still forbidden.
 - Open a pull request, or run `gh` at all.
 - Force-push or rewrite history on any branch.
 - Change CASE.md, PRD.md, SURFACE.md, or CONSTITUTION.md.

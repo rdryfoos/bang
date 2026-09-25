@@ -32,6 +32,11 @@
 #      has to carry the same four BANG.md step 3 installed with or be told the thing is
 #      not there.
 #
+# Before it writes anything it checks the port. A daemon that is already listening is
+# somebody else's, and every receipt after step 8 would be about their board rather than
+# yours: on the sixth cold run a previous test user's daemon answered /health with nine
+# and a half hours of uptime, and the run was right to stop.
+#
 # Usage:  bash scripts/write-launch-agent.sh
 #         bash scripts/write-launch-agent.sh --dry-run    print it, write nothing
 #
@@ -40,12 +45,20 @@ set -uo pipefail
 
 LABEL="com.dryfoos.bang.cannon"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
-HEALTH="http://127.0.0.1:3131/health"
+PORT="3131"
+HEALTH="http://127.0.0.1:$PORT/health"
 DRY_RUN=0
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=1
 
 say() { printf '  %s\n' "$*"; }
 stop() { printf 'write-launch-agent: STOPPED. %s\n' "$*" >&2; exit 1; }
+
+# Who is listening on the daemon's port, if anybody. One line per listener, with the
+# command and the user that owns it, because "a daemon answered" and "our daemon
+# answered" are different facts and only the second one is a receipt.
+listener_on_3131() {
+  lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | tail -n +2
+}
 
 # The command the daemon runs, on one line and staying on one line. Keeping it in a
 # variable rather than inside the plist text is what makes the promise checkable: one
@@ -89,6 +102,26 @@ if [ "$DRY_RUN" = 1 ]; then
   exit 0
 fi
 
+# Nothing is written until 3131 is ours to take.
+#
+# On the sixth cold run a previous test user's daemon was still holding the port. The
+# health check answered ok, because a daemon was there; it had nine and a half hours of
+# uptime, because it was not the one this run had just built. Everything after that step
+# would have been judged against somebody else's board. A port that is already listening
+# is not a thing to write a launch agent over: two daemons on one port is the failure
+# this cannot detect afterwards, because the one that answers is the one that got there
+# first.
+LISTENER="$(listener_on_3131)"
+if [ -n "$LISTENER" ]; then
+  printf 'write-launch-agent: STOPPED. Something already listens on 127.0.0.1:%s.\n' "$PORT" >&2
+  printf '%s\n' "$LISTENER" | sed 's/^/  /' >&2
+  echo "" >&2
+  echo "  Another Cannon is running. Nothing was written and nothing was loaded." >&2
+  echo "  Stop that daemon, or log in as the user that owns it and stop it there," >&2
+  echo "  before running this again." >&2
+  exit 1
+fi
+
 mkdir -p "$HOME/Library/LaunchAgents" "$HOME/.potato-cannon" \
   || stop "could not make $HOME/Library/LaunchAgents"
 
@@ -119,6 +152,20 @@ for _ in $(seq 1 30); do
   LINE="$(curl -s --max-time 2 "$HEALTH" 2>/dev/null)"
   if [ -n "$LINE" ]; then
     printf '  %s\n' "$LINE"
+
+    # A health line says a daemon is there. It does not say it is ours. These two say
+    # that: the process holding the port, with the user that owns it, and how many
+    # times the daemon we just started found the port taken.
+    echo "  listener on $PORT:"
+    OWNED="$(listener_on_3131)"
+    if [ -n "$OWNED" ]; then
+      printf '%s\n' "$OWNED" | sed 's/^/    /'
+    else
+      echo "    (lsof reported none, which should not happen while /health answers)"
+    fi
+
+    EADDRINUSE="$(grep -c EADDRINUSE "$HOME/.potato-cannon/daemon.log" 2>/dev/null || echo 0)"
+    echo "  EADDRINUSE lines in daemon.log: $EADDRINUSE"
     exit 0
   fi
   sleep 1

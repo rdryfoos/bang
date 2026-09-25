@@ -86,8 +86,8 @@ exist; you never create one. You are inside the card's worktree on the card's br
 
    A person creates the promise: they add the line to PRD.md with a new ID, one the
    project's own tool gives them rather than one anybody typed, and commit it on the
-   default branch, because this project's promotions are local merges and there is no
-   remote to open anything against. Then they unblock the card. What you write is the
+   default branch, because this project's promotions are local merges and its `origin`
+   is never used. Then they unblock the card. What you write is the
    blocked reason; what they write is the promise. Neither of you does both, which is
    the whole of why this stops here.
 3. A decision that defers work is a task, not a sentence. If the spec says that

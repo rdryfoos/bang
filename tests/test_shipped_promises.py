@@ -20,20 +20,130 @@ AGENTS = ROOT / "cannon-template" / "agents"
 FORBIDDEN = (
     re.compile(r"git\s+push", re.I),
     re.compile(r"\bgh\s+pr\b", re.I),
+    # The instruction as it was actually written, which named no command at all:
+    # "At the end of every attempt, push the card branch to the remote."
+    re.compile(r"\bpush\b[^.]{0,40}\bto the remote\b", re.I),
+    re.compile(r"\bopen\b[^.]{0,30}\b(draft\s+)?(pull request|PR)\b", re.I),
 )
+
+# A prompt may name the thing in order to forbid it, and on 2026-09-25 it had to: the
+# project does have an `origin`, so "there is no remote" was false and the sentence that
+# replaced it says `git push` will work and is still forbidden. A worker needs to be
+# told that. So a line naming the command passes only when the line forbids it, and a
+# line that merely mentions it is an offender exactly as before.
+PROHIBITION = re.compile(
+    r"\b(do not|don't|never|must not|may not|cannot|forbidden|refus\w*|no agent|"
+    r"without pushing|instead of pushing)\b",
+    re.I,
+)
+
+
+def _sentences(text):
+    """The prose split into sentences, with the line each one starts on.
+
+    Sentences rather than lines, because prose in these files is wrapped: the sentence
+    that forbids a thing and the sentence that names it are often on different lines,
+    and a line is not a unit of meaning.
+    """
+    out = []
+    for paragraph_start, paragraph in _paragraphs(text):
+        line = paragraph_start
+        for piece in re.split(r"(?<=[.!?])\s+", paragraph):
+            if piece.strip():
+                out.append((line, " ".join(piece.split())))
+            line += piece.count("\n")
+    return out
+
+
+def _paragraphs(text):
+    """(line number, paragraph) for each blank-line-separated block."""
+    out = []
+    line = 1
+    for block in re.split(r"\n\s*\n", text):
+        if block.strip():
+            out.append((line, block))
+        line += block.count("\n") + 2
+    return out
+
+
+# A heading can forbid, and in these files one does: everything under "## Never" and
+# under "What this will not do" is a prohibition by where it sits, with no negation
+# word of its own. "Open a pull request, or run `gh` at all." is an instruction only if
+# you read it without its heading.
+FORBIDDING_HEADING = re.compile(r"^#+\s*(Never|What this will not do)\b", re.I)
+
+
+def _forbidding_sections(text):
+    """(start line, end line) for each section whose heading forbids."""
+    lines = text.splitlines()
+    spans, start = [], None
+    for number, line in enumerate(lines, 1):
+        if line.startswith("#"):
+            if start is not None:
+                spans.append((start, number - 1))
+                start = None
+            if FORBIDDING_HEADING.match(line):
+                start = number
+    if start is not None:
+        spans.append((start, len(lines)))
+    return spans
+
+
+def _instructions_to_push(text):
+    """Sentences that name a push or a pull request without forbidding it.
+
+    A sentence is allowed to name the thing only when that same sentence forbids it.
+    Not the sentence before: "Do not change CASE.md. Run git push once the tests are
+    green." would pass on a neighbour rule, and the difference between an instruction
+    and a prohibition is the whole value of this check.
+    """
+    forbidding = _forbidding_sections(text)
+    offenders = []
+    for line, sentence in _sentences(text):
+        if not any(pattern.search(sentence) for pattern in FORBIDDEN):
+            continue
+        if PROHIBITION.search(sentence):
+            continue
+        if any(start <= line <= end for start, end in forbidding):
+            continue
+        offenders.append((line, sentence))
+    return offenders
 
 
 def test_no_agent_is_told_to_push_or_open_a_pull_request():
     offenders = {}
     for path in sorted(AGENTS.glob("*.md")):
-        text = path.read_text(encoding="utf-8")
-        for number, line in enumerate(text.splitlines(), 1):
-            for pattern in FORBIDDEN:
-                if pattern.search(line):
-                    offenders.setdefault(path.name, []).append(f"{number}: {line.strip()}")
+        found = _instructions_to_push(path.read_text(encoding="utf-8"))
+        if found:
+            offenders[path.name] = [f"{line}: {sentence}" for line, sentence in found]
     assert not offenders, (
         "BANG.md promises this project pushes nothing anywhere, and these lines tell a "
         "worker otherwise: %s" % offenders)
+
+
+def test_the_push_check_still_catches_an_instruction_to_push():
+    """The exemption above must not become the loophole.
+
+    Allowing a line that forbids pushing means allowing a line that contains the word
+    "not", and the difference between those two is the whole value of the check. These
+    are the lines the old Build worker actually carried, and a plausible way somebody
+    might write the rule back in while sounding careful.
+    """
+    written_back = "\n".join([
+        "5. At the end of every attempt, push the card branch to the remote.",
+        "   Then run `gh pr create` and write the pr: line onto the card.",
+        "   Do not change CASE.md. Run git push once the tests are green.",
+    ])
+    caught = _instructions_to_push(written_back)
+    assert len(caught) == 3, "expected all three instructions, got %r" % caught
+
+    forbidding = "\n".join([
+        "- Push anything anywhere, to any branch or any remote. There is an `origin` and",
+        "  it is never used; a `git push` that works is still forbidden.",
+        "   **Do not push.** `git push` will succeed if you run it. Nothing stops it.",
+    ])
+    assert not _instructions_to_push(forbidding), (
+        "a prompt forbidding a push must be allowed to name it")
 
 
 def test_bang_still_makes_the_promise_these_agents_keep():
@@ -41,6 +151,27 @@ def test_bang_still_makes_the_promise_these_agents_keep():
     # would not know. So the promise is read here too, in the words BANG.md uses.
     text = (ROOT / "BANG.md").read_text(encoding="utf-8")
     assert "Push anything anywhere" in text, "BANG.md no longer promises not to push"
+
+
+def test_no_shipped_file_claims_the_project_has_no_remote():
+    """It has one, and saying otherwise cost two runs.
+
+    `git clone` from a host always leaves an `origin`, so "this project has no remote"
+    was false in BANG.md and in the Build worker's prompt. On the sixth cold run the
+    worker flagged the mismatch twice, which is the right thing to do with a document
+    that disagrees with the machine, and is time nobody should spend twice.
+
+    The true sentence is that the remote exists and is never used, and a worker needs
+    that version: `git push` will work if it runs it.
+    """
+    claim = re.compile(r"(has|have|is|are)\s+no\s+remote\b", re.I)
+    offenders = {}
+    for path in [ROOT / "BANG.md", *sorted(AGENTS.glob("*.md"))]:
+        for line, sentence in _sentences(path.read_text(encoding="utf-8")):
+            if claim.search(sentence):
+                offenders.setdefault(path.name, []).append(f"{line}: {sentence}")
+    assert not offenders, (
+        "a clone from a host always has an origin; these say otherwise: %s" % offenders)
 
 
 def _first_cards():
