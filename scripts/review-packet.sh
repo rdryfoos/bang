@@ -23,6 +23,9 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
+
+# The interpreter's name is resolved, never spelled. See python.sh.
+. "$HERE/python.sh" || exit 1
 cd "$ROOT" || exit 0
 
 CONF="$HERE/gate.conf"
@@ -34,8 +37,8 @@ SPECASSAY_DIR=".specify/extensions/specassay-check"
 TICKET="${POTATO_TICKET_ID:-}"
 [ -n "$TICKET" ] || { echo "review-packet: no POTATO_TICKET_ID; this runs as the Review entry check"; exit 0; }
 
-BRANCH="$(CARD_IO_MODE=branch BRANCH_PREFIX="${BRANCH_PREFIX:-potato}" python3 "$HERE/card-io.py" 2>/dev/null)"
-TRY_LINE="$(CARD_IO_MODE=line CARD_IO_LINE=try python3 "$HERE/card-io.py" 2>/dev/null)"
+BRANCH="$(CARD_IO_MODE=branch BRANCH_PREFIX="${BRANCH_PREFIX:-potato}" "$PYTHON" "$HERE/card-io.py" 2>/dev/null)"
+TRY_LINE="$(CARD_IO_MODE=line CARD_IO_LINE=try "$PYTHON" "$HERE/card-io.py" 2>/dev/null)"
 WORKTREE="$ROOT/.potato/worktrees/$TICKET"
 PACKET="$(mktemp)"; GATE_OUT="$(mktemp)"; THREAD="$(mktemp)"
 trap 'rm -f "$PACKET" "$GATE_OUT" "$THREAD"' EXIT
@@ -107,12 +110,12 @@ if [ -n "$BRANCH" ] && git rev-parse --verify --quiet "$BRANCH^{commit}" >/dev/n
   fi
   git diff --name-only "$DEFAULT_BRANCH...$BRANCH" > "$files"
   if [ -s "$base" ] && [ -s "$head" ]; then
-    python3 "$SPECASSAY_DIR/scripts/thread-report.py" \
+    "$PYTHON" "$SPECASSAY_DIR/scripts/thread-report.py" \
       --base "$base" --head "$head" --changed-files "$files" \
       --config "$SPECASSAY_DIR/specassay-check-config.yml" 2>&1 \
       || printf 'The Thread Report did not run. Its output is above.\n'
   elif [ -s "$head" ]; then
-    python3 "$HERE/manifest-table.py" "$head" \
+    "$PYTHON" "$HERE/manifest-table.py" "$head" \
       || printf 'The head state could not be read.\n'
   else
     printf 'No manifest on either side; the Gate has not run on this branch.\n'
@@ -120,11 +123,11 @@ if [ -n "$BRANCH" ] && git rev-parse --verify --quiet "$BRANCH^{commit}" >/dev/n
   rm -f "$base" "$head" "$files"
 } > "$THREAD"
   CARD_IO_MODE=block CARD_IO_BLOCK=thread-report CARD_IO_BLOCK_AT=top \
-    python3 "$HERE/card-io.py" < "$THREAD" >/dev/null 2>&1 \
+    "$PYTHON" "$HERE/card-io.py" < "$THREAD" >/dev/null 2>&1 \
     || say_thread_failed=1
 fi
 
-if CARD_IO_MODE=block CARD_IO_BLOCK=review-packet python3 "$HERE/card-io.py" < "$PACKET" >/dev/null 2>&1; then
+if CARD_IO_MODE=block CARD_IO_BLOCK=review-packet "$PYTHON" "$HERE/card-io.py" < "$PACKET" >/dev/null 2>&1; then
   echo "review-packet: written onto $TICKET, $(wc -l < "$PACKET" | tr -d ' ') lines"
 else
   echo "review-packet: could not write the packet onto $TICKET; the card will be bare" >&2

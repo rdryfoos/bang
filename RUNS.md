@@ -24,6 +24,23 @@ stumbled, in your own words. Add yours and open a pull request; that is the whol
   and the guard is what was wrong: it was written as a statement about the T904 line
   when it is a statement about the seed. Fixed here.
 
+- 2026-09-25, Dell 7420, cold Windows user, Bang at `a530286`: stopped at step 2, by the
+  preflight, correctly. It caught the Microsoft Store stub that holds the `python3` name
+  and printed the winget line it was written to print. That part worked exactly as
+  designed.
+
+  Then the part nobody had checked. `winget install --id Python.Python.3.12` installed
+  Python, `python --version` printed 3.12.10, and `python3` still did not resolve. It
+  never will: the python.org build lays down `python.exe` and `py.exe` and no
+  `python3.exe`, and the Store's App Execution Alias holds the `python3` name whether
+  Python is installed or not. The preflight would have refused the same way a second
+  time, on a machine with a working Python on it.
+
+  So `python3` is not a name this project may spell. `scripts/python.sh` resolves it
+  once, by asking which of `python3` then `python` prints a line beginning `Python 3`,
+  and forty call sites across seven scripts now go through it. The Mac is unchanged and
+  lands on `python3`; Windows lands on `python`. Fixed here.
+
 - 2026-09-25, Dell 7420, rik, Bang at `a31d799`: the Windows walk, and the first run of
   this on anything that is not a Mac. Fresh Windows 11 has no git at all. `winget`
   installed Git 2.55, and the window had to be closed and reopened before its path knew

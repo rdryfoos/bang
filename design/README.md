@@ -28,9 +28,13 @@ The flow: outstanding to lend and back; outstanding to mark returned and back; m
 A reviewer opens these screens by pressing Try it on the card, and `scripts/try.sh` has
 to be able to start the app without knowing anything about the branch beyond this:
 
-    src/whms/web.py           exists and runs as `python3 -m whms.web`
+    src/whms/web.py           exists and runs as `$PYTHON -m whms.web`
     --port N                  the port to listen on, and it binds 127.0.0.1 only
     WHMS_DATA_FILE            the records file, the same variable the command line reads
+
+`$PYTHON` is whatever `scripts/python.sh` resolved: `python3` on a Mac, `python` on
+Windows, where no `python3` exists and never will. The build writes the module; nothing
+in the build spells the interpreter's name.
 
 Binding loopback only is not a convenience. It is the same promise NFR-PRIV-10 makes:
 the records stay on this machine, and a web app that listened on every interface would

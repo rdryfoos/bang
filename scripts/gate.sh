@@ -23,6 +23,9 @@
 # a script like any other.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
+
+# The interpreter's name is resolved, never spelled. See python.sh.
+. "$HERE/python.sh" || exit 1
 ROOT="$(pwd)"
 CONF="$HERE/gate.conf"
 [ -f "$CONF" ] && . "$CONF"
@@ -53,7 +56,7 @@ need() { # name, command, version-args
   v="$("$2" $3 2>&1 | head -1 | tr -d '\r')"; line "  $1: $v"; TOOLCHAIN="${TOOLCHAIN:-}${1}=$v; "; return 0
 }
 missing=0
-need python3 python3 --version || missing=1
+need "$PYTHON" "$PYTHON" --version || missing=1
 need git git --version || missing=1
 [ -x "$HERE/check-anchors.py" ] || { line "  MISSING TOOL: check-anchors ($HERE/check-anchors.py)"; missing=1; }
 [ -f "$SPECASSAY_CHECK" ] || { line "  MISSING TOOL: specassay check ($SPECASSAY_CHECK)"; missing=1; }
@@ -66,25 +69,25 @@ if [ "$verdict_code" = 0 ]; then
   # interpreter is a script that works until the day it runs, and this project found one
   # the hard way: an f-string with a nested same-type quote, valid from 3.12 and a
   # syntax error on 3.9, run-through in a branch of this very script.
-  if out="$(python3 -m compileall -q "$HERE" 2>&1)"; then line "  0 scripts compile: green, $(python3 -c 'import sys;print("python "+".".join(map(str,sys.version_info[:3])))')"; else line "  0 scripts compile: RED"; printf '%s\n' "$out" | head -20 | sed 's/^/    /' | tee -a "$REPORT"; floor_red=1; fi
+  if out="$("$PYTHON" -m compileall -q "$HERE" 2>&1)"; then line "  0 scripts compile: green, $("$PYTHON" -c 'import sys;print("python "+".".join(map(str,sys.version_info[:3])))')"; else line "  0 scripts compile: RED"; printf '%s\n' "$out" | head -20 | sed 's/^/    /' | tee -a "$REPORT"; floor_red=1; fi
 
   if [ "$floor_red" = 1 ]; then line "verdict: FLOOR RED, exit 1"; verdict_code=1
   else
     line "gate: gate tier"
     # 1 anchors
-    if out="$(python3 "$HERE/check-anchors.py" 2>&1)"; then line "  1 anchors: green, ${out##*$'\n'}"; else line "  1 anchors: RED"; printf '%s\n' "$out" | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
+    if out="$("$PYTHON" "$HERE/check-anchors.py" 2>&1)"; then line "  1 anchors: green, ${out##*$'\n'}"; else line "  1 anchors: RED"; printf '%s\n' "$out" | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
     # 2 tests
     if [ -n "${TEST_COMMAND:-}" ]; then
       if bash -c "$TEST_COMMAND" >"$REPORT.tests" 2>&1; then line "  2 tests: green (results at ${TEST_RESULTS:-unset})"; else line "  2 tests: RED"; tail -40 "$REPORT.tests" | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
       rm -f "$REPORT.tests"
     else line "  2 tests: RED, no test command configured in gate.conf"; gate_reds=$((gate_reds+1)); fi
     # 2b governed files: a card may not change the machinery that judges it
-    if out="$(python3 "$HERE/governed-files.py" --base "$DEFAULT_BRANCH" 2>&1)"; then line "  2b governed files: ${out#governed-files: }"; else line "  2b governed files: RED"; printf '%s\n' "$out" | sed 's/^governed-files: /    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
+    if out="$("$PYTHON" "$HERE/governed-files.py" --base "$DEFAULT_BRANCH" 2>&1)"; then line "  2b governed files: ${out#governed-files: }"; else line "  2b governed files: RED"; printf '%s\n' "$out" | sed 's/^governed-files: /    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
     # 3 specassay
     if out="$(bash "$SPECASSAY_CHECK" 2>&1)"; then line "  3 specassay: green"; else line "  3 specassay: RED"; printf '%s\n' "$out" | grep -E 'FAIL|GAP|orphan|drift|gate' | head -40 | sed 's/^/    /' | tee -a "$REPORT"; gate_reds=$((gate_reds+1)); fi
     # 6 advisories below the floor
     # 4 docs owed
-    owed="$(python3 - <<'PY'
+    owed="$("$PYTHON" - <<'PY'
 import re,subprocess,glob
 owed=[]
 for path in glob.glob("**/*.md", recursive=True):
@@ -112,7 +115,7 @@ line "attempt: head $HEAD_SHA, card ${CARD:-unknown}"
 # Telemetry, only when the daemon is reachable
 PHASE=""
 if [ -n "$DAEMON" ] && [ -n "$CARD" ] && [ -n "${POTATO_PROJECT_ID:-}" ]; then
-  python3 - "$DAEMON" "$POTATO_PROJECT_ID" "$CARD" "${CANNON_HOME:-}" "$JOURNAL_PREFIX" "$TELEMETRY" <<'PY'
+  "$PYTHON" - "$DAEMON" "$POTATO_PROJECT_ID" "$CARD" "${CANNON_HOME:-}" "$JOURNAL_PREFIX" "$TELEMETRY" <<'PY'
 import json,sys,urllib.request,urllib.parse,glob,os
 daemon,project,card,cannon_home,prefix,out=sys.argv[1:7]
 def get(u):
@@ -186,7 +189,7 @@ if [ "$RECEIPT_SOURCE" = "local" ] && [ "${BANG_PROMOTION:-}" = "1" ]; then
     receipt_result=pass; [ "$verdict_code" = 0 ] || receipt_result=fail
     receipt_out="$(RECEIPT_PREFIX="$JOURNAL_PREFIX" RECEIPT_SHA="$HEAD_SHA" \
       RECEIPT_RESULT="$receipt_result" RECEIPT_CODE="$verdict_code" RECEIPT_CARD="${CARD:-}" \
-      python3 "$HERE/write-receipt.py" 2>&1)" && line "$receipt_out" \
+      "$PYTHON" "$HERE/write-receipt.py" 2>&1)" && line "$receipt_out" \
       || line "gate: receipt not written (non-fatal): $receipt_out"
 
     # The snapshot the Thread Report compares a card against. It used to be taken by

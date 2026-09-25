@@ -26,6 +26,9 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
+
+# The interpreter's name is resolved, never spelled. See python.sh.
+. "$HERE/python.sh" || exit 1
 cd "$ROOT" || { echo "promote: cannot enter the project at $ROOT"; exit 2; }
 
 CONF="$HERE/gate.conf"
@@ -54,9 +57,9 @@ say() { printf 'promote: %s\n' "$*"; }
 mark_card() {
   printf '**Promotion refused, %s.**\n\n%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" \
     | CARD_IO_MODE=block CARD_IO_BLOCK=refusal CARD_IO_BLOCK_AT=top \
-      python3 "$HERE/card-io.py" >/dev/null 2>&1 \
+      "$PYTHON" "$HERE/card-io.py" >/dev/null 2>&1 \
     || say "(the card could not be marked; the reason is in this output only)"
-  CARD_IO_MODE=blocked CARD_IO_BLOCKED=true python3 "$HERE/card-io.py" >/dev/null 2>&1 \
+  CARD_IO_MODE=blocked CARD_IO_BLOCKED=true "$PYTHON" "$HERE/card-io.py" >/dev/null 2>&1 \
     || say "(the card could not be flagged blocked)"
 }
 
@@ -70,17 +73,17 @@ mark_card() {
 unmark_card() {
   local when state
   when="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  state="$(CARD_IO_MODE=state python3 "$HERE/card-io.py" 2>/dev/null || echo unknown)"
+  state="$(CARD_IO_MODE=state "$PYTHON" "$HERE/card-io.py" 2>/dev/null || echo unknown)"
 
   if [ "$state" = "blocked" ]; then
     printf 'The promotion that was refused here succeeded at %s.\n' "$when" \
-      | CARD_IO_MODE=block CARD_IO_BLOCK=refusal python3 "$HERE/card-io.py" >/dev/null 2>&1 || true
+      | CARD_IO_MODE=block CARD_IO_BLOCK=refusal "$PYTHON" "$HERE/card-io.py" >/dev/null 2>&1 || true
   else
     printf 'Promoted at %s.\n' "$when" \
-      | CARD_IO_MODE=block CARD_IO_BLOCK=promotion python3 "$HERE/card-io.py" >/dev/null 2>&1 || true
+      | CARD_IO_MODE=block CARD_IO_BLOCK=promotion "$PYTHON" "$HERE/card-io.py" >/dev/null 2>&1 || true
   fi
 
-  CARD_IO_MODE=blocked CARD_IO_BLOCKED=false python3 "$HERE/card-io.py" >/dev/null 2>&1 \
+  CARD_IO_MODE=blocked CARD_IO_BLOCKED=false "$PYTHON" "$HERE/card-io.py" >/dev/null 2>&1 \
     || say "(the blocked flag could not be cleared)"
 }
 
@@ -111,7 +114,7 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   fail 2 "the project checkout has uncommitted changes; nothing was merged"
 fi
 
-BRANCH="$(CARD_IO_MODE=branch BRANCH_PREFIX="${BRANCH_PREFIX:-potato}" python3 "$HERE/card-io.py" 2>&1)" || fail 2 "$BRANCH"
+BRANCH="$(CARD_IO_MODE=branch BRANCH_PREFIX="${BRANCH_PREFIX:-potato}" "$PYTHON" "$HERE/card-io.py" 2>&1)" || fail 2 "$BRANCH"
 if ! git rev-parse --verify --quiet "$BRANCH^{commit}" >/dev/null; then
   fail 1 "this checkout has no branch $BRANCH, so there is nothing to promote"
 fi
@@ -191,7 +194,7 @@ commit_receipt "Gate green at ${MERGE:0:7}, promotion of $TICKET (with the manif
 # script's to assume, so the last word is done-check reading the receipt for the SHA.
 unmark_card
 say "asking the Done check whether the predicate holds"
-if out="$(python3 "$HERE/done-check.py" --receipts local --default-branch "$DEFAULT_BRANCH" --journal "$JOURNAL_PREFIX" 2>&1)"; then
+if out="$("$PYTHON" "$HERE/done-check.py" --receipts local --default-branch "$DEFAULT_BRANCH" --journal "$JOURNAL_PREFIX" 2>&1)"; then
   printf '%s\n' "$out"
   say "$TICKET may enter Done"
   exit 0

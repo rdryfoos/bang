@@ -19,6 +19,9 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
+
+# The interpreter's name is resolved, never spelled. See python.sh.
+. "$HERE/python.sh" || exit 1
 PHASE="${1:-${POTATO_TO_PHASE:-}}"
 FROM="${POTATO_FROM_PHASE:-somewhere}"
 TICKET="${POTATO_TICKET_ID:-}"
@@ -32,10 +35,10 @@ case "$PHASE" in
     : > "$out"; code=0
     ;;
   Build)
-    python3 "$HERE/column-check.py" --spec-names-ids > "$out" 2>&1; code=$?
+    "$PYTHON" "$HERE/column-check.py" --spec-names-ids > "$out" 2>&1; code=$?
     ;;
   Gate)
-    python3 "$HERE/column-check.py" --has-commits > "$out" 2>&1; code=$?
+    "$PYTHON" "$HERE/column-check.py" --has-commits > "$out" 2>&1; code=$?
     ;;
   Align|Review)
     # Review is the human column. This project called it Align until 2026-09-25 and
@@ -47,7 +50,7 @@ case "$PHASE" in
     # owed while its tests pass, and the review column is the last door before a person
     # is asked to believe it. Then the packet, which illuminates and never refuses, so
     # a card that got through arrives with something to read.
-    python3 "$HERE/column-check.py" --tasks-ticked > "$out" 2>&1; code=$?
+    "$PYTHON" "$HERE/column-check.py" --tasks-ticked > "$out" 2>&1; code=$?
     if [ "$code" = 0 ]; then
       bash "$HERE/review-packet.sh" >> "$out" 2>&1
     fi
@@ -56,7 +59,7 @@ case "$PHASE" in
     # Before anything is merged: did this card deliver what it claimed? A card that
     # reached Done over a promise still at backlog altitude is how NFR-DUR-10 came to
     # sit unproven under a green board on 2026-09-20.
-    if python3 "$HERE/column-check.py" --ids-delivered > "$out" 2>&1; then
+    if "$PYTHON" "$HERE/column-check.py" --ids-delivered > "$out" 2>&1; then
       bash "$HERE/promote-to-done.sh" >> "$out" 2>&1; code=$?
     else
       code=$?
@@ -98,7 +101,7 @@ else
 fi
 
 if [ -n "$TICKET" ]; then
-  CARD_IO_MODE=status CARD_IO_MARK="$line" python3 "$HERE/card-io.py" >/dev/null 2>&1 \
+  CARD_IO_MODE=status CARD_IO_MARK="$line" "$PYTHON" "$HERE/card-io.py" >/dev/null 2>&1 \
     || echo "column-entry: the status line could not be written to $TICKET" >&2
 fi
 
