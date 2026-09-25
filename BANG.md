@@ -30,13 +30,24 @@ Everything this file does lands in one of these places, and nowhere else.
    here they are one folder that Undo removes whole.
 4. On a Mac, `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One
    launch agent so the Cannon daemon starts when you log in. On Windows,
-   a Task Scheduler task named `Bang Potato Cannon`, and the one-line
-   script it runs, `~/.potato-cannon/cannon-daemon.sh`. Either way the
+   the one-line script it runs, `~/.potato-cannon/cannon-daemon.sh`, and
+   **one of two** ways of running it at logon: a scheduled task named
+   `Bang Potato Cannon`, registered for this account only, or, if Windows
+   refuses that, a launcher called `bang-potato-cannon.cmd` in this
+   account's own Startup folder,
+   `~/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup`. The
+   script says which one it used and Undo removes that one. Either way the
    daemon listens on 127.0.0.1:3131 only and is never reachable from
-   another machine. The Windows task is the one thing this file registers
-   outside your home folder; `schtasks` removes it, and Undo gives the
-   line.
-5. `~/.claude/projects/`  One folder per working copy the Cannon runs a
+   another machine. The scheduled task is the one thing this file
+   registers outside your home folder; the Startup launcher is a file in
+   it like any other.
+5. On Windows only, `~/AppData/Local/uv/uv-receipt.json`  uv's own record
+   of where it put itself, written by its PowerShell installer. It is not a
+   cache and pointing `UV_CACHE_DIR` elsewhere does not move it: uv writes
+   it so that a later `uv self update` knows what it is updating. One small
+   file, named here because this file names everything it leaves behind,
+   and removed by Undo.
+6. `~/.claude/projects/`  One folder per working copy the Cannon runs a
    worker in, holding that worker's session transcript as a `.jsonl` file.
    Claude Code writes these, not Bang, and it writes them for your own
    sessions too. They can be large: a card that goes round the board once
@@ -93,7 +104,7 @@ is MIT.
 
 ## What this will not do
 
-- Read, write, or list any folder outside the five places above.
+- Read, write, or list any folder outside the places listed above.
 - Touch any other repository, project, or file of yours.
 - Push anything anywhere. `git clone` gave this folder an `origin`, because
   every clone from GitHub has one, and nothing here ever pushes to it: the
@@ -191,7 +202,7 @@ Where a step says nothing about the machine, the one text is both.
    `command failed: unzip`, with a temporary folder already written. uv's
    PowerShell installer is the one uv documents for Windows and it lands
    in the same place: `%USERPROFILE%\.local\bin`, which is `~/.local/bin`
-   as Git Bash spells it, and which is one of the five places above.
+   as Git Bash spells it, and which is one of the places above.
 
    Then, in this terminal, on either machine:
 
@@ -217,10 +228,16 @@ Where a step says nothing about the machine, the one text is both.
    not there.
 
    Receipt: `specify --version` prints a version at or above 0.14.0, and
-   `ls ~/.local/share/uv ~/.cache/uv` says both are missing. On Windows
-   the two to look at are `~/.local/share/uv` and `~/AppData/Local/uv`,
-   which is where uv keeps its cache there when nothing tells it
-   otherwise.
+   `ls ~/.local/share/uv ~/.cache/uv` says both are missing.
+
+   On Windows the receipt is one line longer and one of the two is not a
+   miss. `ls ~/.local/share/uv` says missing, and
+   `ls ~/AppData/Local/uv` shows **one file and no cache**:
+   `uv-receipt.json`, which is uv's record of where it installed itself,
+   written by the PowerShell installer so that a later `uv self update`
+   knows what it is updating. `UV_CACHE_DIR` does not move it, because it
+   is not a cache. It is the sixth place in the list above, and Undo
+   removes it.
 
 4. Node and pnpm. **Node 22, not the current LTS.** The Cannon's database
    library has no prebuilt binary for newer Node and building it from
@@ -293,10 +310,21 @@ Where a step says nothing about the machine, the one text is both.
        export UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache"
        export UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python"
        export UV_TOOL_BIN_DIR="$HOME/.local/bin"
-       specify init --here --force --non-interactive --integration claude
+       specify init --here --force --non-interactive --integration claude --script sh
 
    `--here` means this folder rather than a new one, and `--force` skips
    the confirmation that a non-empty folder would otherwise ask for.
+
+   `--script sh` is there for Windows and changes nothing on a Mac, which
+   would have chosen `sh` anyway. Spec Kit installs one script flavour and
+   writes the skills to call that flavour, as a matched pair: on Windows it
+   would install `.specify/scripts/powershell/` and write skills that say
+   to run `setup-plan.ps1`. The pair would agree with itself and still be
+   wrong here, because every worker this project runs is a Claude Code
+   session whose shell on Windows is Git Bash, which does not execute a
+   `.ps1`. SpecAssay's own gate skill has already settled the question for
+   half the tree: it says `bash .specify/extensions/...check-traceability.sh`
+   whatever the machine. This makes the other half agree.
    Neither deletes what is already here: Spec Kit adds `.specify/` and
    `.claude/`, and leaves every file this repository ships.
 
@@ -312,6 +340,26 @@ Where a step says nothing about the machine, the one text is both.
    plan and check its work against that template, whose heading still has
    a placeholder where the project's name should be.
 
+   Before the first commit, make sure this project has an identity to
+   commit under. A cold account may have none, and Git for Windows does
+   not invent one, so the commit below fails with git's own long refusal
+   about `user.email`:
+
+       git config user.name  >/dev/null 2>&1 || git config user.name  "$(id -un)"
+       git config user.email >/dev/null 2>&1 || git config user.email "$(id -un)@localhost"
+
+   Both go into `~/bang/.git/config` and nowhere else. No `--global`: a
+   project that writes into `~/.gitconfig` has changed a setting of yours
+   that this file never said it would touch, and that Undo could not put
+   back. A repository-local identity goes with `rm -rf ~/bang`.
+
+   `||` rather than an unconditional set, so a person who already has an
+   identity keeps it. The name is the account's own, which is what a
+   person would have typed anyway, and `@localhost` is the honest address
+   for a commit that never leaves this machine. Every card's worktree
+   shares this config, so the workers and the Cannon's own merges on main
+   are covered by the same two lines.
+
    Then commit what Spec Kit added, on main:
 
        git add -A && git commit -m "Bang: Spec Kit initialised"
@@ -322,7 +370,8 @@ Where a step says nothing about the machine, the one text is both.
    reach the Gate finds no checker and fails on a file that is three
    folders away on the same disk.
 
-   Receipt: `.specify/` exists, `ls .specify/` is printed,
+   Receipt: `git config user.name` and `git config user.email` each print
+   a value; `.specify/` exists, `ls .specify/` is printed,
    `head -1 .specify/memory/constitution.md` prints
    `# Constitution: Who Has My Stuff`, `git status` is clean, and
    `git ls-tree HEAD .specify` prints the folder.
@@ -351,6 +400,21 @@ Where a step says nothing about the machine, the one text is both.
    printing `parent_derivation: heading-nesting`. A WARN that
    `test-results.xml` does not exist is expected here; no test has run
    yet.
+
+   **If Claude Code refuses to run one of these commands as untrusted, run
+   it yourself.** Its permission check can refuse a script the session has
+   only just installed, and this step is where it happens: the Gate script
+   arrives in `.specify/extensions/` a moment before it is run, so the
+   session has no history with it. Zebra met this on a Mac on 2026-09-23
+   and the Dell met it on 2026-09-25.
+
+   What to do is one thing and nothing else. The session prints the line
+   it wanted to run. Type `!` at the Claude Code prompt, followed by that
+   line exactly as printed, which runs it in this session and puts its
+   output in the conversation. Then tell the session to carry on. Do not
+   reword the command, do not turn the permission check off, and do not
+   switch to auto mode: the line is the receipt, and a line you improved
+   is a receipt for something else.
 
    Then commit what SpecAssay added, on main:
 
@@ -414,10 +478,24 @@ Where a step says nothing about the machine, the one text is both.
    loads it with `launchctl bootstrap`, and prints the health line.
 
    On Windows it writes `~/.potato-cannon/cannon-daemon.sh` and nothing
-   else, checks it with `bash -n` before registering anything, registers a
-   logon task named `Bang Potato Cannon` with
-   `schtasks /create /sc onlogon`, starts it once with `schtasks /run`
-   because you have already logged in, and prints the same health line.
+   else, checks it with `bash -n` before registering anything, then finds
+   a way to run it at logon, starts it once because you have already
+   logged in, and prints the same health line.
+
+   There are two ways because the obvious one is refused. `schtasks
+   /Create /SC ONLOGON` writes a task that fires for whoever logs on,
+   which is an act on the machine, so Windows wants an administrator and
+   answers a standard account with "Access is denied". PowerShell's
+   `Register-ScheduledTask`, with a trigger scoped to this user, is the
+   same idea asked for properly and may be allowed where the other is not.
+   That is tried first, because a task is a thing that can be asked about
+   afterwards: it says whether it is registered and what it runs, and Undo
+   removes it by name. If it is refused too, the script writes
+   `bang-potato-cannon.cmd` into this account's Startup folder, which
+   needs no privilege at all and which Windows runs at logon because the
+   file is there. It always works, and it knows nothing about itself,
+   which is why it is second. **The script prints which of the two it
+   used**, and that line is what Undo needs.
 
    Read it first; it is short, and its header says why the daemon is run
    directly rather than through the Cannon's own start command, which
@@ -466,7 +544,29 @@ Where a step says nothing about the machine, the one text is both.
        cp -R ~/bang/cannon-template ~/.potato-cannon/templates/bang
        curl -s -X POST http://127.0.0.1:3131/api/projects \
          -H 'Content-Type: application/json' \
-         -d "{\"path\":\"$HOME/bang\",\"displayName\":\"bang\",\"template\":\"bang\"}"
+         -d "{\"path\":\"$(project_path)\",\"displayName\":\"bang\",\"template\":\"bang\"}"
+
+   where `project_path` is `$HOME/bang` on a Mac and
+   `cygpath -m "$HOME/bang"` on Windows:
+
+       project_path() {
+         case "$(uname -s)" in
+           MINGW*|MSYS*) cygpath -m "$HOME/bang" ;;
+           *)            printf '%s\n' "$HOME/bang" ;;
+         esac
+       }
+
+   **Every path handed to the daemon, or written into anything the daemon
+   reads, goes through `cygpath -m` on Windows.** Git Bash spells your home
+   folder `/c/Users/you`, which is a real path to Git Bash and to nothing
+   else. The daemon is a native Windows `node.exe`: handed `/c/Users/you/bang`
+   it resolves it against the current drive and looks for
+   `C:\c\Users\you\bang`, which is not there, and the registration fails
+   with `ENOENT` on a path with a doubled drive letter in the middle of it.
+   `cygpath -m` gives `C:/Users/you/bang`, which is what `git rev-parse
+   --show-toplevel` prints on Windows too, so the project this registers and
+   the project a card's script later looks up are spelled the same way and
+   match.
 
    The template's columns are Ideas, Spec, Build, Gate, Review and Done.
    Ideas and Done are added by the Cannon; the other four come from the
@@ -530,11 +630,18 @@ On a Mac:
     launchctl bootout gui/$(id -u)/com.dryfoos.bang.cannon
     rm ~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist
 
-On Windows, where the two slashes are not a typo: Git Bash turns a leading
-`/Delete` into a path before `schtasks` ever sees it, and `//Delete` is how
-you stop it.
+On Windows, whichever of the two step 8 said it used. The scheduled task,
+where the two slashes are not a typo (Git Bash turns a leading `/Delete`
+into a path before `schtasks` ever sees it, and `//Delete` is how you say
+you meant a switch):
 
     schtasks //Delete //TN "Bang Potato Cannon" //F
+
+or the Startup launcher:
+
+    rm ~/AppData/Roaming/Microsoft/Windows/"Start Menu"/Programs/Startup/bang-potato-cannon.cmd
+
+Running both is safe: each says it found nothing if it was not the one.
 
 Then, on either:
 
@@ -558,7 +665,10 @@ yours and predates this project, and these two lines are not yours to run:
     rm ~/.local/bin/uv ~/.local/bin/uvx
 
 On Windows the same two are `uv.exe` and `uvx.exe`, and a third,
-`uvw.exe`, which uv's Windows build installs beside them.
+`uvw.exe`, which uv's Windows build installs beside them. uv's own
+record of where it put itself goes too, and only if uv is going:
+
+    rm ~/AppData/Local/uv/uv-receipt.json
 
 Node, if this file installed it, is under `~/.potato-cannon/node` and goes
 with `rm -rf ~/.potato-cannon`, along with every package cache the build
