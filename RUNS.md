@@ -4,11 +4,23 @@ One line per run of Bang, newest first: date, machine, how long, where you stopp
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
 - 2026-09-25, puppy, fresh user, Bang at `96dac1c`, pin `ef5087c`: **all eleven steps,
-  every receipt matched.** The first run to get to the end of `BANG.md` with nothing to
-  report against it: uv and Node 22 installed where the file says they go, Spec Kit and
-  SpecAssay committed on main, the Cannon built and the daemon the run's own, the
-  project registered, the three first cards created, and the board open in the browser
-  with the done line last in Terminal. What the card does on the board is to follow.
+  every receipt matched, and BAN-1 through to Review in about twenty minutes.** The
+  first run to get to the end of `BANG.md` with nothing to report against it: uv and
+  Node 22 installed where the file says they go, Spec Kit and SpecAssay committed on
+  main, the Cannon built and the daemon the run's own, the project registered, the
+  three first cards created, and the board open in the browser with the done line last
+  in Terminal.
+
+  Then the card. Spec, Build and Gate, and into Review, with **the gate task ticked**,
+  which is the door #23 fixed doing what it was fixed to do rather than refusing a
+  green card. Try it is live: pressing it starts the app and opens the screens.
+
+  Two things it turned up, both in this PR. The screens serve as bare
+  browser-default HTML with no stylesheet, because `design/README.md`'s contract said
+  copy was binding and layout was a guide and said nothing at all about the styles the
+  files carry. And the Thread tab's first open landed on one thread rather than the
+  field, before either sub-tab was touched; that one is the fork's and is reported
+  under it.
 
 - 2026-09-25, Dell 7420, 2ndColdWinUser, Bang at `96dac1c`: the second Windows walk, and
   the first to get past step 2. Block 1 from the README went through as written, all
