@@ -41,7 +41,16 @@ case "$PHASE" in
     # Review is the human column. This project called it Align until 2026-09-25 and
     # some of its history entries still say so, so both names are matched: a board
     # that was never renamed keeps working, which is the whole rule.
-    bash "$HERE/review-packet.sh" > "$out" 2>&1; code=$?
+    #
+    # Two things happen here and the order matters. The check runs first and can
+    # refuse: a card whose own tasks still read open is a card that says the work is
+    # owed while its tests pass, and the review column is the last door before a person
+    # is asked to believe it. Then the packet, which illuminates and never refuses, so
+    # a card that got through arrives with something to read.
+    python3 "$HERE/column-check.py" --tasks-ticked > "$out" 2>&1; code=$?
+    if [ "$code" = 0 ]; then
+      bash "$HERE/review-packet.sh" >> "$out" 2>&1
+    fi
     ;;
   Done)
     # Before anything is merged: did this card deliver what it claimed? A card that
