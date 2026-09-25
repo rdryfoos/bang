@@ -3,6 +3,27 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-25, panda, fresh user, pin `b23fcc3`: **the first run to reach the review
+  door, and the first to be refused by it.** Spec asked no question. Build wrote
+  `src/whms/web.py`, `src/whms/pages.py` and `tests/test_web.py`, eight tests named for
+  the ids, and ticked T904 in `specs/backlog/tasks.md`, which is what
+  `cannon-template/agents/build.md` tells a worker to do with a reservation its spec has
+  claimed.
+
+  The Gate then went RED on this project's own
+  `tests/test_shipped_promises.py::test_the_first_card_carries_the_five_ids_the_seed_leaves_unbuilt`,
+  which read the tick as the browser having shipped in the seed again. The worker put
+  T904 back to open, wrote on the line why it had, and left it for a person rather than
+  arguing with a check; the Gate went GREEN at `398b4ce`. Then
+  `column-check.py --tasks-ticked` refused the card at the door into Review, naming the
+  T904 line it had just reopened.
+
+  Two rules that had never been run together, each doing its job: tick the reservation
+  your spec claims, and do not promote a card whose open tasks carry its own ids. The
+  card was right both times and could not move either way. That is the check working,
+  and the guard is what was wrong: it was written as a statement about the T904 line
+  when it is a statement about the seed. Fixed here.
+
 - 2026-09-25, Lenovo, rik, Bang at `a31d799`: the Windows walk, and the first run of
   this on anything that is not a Mac. Steps 1 and 2 went through in Git Bash. The worker
   then stopped before step 3 and said why, which is the right thing to do with a file it

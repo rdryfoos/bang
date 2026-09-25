@@ -174,9 +174,9 @@ def test_no_shipped_file_claims_the_project_has_no_remote():
         "a clone from a host always has an origin; these say otherwise: %s" % offenders)
 
 
-def _first_cards():
+def _first_cards(root=ROOT):
     """The three cards as FIRST-CARDS.md gives them: (title, description)."""
-    text = (ROOT / "FIRST-CARDS.md").read_text(encoding="utf-8")
+    text = (root / "FIRST-CARDS.md").read_text(encoding="utf-8")
     return re.findall(r"^## \d+\. ([^\n]+)\n\n```\n(.*?)\n```", text, re.S | re.M)
 
 
@@ -228,25 +228,147 @@ def test_the_first_cards_are_the_same_in_both_places():
             "FIRST-CARDS.md:\n%s\n\nBANG.md step 10:\n%s" % (ft, fb, sb))
 
 
+# Card one's promises: the five the seed deliberately leaves unbuilt so that a reader's
+# first card has something to do. Written once, because three things below compare
+# against them and a fourth copy is how they stop agreeing.
+SEED_IDS = frozenset({"US-UI-10", "FR-UI-10", "AC-UI-10", "AC-UI-20", "AC-UI-30"})
+
+ID_TOKEN = re.compile(r"\b(?:US|FR|AC|NFR)-[A-Z]+-\d+\b")
+
+
+def _ids_a_spec_claims(text):
+    """The IDs a spec.md says are in its own scope.
+
+    Every spec in this tree ends with a "SpecAssay" section whose one job is to name
+    them, so that is what is read: a spec that mentions an ID in passing has not
+    claimed it, and card one's five are mentioned in passing today, in 005's prose
+    about the screens it is waiting for. A spec written without that section is read
+    whole, so a claim is never missed for want of a heading.
+    """
+    parts = re.split(r"^##\s*SpecAssay\b.*$", text, maxsplit=1, flags=re.M)
+    body = parts[1].split("\n## ", 1)[0] if len(parts) > 1 else text
+    return set(ID_TOKEN.findall(body))
+
+
+def _spec_claiming_the_seed_ids(root):
+    """The spec that claims all five of card one's promises, if one does yet."""
+    for spec in sorted((root / "specs").glob("*/spec.md")):
+        if SEED_IDS <= _ids_a_spec_claims(spec.read_text(encoding="utf-8")):
+            return spec
+    return None
+
+
+def _seed_guard_problem(root):
+    """What is wrong with the seed's reservation of card one's promises, or None.
+
+    This is a statement about the seed, and on 2026-09-25 it was written as though it
+    were a statement about the T904 line. The ninth cold run found the difference the
+    expensive way. panda's Build worker wrote the screens, named eight tests for the
+    ids, and ticked T904 because `cannon-template/agents/build.md` tells it to tick a
+    reservation its spec has claimed. This guard then went red, because it read the
+    tick as the screens having shipped in the seed again. Both rules were right and
+    they contradicted each other, and nothing had ever run the pair together.
+
+    So the open assertion is conditional, which is what it always meant. While no spec
+    claims the five, T904 must be open, because an open task is the only thing holding
+    those promises out of the Gate's silent-gap reading and the only thing keeping the
+    seed's first card from having nothing to do. Once a spec claims them the
+    reservation has expired by `specs/backlog/tasks.md`'s own rule, exactly as T906's
+    line says of itself, and the box may be ticked or not.
+
+    What is checked in both cases is the pair: card one carries five ids, and the T904
+    line carries the same five. That one does not expire.
+    """
+    cards = dict(_first_cards(root))
+    card_one = cards.get("Lend and return in the browser")
+    if card_one is None:
+        return "FIRST-CARDS.md has no card called 'Lend and return in the browser'"
+
+    ids = [line for line in card_one.splitlines() if line.startswith("ids:")]
+    if len(ids) != 1:
+        return "card one has %d ids: lines, and it has one" % len(ids)
+    carried = {one.strip() for one in ids[0][len("ids:"):].split(",")}
+    if carried != set(SEED_IDS):
+        return ("card one carries %s; the promises the seed leaves unbuilt are %s"
+                % (sorted(carried), sorted(SEED_IDS)))
+
+    tasks = (root / "specs" / "backlog" / "tasks.md").read_text(encoding="utf-8")
+    lines = [line for line in tasks.splitlines() if re.match(r"^- \[[ x]\] T904\b", line)]
+    if len(lines) != 1:
+        return "specs/backlog/tasks.md has %d T904 lines; the reservation is one line" % len(lines)
+    line = lines[0]
+
+    missing = [one for one in sorted(carried) if one not in line]
+    if missing:
+        return "%s on card one but not on T904's Carries list" % ", ".join(missing)
+
+    if _spec_claiming_the_seed_ids(root) is None and not line.startswith("- [ ] "):
+        return ("T904 is ticked and no spec claims card one's five promises. Either the "
+                "screens have shipped in the seed again, leaving a reader's first card "
+                "nothing to do, or a tick went on ahead of the spec that earns it.")
+    return None
+
+
 def test_the_first_card_carries_the_five_ids_the_seed_leaves_unbuilt():
     """Card one's ids: line and the reservation that holds those IDs say the same thing.
 
     The seed shipped the browser once. The first card then had nothing to do, and nobody
-    noticed for a week because no card had been dragged. If the screens ship again, this
-    fails: the IDs would be proven and the reservation closed, while card one still asked
-    for them.
+    noticed for a week because no card had been dragged.
     """
-    first = dict((t, b) for t, b in _first_cards())
-    card_one = first["Lend and return in the browser"]
-    ids = [line for line in card_one.splitlines() if line.startswith("ids:")]
-    assert len(ids) == 1, "card one has no ids: line"
-    carried = {i.strip() for i in ids[0][len("ids:"):].split(",")}
-    assert carried == {"US-UI-10", "FR-UI-10", "AC-UI-10", "AC-UI-20", "AC-UI-30"}
+    problem = _seed_guard_problem(ROOT)
+    assert problem is None, problem
 
-    reservation = [
-        line for line in (ROOT / "specs" / "backlog" / "tasks.md").read_text(encoding="utf-8").splitlines()
-        if line.startswith("- [ ] T904")
-    ]
-    assert reservation, "T904 is not open, so card one's promises are not reserved for it"
-    for one in sorted(carried):
-        assert one in reservation[0], "%s is on card one but not on T904's Carries list" % one
+
+def _seed_tree(tmp_path, ticked=False, spec_claims=False):
+    """A tree with just the three files the guard reads.
+
+    Card one comes from the real FIRST-CARDS.md, because a fixture that wrote its own
+    copy of the five ids would pass while the shipped file said something else.
+    """
+    (tmp_path / "specs" / "backlog").mkdir(parents=True)
+    (tmp_path / "FIRST-CARDS.md").write_text(
+        (ROOT / "FIRST-CARDS.md").read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "specs" / "backlog" / "tasks.md").write_text(
+        "# Backlog\n\n- [%s] T904 Deliver the four screens `design/` draws. "
+        "**Carries**: %s (reserved backlog).\n"
+        % ("x" if ticked else " ", ", ".join(sorted(SEED_IDS))), encoding="utf-8")
+    if spec_claims:
+        claiming = tmp_path / "specs" / "006-browser-screens"
+        claiming.mkdir()
+        (claiming / "spec.md").write_text(
+            "# Feature Specification: Browser Screens\n\n"
+            "## SpecAssay \u2014 durable IDs (required)\n\n"
+            "IDs are inherited from PRD.md. None is created here. Scope of this "
+            "feature: %s.\n" % ", ".join("`%s`" % one for one in sorted(SEED_IDS)),
+            encoding="utf-8")
+    return tmp_path
+
+
+def test_the_seed_guard_passes_on_the_seed_with_the_reservation_open(tmp_path):
+    """The shipped state, and the one this repository is in today."""
+    assert _seed_guard_problem(_seed_tree(tmp_path)) is None
+
+
+def test_the_seed_guard_fails_on_the_seed_with_the_reservation_ticked(tmp_path):
+    """The failure it exists for, and the one the conditional must not let through.
+
+    Nothing claims the five, and the box says they are delivered. That is either the
+    browser back in the seed or a tick ahead of its spec, and both leave a reader
+    dragging a card that has nothing to do.
+    """
+    problem = _seed_guard_problem(_seed_tree(tmp_path, ticked=True))
+    assert problem is not None, "a ticked reservation with no spec behind it passed"
+    assert "T904 is ticked" in problem
+
+
+def test_the_seed_guard_passes_when_a_spec_claims_the_five_and_the_reservation_is_ticked(tmp_path):
+    """panda's branch, which was refused and should not have been.
+
+    A spec claims the five, the work is built and proven, and the worker ticked the
+    reservation because `build.md` tells it to. The reservation has expired; the guard
+    has nothing left to say.
+    """
+    tree = _seed_tree(tmp_path, ticked=True, spec_claims=True)
+    assert _seed_guard_problem(tree) is None, _seed_guard_problem(tree)
+    # And the claim is what makes the difference, not the spec directory existing.
+    assert _spec_claiming_the_seed_ids(tree) is not None
