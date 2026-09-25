@@ -11,23 +11,12 @@ and person in this repository is invented.
 
 ## Run it
 
-Bang needs a Mac or a Windows PC, an Anthropic account, and two clocks. About ten
-minutes to install, most of it saying yes. Then the first card takes the board about
-twenty-five minutes on its own; you can watch, or come back.
-
-It writes to a handful of places in your home folder and nowhere else; `BANG.md` lists
-them, and
-lists what it fetches and what it will not do. Read `BANG.md` before you run it, and read
-its paragraph that begins "Read this one twice" twice.
-
-Mac and Windows.
+Every line of this is explained in `RUN-NOTES.md`: what each paste does, what the
+prompts mean, and what to do when it stops.
 
 ### On a Mac
 
-Two blocks, in order, both pasted into Terminal.
-
-Block 1, "Get Claude". Skip it if you already have Claude Code. If git asks to install
-the command line developer tools first, let it; that is Apple's, not ours.
+1. Get Claude.
 
 ```
 curl -fsSL https://claude.ai/install.sh | bash
@@ -35,11 +24,9 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-The second and third lines put Claude Code on your path; the installer prints the same
-instruction.
+2. Close this window and open a new Terminal.
 
-Block 2, "Get the rest". Clones the project to `~/bang`, goes in, and starts Claude Code
-there with the instruction already in its hands.
+3. Get the rest.
 
 ```
 git clone https://github.com/rdryfoos/bang.git ~/bang
@@ -47,75 +34,41 @@ cd ~/bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-Sign in when it asks. After the "Claude can make mistakes" screen, the next prompt is
-"Yes, I trust this folder"; yes is not the default, so pick it. If the bottom line of
-Claude Code says auto mode, press shift+tab until it says manual mode; auto mode refuses
-steps 6 and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The
-board opens in your browser when it finishes; the last line is in Terminal.
+4. Say yes when it asks whether you trust this folder. Then press return at each prompt.
 
-If Claude Code refuses a command as untrusted, it prints the line it wanted to run.
-Type `!` at its prompt followed by that line, exactly as printed, which runs it here
-and puts the output in the conversation; then tell it to carry on. Nothing else: do not
-reword the line, do not turn the permission check off, and do not switch to auto mode.
+5. When the board opens, drag BAN-1 to Spec.
 
 ### On Windows
 
-Two blocks, in order. Block 1 is pasted into PowerShell, which Windows already has.
-Block 2 is pasted into Git Bash, which block 1 installs.
-
-Block 1, "Get Claude", in four parts, pasted one at a time and not together. Each one
-has to finish before the next means anything.
-
-First, in PowerShell, Python. `BANG.md` needs it from step 2 and the project's own
-scripts need it throughout, and a fresh Windows has none:
-
-```
-winget install --id Python.Python.3.12 -e --source winget
-```
-
-Then, in the same window, git:
+1. In PowerShell, get git.
 
 ```
 winget install --id Git.Git -e --source winget
 ```
 
-Close that PowerShell window and open a new one, so it reads the path Git just added.
-Then, on its own:
+2. Close this window and open a new PowerShell.
+
+3. Get Python.
+
+```
+winget install --id Python.Python.3.12 -e --source winget
+```
+
+4. Get Claude Code. Wait for it to finish.
 
 ```
 irm https://claude.ai/install.ps1 | iex
 ```
 
-Wait for that to come back to a prompt. It is an installer, and a line pasted while it
-is still running goes to the installer rather than to PowerShell. Then, on its own
-again:
+5. Put Claude Code on your path.
 
 ```
 [Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.local\bin", 'User')
 ```
 
-That puts Claude Code on your path, the way the Mac block's two lines do. It writes your
-own path setting and not the machine's, so it needs no administrator and touches nothing
-another user of this PC would see.
+6. Close this window and open a new PowerShell.
 
-Now close this window and open a new PowerShell. Windows reads the user path when a
-window opens and never again, so the window you just typed that in cannot see it, and
-neither can anything you start from it. In the new one, `claude --version` should
-answer; if it does not, the path line is what to look at, and nothing below will work
-until it does.
-
-Block 2, "Get the rest", in **Git Bash**: it is in the Start menu, and it is where the
-rest of this happens, including every command in `BANG.md`. Clones the project to
-`$HOME\bang`, goes in, and starts Claude Code there with the instruction already in its
-hands.
-
-`$HOME\bang` and not `~/bang`, which is the only line in this block that differs from
-the Mac's. Git Bash expands `~` and git does not: `git clone` on Windows takes the
-tilde as a literal folder name and fails with "could not create leading directories of
-'~/bang': Permission denied", which reads like a permissions problem and is a spelling
-one. `$HOME` is expanded by the shell before git sees it, so git is handed a real path.
-The `cd` would have worked either way; it matches the clone so that the two lines
-cannot drift apart.
+7. Get the rest.
 
 ```
 git clone https://github.com/rdryfoos/bang.git $HOME\bang
@@ -123,25 +76,9 @@ cd $HOME\bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-Sign in when it asks. After the "Claude can make mistakes" screen, the next prompt is
-"Yes, I trust this folder"; yes is not the default, so pick it. If the bottom line of
-Claude Code says auto mode, press shift+tab until it says manual mode; auto mode refuses
-steps 6 and 7 on its own, and if Claude Code offers to switch to auto mode, say no. The
-board opens in your browser when it finishes; the last line is in Git Bash.
+8. Say yes when it asks whether you trust this folder. Then press return at each prompt.
 
-If Claude Code refuses a command as untrusted, it prints the line it wanted to run.
-Type `!` at its prompt followed by that line, exactly as printed, which runs it here
-and puts the output in the conversation; then tell it to carry on. Nothing else: do not
-reword the line, do not turn the permission check off, and do not switch to auto mode.
-
-Windows is new here and nothing on this page claims it works yet. One walk on one Dell
-is what `RUNS.md` has; yours is the next one, and the line you add to `RUNS.md` is worth
-more than the line above it.
-
-### Either way
-
-When it finishes, or when it stops, add one line to `RUNS.md` saying what happened and
-open a pull request. `CONTRIBUTING.md` says how; it is three sentences.
+9. When the board opens, drag BAN-1 to Spec.
 
 ## What you were handed
 
