@@ -3,6 +3,28 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-25, dragon, fresh user, Bang at main with #20 and #21: **the cleanest run yet,
+  and it still could not get through the door.** Spec asked no question and took seven
+  minutes. Build went green on its first iteration in ten, with five tests named for the
+  ids and a `try:` line on the card. The Gate went GREEN.
+
+  Review then refused it, naming `specs/006-browser-screens/tasks.md` T610, "Run the
+  SpecAssay Check Gate and paste its result on the card", unticked, carrying all five of
+  the card's ids. The worker's own message said `Gate is GREEN at 4cc0440`. So the gate
+  had been run, and the line saying it was owed was open, and the door read the line.
+
+  The door was right. The line was what nobody owned: it described the runner's job, not
+  a worker's, and no prompt told anybody to tick it. The Spec worker writes it into every
+  card's list (T211 on shark, T610 here), so once panda's fix took the T904 guard out of
+  the way, this became the thing every card stops at.
+
+  The cause is not where it was looked for. The wording is in no template: not in
+  `spec.md`, not in Spec Kit's tasks template, not in the constitution. It is in the
+  three `specs/*/tasks.md` files this repository ships, which are the worked examples a
+  Spec worker reads before writing its own. An exemplar is a template nobody remembers
+  to change. Fixed here: the task is reworded as the builder's, given a home in
+  `spec.md` so it is written on purpose rather than copied, and made Build's last task.
+
 - 2026-09-25, panda, fresh user, pin `b23fcc3`: **the first run to reach the review
   door, and the first to be refused by it.** Spec asked no question. Build wrote
   `src/whms/web.py`, `src/whms/pages.py` and `tests/test_web.py`, eight tests named for

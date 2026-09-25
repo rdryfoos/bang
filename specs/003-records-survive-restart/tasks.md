@@ -15,7 +15,7 @@ reader's answers.
 
 ## Phase 2: Gate
 
-- [x] T203 Run the SpecAssay Check Gate and paste its result on the card. No task line may lack `**Carries**`, no test name may be unmatched, no `@covers` may be an orphan. **Carries**: NFR-DUR-10, AC-DUR-10
+- [x] T203 Run the SpecAssay Check Gate locally and report its verdict on the card. No task line may lack `**Carries**`, no test name may be unmatched, no `@covers` may be an orphan. **Carries**: NFR-DUR-10, AC-DUR-10
 
 ## Dependencies and order
 

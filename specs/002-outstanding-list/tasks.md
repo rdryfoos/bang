@@ -24,7 +24,7 @@ fail. All fixture values are invented and generic, never taken from the reader's
 
 ## Phase 3: Gate
 
-- [ ] T107 Run the SpecAssay Check Gate and paste its result on the card. No task line may lack `**Carries**`, no test name may be unmatched, no `@covers` may be an orphan. **Carries**: US-OUT-10, FR-OUT-10, AC-OUT-10, AC-OUT-20
+- [ ] T107 Run the SpecAssay Check Gate locally and report its verdict on the card. No task line may lack `**Carries**`, no test name may be unmatched, no `@covers` may be an orphan. **Carries**: US-OUT-10, FR-OUT-10, AC-OUT-10, AC-OUT-20
 
 ## Dependencies and order
 
