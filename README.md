@@ -17,7 +17,7 @@ You need an Anthropic account; the pastes install everything else.
 
 ### On a Mac
 
-1. Get Claude and the rest.
+1. One paste in your favorite terminal:
 
 ```
 curl -fsSL https://claude.ai/install.sh | bash
