@@ -5,8 +5,13 @@ needs it in both places. Two copies of anything drift, and each of these drifts
 silently: nothing fails, nothing is red, and the person finds out by pasting a line
 that does not work or by running an Undo that leaves something behind.
 """
+import os
 import pathlib
 import re
+import shutil
+import subprocess
+
+import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 README = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -313,13 +318,31 @@ def test_block_two_differs_between_the_machines_in_the_home_folder_and_nothing_e
         "the Windows block still carries a tilde path, which git will not expand")
 
 
+def _bash():
+    """The bash on this machine's path, or a skip with the reason.
+
+    It was `/bin/bash`, which is where bash is on a Mac and on Linux and nowhere at all
+    on Windows. On the fourth Windows cold run these tests were eight of the Gate's red
+    lines, on a card whose own work was clean: the worker stashed its changes and the
+    same eight failed, which is how it knew they were not its own. A test that names a
+    tool by its absolute path is a test about one machine.
+
+    Git for Windows puts bash on the path of the shell every worker runs in, so `which`
+    finds it there. When nothing does, the test says so rather than failing: a suite
+    that cannot find bash has nothing to tell you about a shell script.
+    """
+    found = shutil.which("bash")
+    if not found:
+        pytest.skip("no bash on the path, so a shell script cannot be run here")
+    return found
+
+
 def _eaddrinuse_receipt(tmp_path, log):
     """Run write-launch-agent.sh's own EADDRINUSE lines, lifted out of the script.
 
     Lifted rather than restated: a copy of the two lines in this file would go on
     passing after somebody changed the script, which is the failure this is for.
     """
-    import subprocess
     home = tmp_path / "home"
     (home / ".potato-cannon").mkdir(parents=True)
     if log is not None:
@@ -332,9 +355,12 @@ def _eaddrinuse_receipt(tmp_path, log):
     assert lifted, "the EADDRINUSE lines are no longer in the shape this test lifts"
     script = "\n".join(line.strip() for line in lifted.group(1).splitlines())
     script += '\necho "  EADDRINUSE lines in daemon.log: $EADDRINUSE"'
+    # HOME is the only thing this needs to control: it is what the lifted lines read.
+    # The rest of the environment is inherited, because a hand-built PATH is another
+    # absolute path to get wrong on a machine nobody tested it on.
     out = subprocess.run(
-        ["/bin/bash", "-c", script], capture_output=True, text=True,
-        env={"HOME": str(home), "PATH": "/usr/bin:/bin"})
+        [_bash(), "-c", script], capture_output=True, text=True,
+        env=dict(os.environ, HOME=str(home)))
     return out.stdout.rstrip("\n")
 
 

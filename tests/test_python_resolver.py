@@ -16,7 +16,10 @@ So the name is not a constant, and no script may spell it. `scripts/python.sh` a
 import os
 import pathlib
 import re
+import shutil
 import subprocess
+
+import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RESOLVER = ROOT / "scripts" / "python.sh"
@@ -108,9 +111,16 @@ def _resolve_with(tmp_path, names):
     """
     binaries = tmp_path / "bin"
     binaries.mkdir(exist_ok=True)
-    # uname, because the refusal reads it to decide which advice to print. Nothing
-    # else from the real path, so the machine's own python cannot answer instead.
-    (binaries / "uname").symlink_to("/usr/bin/uname")
+    # uname, because the refusal reads it to decide which advice to print. Nothing else
+    # from the real path, so the machine's own python cannot answer instead.
+    #
+    # Copied rather than symlinked, and found rather than named: it was
+    # `symlink_to("/usr/bin/uname")`, which is one absolute path that is not there on
+    # Windows and one call that needs a privilege there even when it is.
+    uname = shutil.which("uname")
+    if not uname:
+        pytest.skip("no uname on the path, and the resolver's refusal reads it")
+    shutil.copy(uname, binaries / pathlib.Path(uname).name)
     for name, prints in names.items():
         script = binaries / name
         if prints is None:
@@ -120,8 +130,11 @@ def _resolve_with(tmp_path, names):
         script.chmod(0o755)
     env = dict(os.environ, PATH=str(binaries))
     env.pop("PYTHON", None)
+    bash = shutil.which("bash")
+    if not bash:
+        pytest.skip("no bash on the path, so python.sh cannot be sourced here")
     return subprocess.run(
-        ["/bin/bash", "-c", '. "%s" && printf "%%s" "$PYTHON"' % RESOLVER],
+        [bash, "-c", '. "%s" && printf "%%s" "$PYTHON"' % RESOLVER],
         capture_output=True, text=True, env=env)
 
 
