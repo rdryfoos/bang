@@ -26,13 +26,13 @@ worth more than the line above it.
 
 ### On a Mac
 
-**1. Get Claude and the rest.** Skip the first three lines if you already have Claude
-Code. If git asks to install the command line developer tools first, let it; that is
-Apple's, not ours. Lines two and three put Claude Code on your path, and the installer
-prints the same instruction; `source ~/.zshrc` is why there is no window to reopen.
-The last three clone the project to `~/bang`, go in, and start Claude Code there with
-the instruction already in its hands. That last line is the whole of what Bang is told
-to do, and it is the same line on both machines.
+**1. One paste in your favorite terminal:** Skip the first three lines if you already
+have Claude Code. If git asks to install the command line developer tools first, let it;
+that is Apple's, not ours. Lines two and three put Claude Code on your path, and the
+installer prints the same instruction; `source ~/.zshrc` is why there is no window to
+reopen. The last three clone the project to `~/bang`, go in, and start Claude Code there
+with the instruction already in its hands. That last line is the whole of what Bang is
+told to do, and it is the same line on both machines.
 
 ### On Windows
 

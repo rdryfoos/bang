@@ -658,3 +658,55 @@ def test_the_notes_stop_on_the_same_word():
     word = _printed_closing_line().split(".", 1)[0]
     assert "stop pressing return at `%s`" % word in _flat(NOTES), (
         "RUN-NOTES.md does not stop on %r" % word)
+
+
+def _run_it_beats(name):
+    """{number: text} for one machine's beats, as the page numbers them."""
+    return {int(m.group(1)): m.group(2).strip()
+            for m in re.finditer(r"^(\d+)\. (.+)$", _run_it_sections()[name], re.M)}
+
+
+def _note_headings(name):
+    """{number: heading} for one machine's notes in RUN-NOTES.md."""
+    under = NOTES.split("### On a Mac", 1)[1]
+    body = under.split("### On Windows", 1)[0] if name == "Mac" else under.split("### On Windows", 1)[1]
+    return {int(m.group(1)): m.group(2).strip()
+            for m in re.finditer(r"^\*\*(\d+)\.\s*(.*?)\*\*", body, re.M)}
+
+
+def test_every_note_is_numbered_for_a_beat_that_exists():
+    """RUN-NOTES.md's notes are keyed by beat number, so the numbers have to be real.
+
+    This is the half of the pairing that can be checked without reading intent. Four of
+    the six note headings are deliberately short labels rather than quotations of their
+    beat ("Reopen, then get Python." for "Close that window and open a new PowerShell.
+    Get Python."), and a test cannot tell a label from a quotation that has drifted. The
+    numbers it can: they were renumbered once already when the beats were, and a note
+    numbered for a beat that is not there is a note a reader cannot find.
+    """
+    for name in ("Mac", "Windows"):
+        beats, notes = _run_it_beats(name), _note_headings(name)
+        assert notes, "RUN-NOTES.md has no notes for %s" % name
+        stray = sorted(n for n in notes if n not in beats)
+        assert not stray, (
+            "%s notes are numbered for beats that do not exist: %s (beats are %s)"
+            % (name, stray, sorted(beats)))
+
+
+def test_the_mac_note_quotes_the_mac_beat_word_for_word():
+    """The one note that is a quotation, held to it.
+
+    The Mac has one paste and one note, and that note's heading is the beat. It said
+    "Get Claude and the rest." for a beat that had been reworded to "One paste in your
+    favorite terminal:", which is the drift this pair is for: the next rewording of
+    either fails here instead of leaving the notes quoting a line that is not on the
+    page.
+
+    It pins agreement, not wording. Reword both and it passes; reword one and it does
+    not.
+    """
+    beats, notes = _run_it_beats("Mac"), _note_headings("Mac")
+    assert set(notes) == {1}, "the Mac has %d notes; it has one paste" % len(notes)
+    assert notes[1] == beats[1], (
+        "the Mac note quotes a beat that is not on the page.\n"
+        "  note: %r\n  beat: %r" % (notes[1], beats[1]))
