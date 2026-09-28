@@ -192,3 +192,99 @@ def test_build_md_says_the_tick_and_the_finishing_commit_are_one_commit():
         "build.md no longer says the tick goes in the finishing commit")
     assert "verdict" in text and "GREEN or RED" in text, (
         "build.md no longer asks for the gate's own verdict on the card")
+
+
+# ---------------------------------------------------------------------------
+# Buddy, on a card in Review, with a pen.
+#
+# On 2026-09-27 a reader said "I was hoping it would be centered". The judgment was
+# made correctly in about a minute, and what came back was a paragraph for the reader
+# to type by hand and a question about demoting the card. The ceremony was the whole
+# of the delay, and the reader had already said the only thing anybody needed.
+#
+# These read the prompt, because the prompt is the whole of what an agent with the
+# prompts turned off has been told. They are the Bang half: Buddy cannot write until
+# the fork half lands, so what is checked here is that the rules are there first.
+# ---------------------------------------------------------------------------
+BUDDY_MD = ROOT / "cannon-template" / "agents" / "ticket-qa.md"
+
+
+def _buddy():
+    return _flat(BUDDY_MD.read_text(encoding="utf-8"))
+
+
+def test_buddy_makes_a_within_card_change_rather_than_handing_it_back():
+    buddy = _buddy()
+    assert "**You make it.**" in buddy, "the prompt does not give Buddy the change"
+    assert "The card stays in Review and the reader tries it again." in buddy
+
+
+def test_the_fence_is_the_build_workers_fence():
+    """Same fence, same reasons: worktree, branch, governed files, commit, tests, Gate."""
+    buddy = _buddy()
+    for clause in [
+        "Only in the card's worktree, on the card's branch.",
+        "Only in files the card's IDs govern.",
+        "Commit on the branch",
+        "Run the project's tests.",
+        "Run the Gate after every write",
+        "The card stays in Review.",
+    ]:
+        assert clause in buddy, "the fence does not say: %s" % clause
+    # After every write, not at the end of a batch: a write whose Gate has not run is
+    # a write nobody has checked, and the reader is about to press Try it on it.
+    assert "not at the end of a batch" in buddy
+
+
+def test_the_governed_files_are_named_and_the_checks_are_out_of_bounds():
+    buddy = _buddy()
+    for named in ("PRD.md", "CASE.md", "CONSTITUTION.md", "SURFACE.md", "scripts/"):
+        assert named in buddy, "%s is not named as out of bounds" % named
+    assert "a card that edits the checks that judge it has judged itself" in buddy
+
+
+def test_a_new_promise_is_refused_with_the_ac_the_id_and_the_card_named():
+    """The one fork. The judgment Buddy already made correctly, kept."""
+    buddy = _buddy()
+    assert "A change to how an existing promise is met is delivery. Make it." in buddy
+    assert "A change to what the card promises is not yours" in buddy
+    for part in [
+        "name the AC, FR, US or NFR it would change, by ID, and what that ID says now",
+        "name the ID that would have to be created and what it would promise",
+        "name the card that would carry it",
+    ]:
+        assert part in buddy, "the refusal does not: %s" % part
+    assert "No write, no block, no demotion, no offer to do it anyway." in buddy
+
+
+def test_rework_and_demote_is_no_longer_buddys_path_and_what_keeps_it_is_said():
+    buddy = _buddy()
+    assert "Do not write a `Rework` block." in buddy, (
+        "the prompt still lets Buddy write a Rework block")
+    assert "Demote to Build so the worker picks this up?" not in buddy, (
+        "the demotion question is still in the prompt")
+    # It keeps exactly one use, and the prompt says which.
+    assert "a change a person wants left for the Build worker rather than made now" in buddy
+    assert "Rik writes those by hand" in buddy
+
+
+def test_the_second_path_check_speaks_only_when_it_finds_something():
+    """A check that announces itself when it passes is a line nobody reads."""
+    buddy = _buddy()
+    assert "**Say something only if you found something.**" in buddy
+    assert 'or say "no second path found" once' not in buddy, (
+        "the prompt still prints the precheck on a passing check")
+    assert "If there is not, say nothing about it at all and answer the question." in buddy
+
+
+def test_buddys_own_description_no_longer_says_it_only_reads():
+    """The line the daemon shows beside the agent, and it was the first thing false.
+
+    It said "Reads only." while the prompt below it hands Buddy a pen. A description
+    that contradicts its own prompt is the one sentence a reader checks when they are
+    deciding whether to trust what just happened to their branch.
+    """
+    front = BUDDY_MD.read_text(encoding="utf-8").split("---", 2)[1]
+    assert "Reads only" not in front, "the description still says Buddy only reads"
+    assert "writes only in the card's own worktree" in _flat(front)
+    assert "while it is in Review" in _flat(front)
