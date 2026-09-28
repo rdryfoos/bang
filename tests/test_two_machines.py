@@ -212,7 +212,7 @@ def test_the_pin_is_the_same_in_both_of_bangs_two_places():
     assert pins[0] == pins[1], "the two pins differ: %s and %s" % tuple(pins)
 
     fetches = BANG.split("## What this fetches from the network", 1)[1].split("\n## ", 1)[0]
-    step_seven = BANG.split("\n7. Potato Cannon.", 1)[1].split("\n8. ", 1)[0]
+    step_seven = BANG.split("\n8. Potato Cannon.", 1)[1].split("\n9. ", 1)[0]
     assert pins[0] in fetches, "the fetch list does not name the pin"
     assert pins[0] in step_seven, "step 7's receipt does not name the pin"
 

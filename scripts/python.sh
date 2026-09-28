@@ -20,8 +20,30 @@
 # Written by the born-threaded practice; MIT.
 
 # The first name on the path that says it is Python 3. Prints it, or nothing.
+# The project's own interpreter, if step 7 made one. Prints it, or nothing.
+#
+# It is preferred over anything on the path because it is the one with pytest in it.
+# Apple ships python3 and does not ship pytest, and until 2026-09-28 the way that gap
+# got closed was a Build worker installing pytest onto the reader's machine, which is
+# the page asking for an installation it never promised. The environment is the page
+# keeping its own promise instead.
+#
+# Absent, this returns nothing and the search below runs as it always did: a checkout
+# somebody is poking at by hand, before step 7 or after Undo, still resolves a Python.
+project_python() {
+  local venv="$HOME/.potato-cannon/venv"
+  for candidate in "$venv/bin/python" "$venv/Scripts/python.exe"; do
+    [ -x "$candidate" ] || continue
+    case "$("$candidate" --version 2>&1)" in
+      "Python 3"*) printf '%s\n' "$candidate"; return 0 ;;
+    esac
+  done
+  return 1
+}
+
 resolve_python() {
   local candidate version
+  project_python && return 0
   for candidate in python3 python; do
     command -v "$candidate" >/dev/null 2>&1 || continue
     version="$("$candidate" --version 2>&1)" || continue
