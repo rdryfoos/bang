@@ -212,25 +212,63 @@ Where a step says nothing about the machine, the one text is both.
        export UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache"
        export UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python"
        export UV_TOOL_BIN_DIR="$HOME/.local/bin"
+       export UV_PYTHON_PREFERENCE="only-managed"
        uv tool install specify-cli
 
-   Those four are why this step does not put anything in a place this file
+   `UV_PYTHON_PREFERENCE=only-managed` says: run this tool on a Python uv
+   fetched and put under `UV_PYTHON_INSTALL_DIR`, never one already on the
+   machine. It is the line that makes this step work on somebody else's
+   Mac.
+
+   Left to itself uv uses a Python it finds. Every cold run of this file
+   until 2026-09-28 was on a machine with none, so uv always brought its
+   own and nobody saw what happens otherwise. The first run by a stranger
+   was on a Mac with a python.org 3.12 already installed, whose
+   certificate store had never been installed with it: Spec Kit's catalog
+   fetch stopped with `CERTIFICATE_VERIFY_FAILED`, on a machine where
+   `curl` to the same URL returned 200. Its
+   `ssl.get_default_verify_paths()` showed `cafile=None` and a Framework
+   openssl path, which is that Python saying it has nowhere to look.
+   uv's own Python is python-build-standalone, which reads
+   `/etc/ssl/cert.pem` on a Mac, so it is a Python whose trust store is
+   the operating system's rather than one an installer was supposed to
+   have set up.
+
+   The right fix is not to install certificates on a stranger's machine.
+   It is not to touch their Python at all.
+
+   Those five are why this step does not put anything in a place this file
    never told you about. Left to itself uv keeps its tools in
    `~/.local/share/uv`, its cache in `~/.cache/uv` and any Python it
    downloads beside them, which is three more directories and several
    hundred megabytes. `UV_TOOL_BIN_DIR` is the exception and points at
    `~/.local/bin` on purpose: that is where the `specify` command has to
-   land to be on your path, and `~/.local/bin` is already one of the five
+   land to be on your path, and `~/.local/bin` is already one of the
    places.
 
-   **Every later call to `uv` or `specify` carries the same four**, in this
-   file, in `scripts/`, and in the launch agent's environment. A tool
-   installed under one `UV_TOOL_DIR` is invisible to a call made without
-   it, which is a confusing way to be told the thing you just installed is
-   not there.
+   **Every later call to `uv` or `specify` carries the same five**, in this
+   file, in `scripts/`, and in the launch agent's environment, and that
+   includes every `uv tool run` and `uvx`. A tool installed under one
+   `UV_TOOL_DIR` is invisible to a call made without it, which is a
+   confusing way to be told the thing you just installed is not there; and
+   a `uv tool run` made without the preference is a run on whatever Python
+   the machine has, which is the failure above with the receipt already
+   printed.
 
-   Receipt: `specify --version` prints a version at or above 0.14.0, and
+   Receipt, and the second line is the one that matters:
+
+       specify --version
+       uv tool run --from specify-cli python -c "import sys; print(sys.executable)"
+
+   `specify --version` prints a version at or above 0.14.0, and
    `ls ~/.local/share/uv ~/.cache/uv` says both are missing.
+
+   The second line prints the interpreter `specify` actually runs on, and
+   it must be a path under `~/.potato-cannon/uv`. If it names
+   `/Library/Frameworks`, `/opt/homebrew` or `.pyenv`, the preference did
+   not take: stop, because the next step that fetches anything will stop
+   for you, several minutes later, with a certificate error that says
+   nothing about this.
 
    On Windows the receipt is one line longer and one of the two is not a
    miss. `ls ~/.local/share/uv` says missing, and
@@ -312,6 +350,7 @@ Where a step says nothing about the machine, the one text is both.
        export UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache"
        export UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python"
        export UV_TOOL_BIN_DIR="$HOME/.local/bin"
+       export UV_PYTHON_PREFERENCE="only-managed"
        specify init --here --force --non-interactive --integration claude --script sh
 
    `--here` means this folder rather than a new one, and `--force` skips
@@ -652,6 +691,11 @@ Then, on either:
     rm ~/.local/bin/specify
     rm -rf ~/.potato-cannon
     rm -rf ~/bang
+
+The Python uv fetched for `specify` goes with `rm -rf ~/.potato-cannon`: it is under
+`~/.potato-cannon/uv/python`, because `UV_PYTHON_INSTALL_DIR` put it there, and that
+is the whole of what step 3's fifth export adds to this list. Nothing of the machine's
+own Python is touched, at install or at Undo, which is the point of it.
 
 The uninstall carries `UV_TOOL_DIR` because the install did: uv keeps its
 tools where that variable points, and a call without it looks in

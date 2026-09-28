@@ -187,3 +187,90 @@ def test_the_web_contract_says_the_same_thing_in_both_places():
     line = "src/whms/web.py           exists and runs as `$PYTHON -m whms.web`"
     assert line in (ROOT / "scripts" / "try.sh").read_text(encoding="utf-8")
     assert line in (ROOT / "design" / "README.md").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Which Python `specify` runs on, which is not the one `python.sh` resolves.
+#
+# The first run of this project by a stranger stopped at Spec Kit's catalog fetch with
+# CERTIFICATE_VERIFY_FAILED. uv had installed specify-cli onto a python.org 3.12 that
+# was already on the machine and whose certificate store had never been installed with
+# it: `ssl.get_default_verify_paths()` gave `cafile=None`, while `curl` to the same
+# address returned 200. Every cold run before it was on a machine with no Python at
+# all, so uv always brought its own and nobody saw what happens otherwise.
+# ---------------------------------------------------------------------------
+
+PREFERENCE = 'export UV_PYTHON_PREFERENCE="only-managed"'
+
+
+def test_the_tool_install_runs_on_a_python_uv_fetched():
+    """The line that makes step 3 work on somebody else's Mac."""
+    bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
+    step3 = bang.split("\n3. Install uv if missing", 1)[1].split("\n4. Node and pnpm", 1)[0]
+    install = step3.index("uv tool install specify-cli")
+    assert PREFERENCE in step3[:install], (
+        "the uv tool install line does not carry UV_PYTHON_PREFERENCE, so uv will use "
+        "whatever Python the machine has")
+
+
+def test_every_place_that_carries_the_uv_set_carries_the_preference():
+    """A `uv tool run` made without it is a run on the machine's own Python.
+
+    The set is written out in BANG.md twice and in the launch agent's environment
+    twice, and a call that carries four of the five gets the failure above with the
+    receipt already printed.
+    """
+    bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
+    script = (ROOT / "scripts" / "write-launch-agent.sh").read_text(encoding="utf-8")
+    assert bang.count('export UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"') == \
+        bang.count(PREFERENCE), "BANG.md carries the four somewhere without the fifth"
+    assert script.count('UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"') == \
+        script.count('UV_PYTHON_PREFERENCE="only-managed"'), (
+        "a daemon environment carries the four without the fifth")
+
+
+def test_the_receipt_reads_the_interpreter_and_refuses_the_machines_own():
+    """`specify --version` cannot tell you this. The interpreter's path can.
+
+    A version number prints the same on a Python that will fail at the first fetch as
+    on one that will not, which is why the run that failed got a green receipt and
+    stopped several minutes later with an error that says nothing about step 3.
+    """
+    bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
+    step3 = bang.split("\n3. Install uv if missing", 1)[1].split("\n4. Node and pnpm", 1)[0]
+    assert 'uv tool run --from specify-cli python -c "import sys; print(sys.executable)"' in step3
+    assert "must be a path under\n   `~/.potato-cannon/uv`" in step3 or \
+        "a path under `~/.potato-cannon/uv`" in " ".join(step3.split()), (
+        "the receipt does not require the interpreter to be uv's own")
+    for wrong in ("/Library/Frameworks", "/opt/homebrew", ".pyenv"):
+        assert wrong in step3, "the receipt does not name %s as a wrong answer" % wrong
+
+
+def test_undo_removes_the_python_uv_fetched():
+    """It lands under ~/.potato-cannon/uv/python, so `rm -rf ~/.potato-cannon` has it."""
+    bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
+    undo = bang.split("## Undo, in full", 1)[1]
+    assert "rm -rf ~/.potato-cannon" in undo
+    assert "~/.potato-cannon/uv/python" in " ".join(undo.split()), (
+        "Undo does not say where the Python uv fetched went")
+
+
+def test_the_notes_name_the_certificate_error():
+    notes = (ROOT / "RUN-NOTES.md").read_text(encoding="utf-8")
+    flat = " ".join(notes.split())
+    assert "CERTIFICATE_VERIFY_FAILED" in flat
+    assert "Do not install certificates by hand" in flat, (
+        "RUN-NOTES does not say what not to do about it")
+
+
+def test_the_preference_is_not_imposed_on_the_projects_own_python():
+    """`specify`'s interpreter and the project's are different things.
+
+    `scripts/python.sh` resolves the Python that runs this project's own scripts, which
+    on Windows is the one winget installed. UV_PYTHON_PREFERENCE is uv's, about uv's
+    tools, and nothing in python.sh reads it or should.
+    """
+    resolver = RESOLVER.read_text(encoding="utf-8")
+    assert "UV_PYTHON_PREFERENCE" not in resolver, (
+        "python.sh reads uv's preference; the project's Python is not uv's business")
+    assert "only-managed" not in resolver
