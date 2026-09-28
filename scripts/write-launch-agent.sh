@@ -36,10 +36,13 @@
 #      PNPM_HOME and npm_config_cache are set for the same reason the path is:
 #      anything the daemon or a worker under it downloads lands in ~/.potato-cannon,
 #      which is one of the places BANG.md says this project writes to, and Undo
-#      removes it whole. The four UV_* are there for the same reason and for one
+#      removes it whole. The five UV_* are there for the same reason and for one
 #      more: a tool installed under one UV_TOOL_DIR is invisible to a call made
-#      without it, so a worker running specify has to carry the same four BANG.md
-#      step 3 installed with or be told the thing is not there.
+#      without it, so a worker running specify has to carry the same five BANG.md
+#      step 3 installed with or be told the thing is not there. UV_PYTHON_PREFERENCE
+#      is the fifth: without it a `uv tool run` here picks whatever Python the machine
+#      has, and on 2026-09-28 a stranger's Mac had one whose certificate store had
+#      never been installed.
 #
 # What the two branches do not share, and a reader should know it before leaning on
 # the Windows one: launchd's KeepAlive starts the daemon again when it dies, and a
@@ -118,14 +121,14 @@ listener_on_3131() {
 # variable rather than inside the plist text is what makes the promise checkable: one
 # line here is one line in the file, and the check below says so before anything is
 # installed.
-EXEC_LINE='cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL" TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8" PATH="$HOME/.potato-cannon/node/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache" UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python" UV_TOOL_BIN_DIR="$HOME/.local/bin" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" node ./apps/daemon/dist/server/server.js'
+EXEC_LINE='cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL" TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8" PATH="$HOME/.potato-cannon/node/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache" UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python" UV_TOOL_BIN_DIR="$HOME/.local/bin" UV_PYTHON_PREFERENCE="only-managed" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" node ./apps/daemon/dist/server/server.js'
 
 # The same command for Windows, and the differences are all forced. `env -i` is gone:
 # it would empty the environment a native node.exe needs to start at all, SystemRoot
 # and TEMP among it, so the variables are exported over what is there instead. The
 # path names ~/.potato-cannon/node without the bin. And the ampersands are ampersands,
 # because this one goes into a shell script rather than into XML.
-EXEC_LINE_WIN='cd "$HOME/.potato-cannon/app" && export PATH="$HOME/.potato-cannon/node:$HOME/.local/bin:$PATH" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache" UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python" UV_TOOL_BIN_DIR="$HOME/.local/bin" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" && exec node ./apps/daemon/dist/server/server.js'
+EXEC_LINE_WIN='cd "$HOME/.potato-cannon/app" && export PATH="$HOME/.potato-cannon/node:$HOME/.local/bin:$PATH" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache" UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python" UV_TOOL_BIN_DIR="$HOME/.local/bin" UV_PYTHON_PREFERENCE="only-managed" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" && exec node ./apps/daemon/dist/server/server.js'
 
 for line in "$EXEC_LINE" "$EXEC_LINE_WIN"; do
   case "$line" in

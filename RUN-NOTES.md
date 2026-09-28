@@ -109,6 +109,13 @@ It is meant to. `BANG.md` prints a receipt after every step and stops at the fir
 that does not match, rather than carrying on over it, so a run that stops has told you
 where. Read the receipt it printed and the step above it.
 
+**`CERTIFICATE_VERIFY_FAILED`, while Spec Kit fetches its catalogs.** A Python already
+on the machine, usually a python.org one, whose certificate store was never installed
+with it. `curl` to the same address works, which is what makes it confusing. The fix
+is to pull this project and run it again: step 3 now tells uv to use a Python it
+fetches itself, which reads the operating system's own trust store. Do not install
+certificates by hand to get past it; nothing here should be changing your Python.
+
 A stop is a result. Write it down.
 
 ## When it finishes, or when it stops
