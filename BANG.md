@@ -30,7 +30,12 @@ Everything this file does lands in one of these places, and nowhere else.
    gigabyte into `~/.cache`, `~/Library/pnpm` and `~/.npm`, three places
    this file would then have to list and Undo would have to reach into;
    here they are one folder that Undo removes whole.
-4. On a Mac, `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One
+4. `~/.potato-cannon/venv/`  The project's own Python environment, made
+   by step 7 on the Python uv manages, with pytest in it. The Gate and
+   every worker run the tests through it. It is inside
+   `~/.potato-cannon`, so `rm -rf ~/.potato-cannon` removes it with
+   everything else.
+5. On a Mac, `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One
    launch agent so the Cannon daemon starts when you log in. On Windows,
    the one-line script it runs, `~/.potato-cannon/cannon-daemon.sh`, and
    **one of two** ways of running it at logon: a scheduled task named
@@ -43,13 +48,13 @@ Everything this file does lands in one of these places, and nowhere else.
    another machine. The scheduled task is the one thing this file
    registers outside your home folder; the Startup launcher is a file in
    it like any other.
-5. On Windows only, `~/AppData/Local/uv/uv-receipt.json`  uv's own record
+6. On Windows only, `~/AppData/Local/uv/uv-receipt.json`  uv's own record
    of where it put itself, written by its PowerShell installer. It is not a
    cache and pointing `UV_CACHE_DIR` elsewhere does not move it: uv writes
    it so that a later `uv self update` knows what it is updating. One small
    file, named here because this file names everything it leaves behind,
    and removed by Undo.
-6. `~/.claude/projects/`  One folder per working copy the Cannon runs a
+7. `~/.claude/projects/`  One folder per working copy the Cannon runs a
    worker in, holding that worker's session transcript as a `.jsonl` file.
    Claude Code writes these, not Bang, and it writes them for your own
    sessions too. They can be large: a card that goes round the board once
@@ -88,15 +93,17 @@ unproven.
    `https://astral.sh/uv/install.ps1` on Windows  The uv installer, run as
    your user. Step 3 says why Windows needs the other one.
 2. `specify-cli` from PyPI, via uv.
-3. SpecAssay's Spec Kit catalogs and release files from
+3. `pytest` from PyPI, into the project's own environment, and the
+   Python uv fetches to make it.
+4. SpecAssay's Spec Kit catalogs and release files from
    `github.com/rdryfoos/specassay` (MIT).
-4. Potato Cannon from `github.com/rdryfoos/potato-cannon`, branch
+5. Potato Cannon from `github.com/rdryfoos/potato-cannon`, branch
    `estate/cannon`, commit
    `e08e29148b330969bd0511c474c86da4ccd16915`, and the npm packages its
    build needs, fetched by pnpm from the public npm registry.
-5. If Node is missing, the Node 22 build for this machine from
+6. If Node is missing, the Node 22 build for this machine from
    `nodejs.org`: a tarball on a Mac, a zip on Windows.
-6. Nothing else. No telemetry, no account, no message to anyone.
+7. Nothing else. No telemetry, no account, no message to anyone.
 
 Potato Cannon is by crathgeb (github.com/crathgeb/potato-cannon), under the
 Sustainable Use License: free for your personal and internal use. The copy
@@ -282,7 +289,7 @@ Where a step says nothing about the machine, the one text is both.
 4. Node and pnpm. **Node 22, not the current LTS.** The Cannon's database
    library has no prebuilt binary for newer Node and building it from
    source fails, so a newer Node will get you through this step and stop
-   you at step 7. If `node --version` already starts with `v22.`, skip to
+   you at step 8. If `node --version` already starts with `v22.`, skip to
    pnpm. Otherwise, no administrator password needed. On a Mac:
 
        mkdir -p ~/.potato-cannon/node
@@ -473,7 +480,51 @@ Where a step says nothing about the machine, the one text is both.
    `git ls-tree HEAD .specify/extensions/specassay-check` prints the
    folder.
 
-7. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
+7. The project's own Python, with its test runner in it.
+
+   The Gate runs this project's tests, and `scripts/gate.conf` runs them
+   as `$PYTHON -m pytest`. Nothing above installs pytest. Make an
+   environment that has it, on the Python uv manages rather than on
+   whatever the machine came with:
+
+       export UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python"
+       export UV_PYTHON_PREFERENCE="only-managed"
+       uv venv --python 3.12 ~/.potato-cannon/venv
+       ~/.potato-cannon/venv/bin/python -m ensurepip --upgrade
+       ~/.potato-cannon/venv/bin/python -m pip install pytest
+
+   On Windows the last two are
+   `~/.potato-cannon/venv/Scripts/python.exe` instead.
+
+   It goes in `~/.potato-cannon` rather than in `~/bang/.venv` because a
+   card's worktree is cut from a commit and a virtual environment is not
+   committed: a `.venv` in the checkout is a `.venv` no worker has. One
+   environment beside the Cannon is one environment every worktree can
+   reach, and `rm -rf ~/.potato-cannon` removes it whole.
+
+   **This is the step that was missing, and twelve green runs went past
+   the gap.** Apple ships `python3` and does not ship pytest. On the runs
+   before 2026-09-28 the Build worker installed pytest itself when it
+   found none, which is a build asking the reader's machine for an
+   installation the page never promised, and CONSTITUTION.md III says
+   what that costs: "The reader followed a page that installed exactly
+   what was needed and no more. A build that asks them for another
+   installation has broken the page's promise." On 2026-09-28 a worker
+   declined, correctly, and the Gate went red with `No module named
+   pytest`. The worker was right and the page was wrong.
+
+   Receipt, both lines:
+
+       . scripts/python.sh && echo "$PYTHON"
+       . scripts/python.sh && "$PYTHON" -m pytest --version
+
+   The first prints a path under `~/.potato-cannon/venv`. The second
+   prints a pytest version. If the first prints `python3` or `python`
+   with no path, `scripts/python.sh` did not find the environment this
+   step makes: stop, because everything after this runs the tests on
+   whatever the machine has.
+
+8. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
    and commit above. Then, in the same terminal as step 4, where the first
    line is step 4's path again and on Windows is
    `$HOME/.potato-cannon/node` without the `bin`:
@@ -508,7 +559,7 @@ Where a step says nothing about the machine, the one text is both.
    the clone is at the commit this file pinned, and a seven-character
    comparison is a weaker claim than the one being made.
 
-8. The daemon. Run the script this repository ships:
+9. The daemon. Run the script this repository ships:
 
        bash scripts/write-launch-agent.sh
 
@@ -575,7 +626,7 @@ Where a step says nothing about the machine, the one text is both.
    half hours of uptime on a daemon installed minutes earlier. The other two
    lines are what tell those apart.
 
-9. Register the project. The daemon can only name a template that lives in
+10. Register the project. The daemon can only name a template that lives in
    its own templates folder, so copy this project's template there first,
    then register. The first line is step 4's path again, and on Windows it
    is `$HOME/.potato-cannon/node` without the `bin`:
@@ -614,7 +665,7 @@ Where a step says nothing about the machine, the one text is both.
    template. Receipt: `curl -s http://127.0.0.1:3131/api/projects` lists
    one project named bang.
 
-10. First cards. Create these three in the Ideas column, in this order and
+11. First cards. Create these three in the Ideas column, in this order and
     no others. Each is created with `POST /api/tickets/<project id>` and a
     title and a description; the project id came back from step 9. A
     description is the text under its title exactly as written here,
@@ -646,7 +697,7 @@ Where a step says nothing about the machine, the one text is both.
 
     Receipt: the card ids, one per line.
 
-11. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
+12. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
     the line `Bang. Your board is open in your browser; drag BAN-1 to Spec
     there by hand.`, and only then open the URL
     in the default browser: `open` on a Mac, `start` on Windows. The done
@@ -659,7 +710,7 @@ Where a step says nothing about the machine, the one text is both.
 
 A browser tab showing the Potato Cannon board for the project bang, with
 the first cards in Ideas and nothing in any other column. In the terminal,
-eleven receipts and the done line. From here the page hands you to First
+twelve receipts and the done line. From here the page hands you to First
 Light: the first card, dragged through.
 
 ## Undo, in full
@@ -691,6 +742,10 @@ Then, on either:
     rm ~/.local/bin/specify
     rm -rf ~/.potato-cannon
     rm -rf ~/bang
+
+The project's own environment, `~/.potato-cannon/venv`, goes with
+`rm -rf ~/.potato-cannon` too, and with it the pytest step 7 put in it. Nothing was
+installed into a Python of yours.
 
 The Python uv fetched for `specify` goes with `rm -rf ~/.potato-cannon`: it is under
 `~/.potato-cannon/uv/python`, because `UV_PYTHON_INSTALL_DIR` put it there, and that

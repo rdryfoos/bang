@@ -222,11 +222,26 @@ def test_every_place_that_carries_the_uv_set_carries_the_preference():
     """
     bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
     script = (ROOT / "scripts" / "write-launch-agent.sh").read_text(encoding="utf-8")
-    assert bang.count('export UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"') == \
-        bang.count(PREFERENCE), "BANG.md carries the four somewhere without the fifth"
-    assert script.count('UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"') == \
-        script.count('UV_PYTHON_PREFERENCE="only-managed"'), (
-        "a daemon environment carries the four without the fifth")
+
+    # Every block that sets UV_TOOL_DIR is a block that runs a uv tool, and every one
+    # of those needs the preference. The reverse does not hold: a block may set the
+    # preference without the tool set, which is what step 7 does when it asks uv for a
+    # Python to make the project's environment on and never touches a tool.
+    for name, text in (("BANG.md", bang), ("write-launch-agent.sh", script)):
+        # The assignment, not the word: the prose explains `UV_TOOL_DIR` in backticks
+        # in a paragraph that sets nothing, and a paragraph cannot carry a preference.
+        blocks = text.split('UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"')[1:]
+        assert blocks, "%s no longer carries the uv tool set at all" % name
+        for number, block in enumerate(blocks, 1):
+            # Within the same paragraph or exec line as the tool directory.
+            near = block.split("\n\n")[0]
+            if "uv tool uninstall" in near:
+                # Undo. It removes a tool rather than running one, so there is no
+                # interpreter to choose and an inert flag on a line a person types is
+                # a thing for them to wonder about.
+                continue
+            assert "UV_PYTHON_PREFERENCE" in near, (
+                "%s block %d runs a uv tool without the preference" % (name, number))
 
 
 def test_the_receipt_reads_the_interpreter_and_refuses_the_machines_own():
@@ -274,3 +289,82 @@ def test_the_preference_is_not_imposed_on_the_projects_own_python():
     assert "UV_PYTHON_PREFERENCE" not in resolver, (
         "python.sh reads uv's preference; the project's Python is not uv's business")
     assert "only-managed" not in resolver
+
+
+# ---------------------------------------------------------------------------
+# The project brings its own test runner.
+#
+# The Gate runs `$PYTHON -m pytest` and nothing installed pytest. Apple ships python3
+# and does not ship pytest, so on every green run before 2026-09-28 the Build worker
+# installed it onto the reader's machine, which is a build asking for an installation
+# the page never promised. On 2026-09-28 a worker declined, correctly, and the Gate
+# went red with "No module named pytest". The worker was right and the page was wrong.
+# ---------------------------------------------------------------------------
+VENV = "~/.potato-cannon/venv"
+
+
+def test_python_sh_prefers_the_projects_own_interpreter():
+    """The one with pytest in it, ahead of anything on the path."""
+    resolver = RESOLVER.read_text(encoding="utf-8")
+    assert "project_python()" in resolver, "python.sh has no project interpreter"
+    assert '"$venv/bin/python" "$venv/Scripts/python.exe"' in resolver, (
+        "python.sh does not look in both layouts; Windows puts it under Scripts")
+    # Before the search, not after it.
+    assert resolver.index("project_python && return 0") < resolver.index(
+        'for candidate in python3 python'), (
+        "python.sh searches the machine before looking at the project's own")
+
+
+def test_python_sh_still_falls_back_when_there_is_no_project_interpreter():
+    """A checkout somebody is poking at by hand, before step 7 or after Undo."""
+    resolver = RESOLVER.read_text(encoding="utf-8")
+    assert "for candidate in python3 python; do" in resolver, (
+        "the fallback search is gone, so a bare checkout resolves nothing")
+
+
+def test_the_step_that_makes_it_has_a_receipt_that_reads_the_interpreter():
+    bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
+    step = bang.split("\n7. The project's own Python", 1)[1].split("\n8. ", 1)[0]
+    assert 'uv venv --python 3.12 ~/.potato-cannon/venv' in step
+    assert "-m pip install pytest" in step
+    assert '. scripts/python.sh && echo "$PYTHON"' in step, (
+        "the receipt does not print the interpreter it resolved")
+    assert '"$PYTHON" -m pytest --version' in step, (
+        "the receipt does not prove pytest is in it")
+    assert VENV in step
+
+
+def test_the_test_tier_names_no_interpreter_but_the_resolved_one():
+    """`$PYTHON` and nothing else, so the environment step 7 makes is the one used."""
+    conf = (ROOT / "scripts" / "gate.conf").read_text(encoding="utf-8")
+    command = [l for l in conf.splitlines() if l.startswith("TEST_COMMAND=")]
+    assert len(command) == 1, "gate.conf has %d TEST_COMMAND lines" % len(command)
+    assert command[0] == 'TEST_COMMAND="$PYTHON -m pytest -q --junitxml=test-results.xml"', (
+        "the test tier names an interpreter of its own: %s" % command[0])
+
+
+def test_the_environment_is_in_the_places_list_and_undo_removes_it():
+    bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
+    places = bang.split("## What this fetches", 1)[0]
+    assert VENV in places, "the places list does not name the project's environment"
+    undo = " ".join(bang.split("## Undo, in full", 1)[1].split())
+    assert "rm -rf ~/.potato-cannon" in undo
+    assert "`~/.potato-cannon/venv`, goes with" in undo, (
+        "Undo does not say the environment goes with it")
+
+
+def test_the_worker_is_told_not_to_install_a_tool_the_checks_need():
+    """Skully's worker had to infer this. It is in words now."""
+    build = " ".join((ROOT / "cannon-template" / "agents" / "build.md")
+                     .read_text(encoding="utf-8").split())
+    assert "Do not install it and do not copy it in." in build
+    assert "not a test runner" in build, (
+        "the rule names the checker but not the test runner, which is the one that bit")
+
+
+def test_the_notes_carry_the_xcode_licence_stop():
+    notes = " ".join((ROOT / "RUN-NOTES.md").read_text(encoding="utf-8").split())
+    assert "You have not agreed to the Xcode license agreements" in notes
+    assert "sudo xcodebuild -license accept" in notes
+    assert "It has nothing to do with Python" in notes, (
+        "the note does not say it is unrelated to the Python stop below it")

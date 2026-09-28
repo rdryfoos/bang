@@ -109,6 +109,14 @@ It is meant to. `BANG.md` prints a receipt after every step and stops at the fir
 that does not match, rather than carrying on over it, so a run that stops has told you
 where. Read the receipt it printed and the step above it.
 
+**"You have not agreed to the Xcode license agreements", on a Mac with Xcode.** It
+comes up where the page expects git to work, and it is the whole of the stop: nothing
+runs until somebody accepts it. macOS resets it after an upgrade, so a machine that
+was fine last week can ask today. An administrator accepts it once, for the machine,
+with `sudo xcodebuild -license accept`. Then paste the same block again from the top;
+nothing before it needs undoing. It has nothing to do with Python or with anything
+below.
+
 **`CERTIFICATE_VERIFY_FAILED`, while Spec Kit fetches its catalogs.** A Python already
 on the machine, usually a python.org one, whose certificate store was never installed
 with it. `curl` to the same address works, which is what makes it confusing. The fix

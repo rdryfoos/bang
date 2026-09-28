@@ -122,6 +122,18 @@ protocol; this file restates the parts you act on.
    with it open and was refused there, correctly, by a check that had no way to know
    the gate had in fact been run.
 
+   **If a tool the checks need is missing, stop and say so. Do not install it and do
+   not copy it in.** Not the checker, not a test runner, not a library: if the tests
+   cannot run, that is the page's gap and a person closes it. A worker that installs
+   what judges it has judged itself, and a worker that installs anything at all has
+   made the reader's machine carry something `BANG.md` never told them about, which
+   is what `CONSTITUTION.md` III calls breaking the page's promise.
+
+   On 2026-09-28 a worker met `No module named pytest` and declined to install it.
+   That was right, and the Gate going red was the page's fault rather than the
+   worker's: twelve green runs before it had leaned on workers installing pytest
+   themselves. Step 7 of `BANG.md` installs it now.
+
    **If the checker is missing from the worktree, stop and say so; do not copy it in.**
    On 2026-09-24 a worker met MISSING TOOL, found the checker three folders away in the
    project's own checkout and copied it into the worktree, and the attempt went green.

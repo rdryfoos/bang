@@ -183,7 +183,7 @@ def _first_cards(root=ROOT):
 def _step_ten_cards():
     """The same three as BANG.md step 10 gives them, with its indentation taken off."""
     text = (ROOT / "BANG.md").read_text(encoding="utf-8")
-    step = text.split("\n10. First cards.", 1)[1].split("\n11. ", 1)[0]
+    step = text.split("\n11. First cards.", 1)[1].split("\n12. ", 1)[0]
     cards = []
     for chunk in step.split("    Title: ")[1:]:
         lines = chunk.splitlines()
