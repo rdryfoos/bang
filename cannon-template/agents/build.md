@@ -42,17 +42,17 @@ protocol; this file restates the parts you act on.
 2. If a "Previous Attempts" section is present below, the runner's output from the
    last attempt is your feedback. Fix what it names first.
 3. If the project has a `design/` folder, read `design/README.md` and the screens it
-   maps. The README's "What a build reads from this" list is the contract, and the
-   pictures themselves are illustration: a screen is the definition of "working" for
-   the IDs it names, the copy on a screen is the copy, and layout is a guide. Nothing
-   else in `design/` binds you.
+   maps. The screens are a low-fidelity sketch, for reference. What a build must
+   satisfy is the registry, and the controls, order, states and words that matter are
+   named there in acceptance criteria. Anything not named is the build's to choose and
+   the reviewer's to judge in Review.
 
-   **The screens are served as drawn, styles included.** Style on the screens is the style: the `<style>` block each file carries and every inline `style=` on its elements are served as drawn, not reimplemented and not dropped. Layout
-   being a guide is about where things sit at a given width; it is not permission to
-   serve the markup bare. On 2026-09-25 a card built the four screens, passed the Gate,
-   reached Review, and served black Times on white with no panel and no cards, because
-   it read "layout is a guide" as covering the stylesheet too. The card was right about
-   every word on the screen and the thing was unrecognisable.
+   **A nav bar or a palette is delivery unless an acceptance criterion says
+   otherwise; a state or a word an acceptance criterion names is not.** So read the
+   card's IDs before you read the pictures. A build that matches the sketch and misses a
+   named state is not done. A build that satisfies every named criterion and looks
+   nothing like the sketch is done, and whether it looks right is Review's to say, on
+   the screen, in words a hand can act on.
 
 ## Do
 0. An `@covers` mark on a test file carries no promise: the mark goes on the source
