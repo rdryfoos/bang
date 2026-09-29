@@ -20,7 +20,7 @@ Written 2026-09-19, at the project's birth, before any card ran.
 
 | Row | What | Bound |
 |-----|------|-------|
-| L1 | The lending tracker | none yet. The application does not exist at the time of writing, and `AC-PRIV-20` requires that it make no outbound network request at all. |
+| L1 | The lending tracker | none yet. The command line is the only door: src/whms/ has cli.py, store.py, records.py and outstanding.py, and none of them binds a port. The web app that will listen is T904's unbuilt work. When it lands, this row becomes one TCP listener on 127.0.0.1 only, on the port given at start. |
 
 ## Egress {#egress}
 
