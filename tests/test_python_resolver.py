@@ -128,7 +128,20 @@ def _resolve_with(tmp_path, names):
         else:
             script.write_text("#!/bin/sh\necho '%s'\n" % prints)
         script.chmod(0o755)
-    env = dict(os.environ, PATH=str(binaries))
+    # HOME is isolated, and that is not tidiness.
+    #
+    # python.sh prefers `$HOME/.potato-cannon/venv`, which BANG.md step 7 makes. On a
+    # machine that has run Bang, that interpreter is real and it shadows every stub
+    # below: the resolver answers with it before it ever looks at PATH, and these
+    # tests then measure the machine rather than the resolver. On the first Build of a
+    # fresh card that is exactly what happened, and these five went red on a worker
+    # whose own work was clean.
+    #
+    # PYTHON is unset for the same reason at one remove: an exported value short-
+    # circuits the search entirely.
+    home = tmp_path / "home"
+    home.mkdir(exist_ok=True)
+    env = dict(os.environ, PATH=str(binaries), HOME=str(home))
     env.pop("PYTHON", None)
     bash = shutil.which("bash")
     if not bash:
@@ -368,3 +381,55 @@ def test_the_notes_carry_the_xcode_licence_stop():
     assert "sudo xcodebuild -license accept" in notes
     assert "It has nothing to do with Python" in notes, (
         "the note does not say it is unrelated to the Python stop below it")
+
+
+def test_the_resolver_reads_home_rather_than_a_path_baked_into_it(tmp_path):
+    """The isolation above is only isolation while python.sh honours HOME.
+
+    Put a project interpreter under the temporary HOME and the resolver must prefer it
+    over the stubs on PATH. If it ever stopped reading HOME, or read the real one, this
+    fails here rather than in a card's Build, which is where it surfaced the first time.
+    """
+    home = tmp_path / "home"
+    venv = home / ".potato-cannon" / "venv" / "bin"
+    venv.mkdir(parents=True)
+    interpreter = venv / "python"
+    interpreter.write_text("#!/bin/sh\necho 'Python 3.12.10'\n")
+    interpreter.chmod(0o755)
+
+    binaries = tmp_path / "bin"
+    binaries.mkdir(exist_ok=True)
+    for name in ("python3", "python"):
+        stub = binaries / name
+        stub.write_text("#!/bin/sh\necho 'Python 3.9.6'\n")
+        stub.chmod(0o755)
+    uname = shutil.which("uname")
+    if not uname:
+        pytest.skip("no uname on the path, and the resolver's refusal reads it")
+    shutil.copy(uname, binaries / pathlib.Path(uname).name)
+
+    bash = shutil.which("bash")
+    if not bash:
+        pytest.skip("no bash on the path, so python.sh cannot be sourced here")
+    env = dict(os.environ, PATH=str(binaries), HOME=str(home))
+    env.pop("PYTHON", None)
+    out = subprocess.run(
+        [bash, "-c", '. "%s" && printf "%%s" "$PYTHON"' % RESOLVER],
+        capture_output=True, text=True, env=env)
+
+    assert out.returncode == 0, out.stderr
+    assert out.stdout == str(interpreter), (
+        "the resolver did not prefer the project interpreter under HOME; it answered %r"
+        % out.stdout)
+
+
+def test_the_stubs_are_reached_when_that_home_has_no_project_interpreter(tmp_path):
+    """The other half of the same guarantee, and what the five tests above rely on.
+
+    With HOME isolated and no venv in it, the search falls through to PATH and the
+    stubs answer. Without the isolation this passed on the Mini, which has no
+    ~/.potato-cannon/venv, and failed on any machine that had run Bang.
+    """
+    out = _resolve_with(tmp_path, {"python3": "Python 3.12.10"})
+    assert out.returncode == 0, out.stderr
+    assert out.stdout == "python3", out.stdout
