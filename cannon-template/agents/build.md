@@ -37,6 +37,21 @@ protocol; this file restates the parts you act on.
    A block written by a hand is still a block somebody wrote in a hurry. Building
    outside the card's promises is how a board comes to say a thing was delivered that
    nobody created, and the worker is the last reader who can notice.
+
+   **A Rework block is a hand's.** The daemon refuses one written by an agent, and says
+   why at `apps/daemon/src/services/rework-guard.ts:4` in the Cannon: the block is read at
+   the start of the next Build attempt, so one written while an attempt is already running
+   is an instruction the worker has read past or will read halfway through, and neither the
+   writer nor the worker can tell which. Nothing parses it out of the card. The whole
+   description is handed to the worker as its prompt, at
+   `apps/daemon/src/services/session/prompts.ts:177`, and the block is read because it is in
+   there. The drag that follows it is back to Build, not back to Spec. It carries delivery
+   changes only: what the thing does, how it looks, what a reader wants different about what
+   was built. A change to what an AC, FR, US or NFR says is not Rework; that is a new
+   promise, created by a hand in `PRD.md`, and a new card to carry it. Nothing on disk checks
+   that a card's code does no more than its IDs promise: that judgement is the reviewer's, in
+   Review.
+
 1. The card's `ids:` line, PRD.md at HEAD for those IDs, the committed spec, plan, and
    tasks in this worktree.
 2. If a "Previous Attempts" section is present below, the runner's output from the

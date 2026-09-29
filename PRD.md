@@ -51,7 +51,7 @@ below do not change when they do — that is the point of creating at intent.
 
 ## Screens
 
-The picture of this software lives in `design/` and is governed like this file. Each
+The sketch of this software lives in `design/` and is governed like this file. Each
 screen names the IDs it fulfils; `design/README.md` is the map, and it is where what
 the screens are, and what a build reads from them, is said.
 
