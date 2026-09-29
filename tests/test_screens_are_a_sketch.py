@@ -169,3 +169,22 @@ def test_every_id_the_screens_claim_is_one_the_registry_carries():
     for ident in sorted(claimed):
         assert re.search(r"\b%s\b" % re.escape(ident), registry), (
             "design/ claims %s and PRD.md does not carry it" % ident)
+
+
+def test_no_criterion_in_the_registry_delegates_itself_to_a_drawing():
+    """The ruling, held where it binds.
+
+    AC-UI-10, AC-UI-20 and AC-UI-30 each read "as design/<file>.html draws it" until
+    2026-09-29, which pointed a promise at a sketch for its own content. The named
+    things in them stand on their own now. FR-UI-10 still names the folder, because
+    serving those screens is what the app is for; naming one of the files inside it is
+    the thing that went.
+    """
+    offenders = []
+    for line in PRD.read_text(encoding="utf-8").splitlines():
+        if not re.match(r"\s*- (?:US|FR|AC|NFR)-", line):
+            continue
+        for drawing in re.findall(r"design/[\w.-]+\.html", line):
+            offenders.append((line.strip().split("—")[0].strip(), drawing))
+    assert not offenders, (
+        "a registry line points at a drawing for its content: %s" % offenders)

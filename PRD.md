@@ -26,6 +26,7 @@ below do not change when they do — that is the point of creating at intent.
     - AC-OUT-10 — An item marked returned no longer appears in the outstanding list.
     - AC-OUT-20 — With nothing outstanding, the list says so in words rather than
       showing an empty screen.
+    - AC-OUT-30 — Each item in the outstanding list shows what it is, who has it, and the date it went out.
 
 ## Returning an item
 
@@ -42,6 +43,7 @@ below do not change when they do — that is the point of creating at intent.
   - AC-PRIV-10 — No file under the repository contains a value from the local answers. The reader's filled CASE lives outside the worktree at BANG_CASE_FILE; nothing in this repository, at any commit, carries an item, a borrower, or a date from it.
   - AC-PRIV-20 — The application makes no outbound network request during any
     lending, listing, or returning operation.
+  - AC-PRIV-30 — The app says on screen where the records are kept, on every screen a person sees.
 - NFR-DUR-10 — Records survive restarting the application.
   - AC-DUR-10 — After a restart, every lend and return recorded before the restart is still present with its dates.
 - NFR-ENG-10 — Records are written by one path: every entry point onto them, present and future, calls the engine's operations and keeps no write of its own.
@@ -50,16 +52,20 @@ below do not change when they do — that is the point of creating at intent.
 ## Screens
 
 The picture of this software lives in `design/` and is governed like this file. Each
-screen names the IDs it fulfils; `design/README.md` is the map. A build satisfies a
-promise when the sentence here and the screen there both hold.
+screen names the IDs it fulfils; `design/README.md` is the map, and it is where what
+the screens are, and what a build reads from them, is said.
 
 ## Screen promises
 
 - US-UI-10 — As the owner, I lend, see what is out, and mark things returned on a screen in my browser, not only at the command line.
   - FR-UI-10 — A local web app serves the four screens in design/ and reads and writes the same records file the command line does; nothing leaves the machine.
-    - AC-UI-10 — Opening the app shows the outstanding list as design/outstanding.html draws it, oldest first with days out, or design/nothing-out.html when nothing is out.
-    - AC-UI-20 — Lend something works as design/lend.html draws it: what, to whom, date out defaulting to today; a missing borrower is refused in place and nothing is saved.
-    - AC-UI-30 — Mark returned works as design/mark-returned.html draws it: date back defaulting to today; the item leaves the list at once and the record survives a restart.
+    - AC-UI-10 — Opening the app shows the outstanding list, oldest first with days out, or says in words that nothing is out when nothing is.
+    - AC-UI-20 — Lend something takes what, to whom, and a date out defaulting to today; a missing borrower is refused in place and nothing is saved.
+    - AC-UI-30 — Mark returned takes a date back defaulting to today; the item leaves the list at once and the record survives a restart.
+    - AC-UI-50 — Every item in the outstanding list carries its own Mark returned control.
+    - AC-UI-60 — The outstanding list and the nothing-out screen each offer a way to lend something.
+    - AC-UI-70 — From Lend something and from Mark returned there is a way back to the outstanding list that records nothing.
+    - AC-UI-80 — The Mark returned screen names the item, who has it and when it went out, before anything is recorded.
 - US-UI-20 — As the owner, when I lend something I see what I have lent that person before and whether it came back, so I decide with the history in front of me.
   - AC-UI-40 — On the Lend screen, once a borrower is named, the app lists what that person has had before, showing what came back and what is still out; a borrower with no history shows nothing extra.
 
