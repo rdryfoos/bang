@@ -29,6 +29,10 @@ debt on an open task of its own.
 
 - [ ] T904 Deliver the four screens `design/` draws as a local web app over the same records file the command line writes. **Carries**: US-UI-10, FR-UI-10, AC-UI-10, AC-UI-20, AC-UI-30 (reserved backlog). Reserved, no card yet. It was closed once, on the rehearsal board, and the work shipped in the seed; the seed then had nothing left for a reader's first card to do, so on 2026-09-23 the screens came back out and this reservation with them. `design/` is the brief and `NFR-ENG-10` is the rule the build is held to.
 
+## What the screens say, and the ways between them
+
+- [ ] T907 Deliver what each screen says and how a person moves between them: the item line saying what it is and who has it, a Mark returned control on every item, a way to lend from both list screens, a way back that records nothing, the item named on the Mark returned screen before anything happens, and the records line on every screen. **Carries**: AC-OUT-30, AC-UI-50, AC-UI-60, AC-UI-70, AC-UI-80, AC-PRIV-30 (reserved backlog). Reserved, no card yet. Created 2026-09-29 out of the survey of what the four screens carried that no criterion named, after the ruling that the screens are a sketch: what the sketch drew and nobody had promised had to become promises or be let go, and these six are the ones that became promises.
+
 ## The borrower's history
 
 - [ ] T905 Show what a borrower has had before, on the Lend screen, once they are named. **Carries**: US-UI-20, AC-UI-40 (reserved backlog). Reserved, no card yet.
