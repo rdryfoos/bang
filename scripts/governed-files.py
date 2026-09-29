@@ -16,9 +16,19 @@ configuration, the entry checks, and the hooks. Changing them is project work, d
 hand on its own branch, and it is not a thing a card does on the way past.
 
 design/ joined the list on 2026-09-20, when the project gained a picture of the software.
-The screens are the definition of "working" for the IDs they name, in the same way the
-PRD's sentences are. A card that redrew the screen it is judged against would be marking
-its own homework as surely as one that edited the gate.
+It stays on it after the 2026-09-29 ruling that the screens are a sketch: a sketch a card
+may redraw is a sketch that stops being the reference it was kept for.
+
+The four documents joined on 2026-09-29: PRD.md, CASE.md, CONSTITUTION.md and SURFACE.md.
+Every prompt on the board had told a worker not to touch any of them for as long as the
+prompts had existed, and nothing refused the touch, so the rule held for exactly as long as
+each agent kept reading its own instructions. They are not machinery in the sense the
+scripts are; they are what the machinery is pointed at. PRD.md is the registry, so a card
+that edited it would be marking its own homework more completely than one that edited the
+gate, which only decides whether the promise was kept. CASE.md is what the promises were
+made about, CONSTITUTION.md is what the build must be true of, and SURFACE.md is what it
+may touch: a card that rewrote any of those would be changing the question rather than
+answering it.
 
 Usage: governed-files.py [--base BRANCH] [--head REF]
 Exit 0 clean, 1 a governed file changed, 2 cannot tell.
@@ -35,6 +45,10 @@ GOVERNED = (
     ".specify/extensions/specassay-check/scripts/",
     ".github/workflows/",
     "design/",
+    "PRD.md",
+    "CASE.md",
+    "CONSTITUTION.md",
+    "SURFACE.md",
 )
 
 # Documents about the project rather than parts of it. A card may not change them,
