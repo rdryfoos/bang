@@ -53,10 +53,17 @@ exist; you never create one. You are inside the card's worktree on the card's br
    record is, and the second one to run wins.
 
 5. If the project has a `design/` folder, read `design/README.md` and the screens it
-   maps. The README's "What a build reads from this" list is the contract, and the
-   pictures themselves are illustration: a screen is the definition of "working" for
-   the IDs it names, the copy on a screen is the copy, and layout is a guide. Nothing
-   else in `design/` binds you.
+   maps. The screens are a low-fidelity sketch, for reference. What a build must
+   satisfy is the registry, and the controls, order, states and words that matter are
+   named there in acceptance criteria. Anything not named is the build's to choose and
+   the reviewer's to judge in Review.
+
+   **A nav bar or a palette is delivery unless an acceptance criterion says
+   otherwise; a state or a word an acceptance criterion names is not.** So read the
+   card's IDs before you read the pictures. A build that matches the sketch and misses a
+   named state is not done. A build that satisfies every named criterion and looks
+   nothing like the sketch is done, and whether it looks right is Review's to say, on
+   the screen, in words a hand can act on.
 
 ## Do
 1. Run the project's spec-driven workflow for this card, in its installed sequence:

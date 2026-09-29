@@ -48,6 +48,13 @@ stumbled, in your own words. Add yours and open a pull request; that is the whol
   field, before either sub-tab was touched; that one is the fork's and is reported
   under it.
 
+  What the screens looked like: black Times on white, no panel, no cards. Every word on
+  every screen was right. Reading the contract that way was not wrong, because nothing in
+  it said otherwise. The first answer was to make the styles binding. On 2026-09-29 Rik
+  ruled the other way instead: the four files in `design/` are a low-fidelity sketch for
+  reference, and what a build must satisfy is the registry, so a run that comes up looking
+  unlike the sketch is Review's to judge rather than the Gate's to refuse.
+
 - 2026-09-25, Dell 7420, 2ndColdWinUser, Bang at `96dac1c`: the second Windows walk, and
   the first to get past step 2. Block 1 from the README went through as written, all
   four pastes.

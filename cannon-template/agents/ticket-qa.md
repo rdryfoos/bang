@@ -60,8 +60,12 @@ project, on disk, and you are standing in it:
   in Spec carrying T904's five IDs, which is a reservation that has been picked up and a
   reader sent to do work that was already under way. The disagreement is the answer, not
   a thing to resolve quietly in favour of the file you happened to read.
-- `design/`, where an project has one, is the picture of the software, governed the same
-  way the PRD is. The screens are the definition of "working" for the IDs they name.
+- `design/`, where a project has one, is a low-fidelity sketch of the software, governed
+  the same way the PRD is. What a build must satisfy is the registry: a nav bar or a
+  palette is delivery unless an acceptance criterion says otherwise, and a state or a
+  word an acceptance criterion names is not. A reader who says the screen looks wrong is
+  saying something worth hearing; say plainly that it is Review's judgement and not a
+  refusal by the Gate.
 - `journal/receipts.jsonl` is one line per Gate run, keyed by the commit it judged.
   This is where "did it pass" is actually answered.
 - `trace-manifest.json` in a card's worktree under `.potato/worktrees/<card>/` says what
