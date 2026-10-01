@@ -209,3 +209,61 @@ def test_buddy_may_bring_the_card_up_to_the_default_branch_when_asked():
         "### The fence, when you make it", 1)[1]
     assert "Merging the default branch" in fence, (
         "the merge permission is outside the fence")
+
+
+# --- the card's lines, the session trailer, and the hand-task spelling ---------------
+
+def test_the_three_commit_ish_lines_are_explained_where_they_are_read():
+    """`branch:`, `head:` and `reviewed:` answer three different questions.
+
+    A drag to Done merges the branch tip. On BAN-1 that was four Buddy commits and a merge
+    of main ahead of the commit the review packet described, and the card carried only
+    `head:`, which is a fourth number again: where the Build attempt ended. Nothing said
+    the three were different, so a reader had no way to know which one they had.
+    """
+    for name in ("build.md", "ticket-qa.md"):
+        prompt = _flat((AGENTS / name).read_text(encoding="utf-8"))
+        assert "What each of the card's three commit-ish lines means" in prompt, (
+            "%s does not explain the card's lines" % name)
+        assert "`reviewed:` is the commit the review packet describes" in prompt, name
+        assert "`head:` is where the Build attempt ended" in prompt, name
+        assert "a drag to Done merges the branch tip" in prompt, name
+
+
+def test_the_session_trailer_names_where_the_id_actually_is():
+    """The instruction has to be satisfiable, which it was not.
+
+    No tool returns a session, there is no route for one, and the id was in no
+    environment. It is `POTATO_SESSION_ID` now, and the fallback is the word rather than
+    a plausible value worked out from somewhere else.
+    """
+    build = _flat((AGENTS / "build.md").read_text(encoding="utf-8"))
+    assert "POTATO_SESSION_ID" in build
+    assert "If that variable is not set, write `unavailable` and carry on" in build
+    assert "read from the daemon's session list for the active session" not in build, (
+        "build.md still tells the worker to read a list that does not exist")
+
+
+def test_a_hands_task_carries_the_word_none_and_nothing_else():
+    """The spelling, because the Gate will start caring about it.
+
+    SpecAssay 0.5.4 accepts `none` and refuses any other non-ID value, so a parenthesis
+    is a red Gate rather than a style preference. BAN-1's T908 reads `(none)` today.
+    """
+    for name in ("build.md", "spec.md", "ticket-qa.md"):
+        prompt = _flat((AGENTS / name).read_text(encoding="utf-8"))
+        assert "`**Carries**: none`" in prompt, "%s does not give the spelling" % name
+        assert "`(none)`" in prompt, (
+            "%s does not say which spelling fails" % name)
+
+    # The two workers' paragraph stays one paragraph, as #48 left it.
+    opening = "A hand's task carries exactly"
+    said = {}
+    for name in ("build.md", "spec.md"):
+        text = (AGENTS / name).read_text(encoding="utf-8")
+        assert opening in text, "%s lost the spelling paragraph" % name
+        said[name] = _flat(opening + re.split(
+            r"\n\s*\n", text.split(opening, 1)[1], maxsplit=1)[0])
+    assert said["build.md"] == said["spec.md"], (
+        "the two workers' spellings have drifted:\n%s\n%s"
+        % (said["build.md"], said["spec.md"]))

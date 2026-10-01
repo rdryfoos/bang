@@ -128,7 +128,15 @@ WEB_ENTRY="src/whms/web.py"
 # One state directory per project, not one per machine. A shared directory meant that
 # staging one board killed the Try it app of another, because both wrote the same pid
 # file. The key is the project's own path, so two boards cannot collide.
-STATE_KEY="$(printf '%s' "$ROOT" | shasum | cut -c1-12)"
+# sha256sum on Linux, shasum on a Mac. The two print different digests of the same
+# input, which does not matter: this is a key for a directory name, not a checksum
+# anybody compares across machines, and a machine only ever has to agree with itself.
+# The first Linux run met `shasum: command not found` here.
+if command -v sha256sum >/dev/null 2>&1; then
+  STATE_KEY="$(printf '%s' "$ROOT" | sha256sum | cut -c1-12)"
+else
+  STATE_KEY="$(printf '%s' "$ROOT" | shasum | cut -c1-12)"
+fi
 STATE="${TMPDIR:-/tmp}/bang-try-web-$STATE_KEY"
 LIFETIME_MINUTES="${TRY_WEB_MINUTES:-30}"
 

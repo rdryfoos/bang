@@ -15,6 +15,8 @@ text reaches a process listing. Modes, in CARD_IO_MODE:
   blocked  set the card's blocked flag from CARD_IO_BLOCKED, "true" or "false"
   state    print "blocked" or "clear" on stdout, the card's flag as it stands
   line     print the value of the CARD_IO_LINE named line, or nothing if absent
+  setline  set the CARD_IO_LINE named line to CARD_IO_VALUE, leaving every other line
+           and block of the description exactly as it was found
 
 The card's branch is its own `branch:` line when it has one, otherwise the
 project's branch prefix and the ticket id, which is what the Cannon names a
@@ -140,6 +142,26 @@ def main():
             api(ticket_path(project, ticket), method="PUT", body={"description": new_description})
         except Exception as e:
             print(f"card-io: could not write the {name} block ({e.__class__.__name__})", file=sys.stderr)
+            return 2
+        return 0
+
+    if mode == "setline":
+        name = (os.environ.get("CARD_IO_LINE") or "").strip()
+        if not name:
+            print("card-io: setline needs CARD_IO_LINE", file=sys.stderr)
+            return 2
+        value = (os.environ.get("CARD_IO_VALUE") or "").strip()
+        # The targeted route, not a read-rebuild-write of the whole description. A card's
+        # description is a document several hands write into, and every whole-document
+        # write is a chance to lose somebody else's. The daemon changes only the lines it
+        # is handed; `block` above still rebuilds, which is why it is the mode that can
+        # lose a line somebody added while it was thinking.
+        try:
+            api(ticket_path(project, ticket) + "/description", method="POST",
+                body={"lines": [{"name": name, "value": value}], "actor": "hook:review-packet"})
+        except Exception as e:
+            print(f"card-io: could not set {name} on {ticket} ({e.__class__.__name__})",
+                  file=sys.stderr)
             return 2
         return 0
 

@@ -127,6 +127,23 @@ if [ -n "$BRANCH" ] && git rev-parse --verify --quiet "$BRANCH^{commit}" >/dev/n
     || say_thread_failed=1
 fi
 
+# The commit this packet describes, on the card, as its own line.
+#
+# `head:` is the Build worker's record of where its attempt ended, and it stays that.
+# This is a different fact and it needs its own line: a reader dragging a card to Done
+# merges the branch tip, which on BAN-1 was four Buddy commits and a merge of main ahead
+# of what the packet described. Both numbers are true and they answer different
+# questions. Written here because this is the moment the packet is written, and a line
+# written at any other moment would be a guess about which commit a reader read.
+if [ -n "$BRANCH" ]; then
+  REVIEWED="$(git rev-parse "$BRANCH" 2>/dev/null)"
+  if [ -n "$REVIEWED" ]; then
+    CARD_IO_MODE=setline CARD_IO_LINE=reviewed CARD_IO_VALUE="$REVIEWED" \
+      "$PYTHON" "$HERE/card-io.py" >/dev/null 2>&1 \
+      || echo "review-packet: could not write the reviewed: line onto $TICKET" >&2
+  fi
+fi
+
 if CARD_IO_MODE=block CARD_IO_BLOCK=review-packet "$PYTHON" "$HERE/card-io.py" < "$PACKET" >/dev/null 2>&1; then
   echo "review-packet: written onto $TICKET, $(wc -l < "$PACKET" | tr -d ' ') lines"
 else
