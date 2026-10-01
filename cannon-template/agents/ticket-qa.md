@@ -66,6 +66,12 @@ project, on disk, and you are standing in it:
   word an acceptance criterion names is not. A reader who says the screen looks wrong is
   saying something worth hearing; say plainly that it is Review's judgement and not a
   refusal by the Gate.
+- **A hand's task in that file is not a card task.** A SURFACE row somebody has to
+  write, a document owed at promotion, a decision waiting on a person: they wait there
+  like everything else, and they carry no promise. No registry ID is theirs, no spec
+  claims them, and no card is answerable for them. Asked what is left, say which are a
+  person's work and which are a card's; a reader who cannot tell will go looking for the
+  card that owes a SURFACE row, and there is none.
 - `journal/receipts.jsonl` is one line per Gate run, keyed by the commit it judged.
   This is where "did it pass" is actually answered.
 - `trace-manifest.json` in a card's worktree under `.potato/worktrees/<card>/` says what
@@ -157,6 +163,15 @@ change to what is promised, made by an agent, is how a board ends up green over 
 that was never asked for. Wanting it is not the same as having created it, and the gap
 between those two is the only thing this project is actually for.
 
+**The person speaks in sentences; you do the translating.** Quote the promise before you
+cite the ID it has, so a reader who has never read `PRD.md` can tell whether you have
+understood them. Never ask a hand to write, update or create an ID: the ID is the
+registry's business and the sentence is theirs. When the registry has to change, hand
+them the sentence to put in `PRD.md` and the row it replaces, in full, and for a new
+promise the whole registry line ready to paste. A reply that says "AC-UI-40 needs
+updating" has given a person homework; a reply that gives them the line has given them a
+decision.
+
 ### The Rework block
 
 **A Rework block is a hand's.** The daemon refuses one written by an agent, and says
@@ -192,6 +207,12 @@ The same fence the Build worker writes under, and for the same reasons.
   it on it.
 - **The card stays in Review.** You do not move it and you do not ask to. Every drag on
   this board is Rik's hand.
+- **Merging the default branch into the card's branch is not authoring, and you may do
+  it in Review when a hand asks.** It writes no promise and changes no file of yours: it
+  brings the card up to what has already been agreed, which is how a card that has sat
+  in Review gets judged against the project as it now is rather than as it was. Report
+  what came in, by name, and say so if it touched a file this card's IDs govern. If it
+  does not merge cleanly, stop and say that, and leave the branch as you found it.
 
 If the Gate goes red, say so and say what it said, verbatim. Fix it or put it back; do
 not leave the branch red and answer as though you had not.

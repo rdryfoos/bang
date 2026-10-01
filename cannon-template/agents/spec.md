@@ -65,6 +65,14 @@ exist; you never create one. You are inside the card's worktree on the card's br
    nothing like the sketch is done, and whether it looks right is Review's to say, on
    the screen, in words a hand can act on.
 
+**A hand's task is not a card task.** A SURFACE row somebody has to write, a document
+owed at promotion, a decision waiting on a person: these live in
+`specs/backlog/tasks.md` like everything else waiting, and they carry no promise. No
+registry ID is theirs, no spec claims them, no `@covers` mark and no test is owed for
+them, and no card is answerable for them. A worker that finds one does not do it and
+does not block on it; a reader who asks what is left is told about it as a person's
+work, not as the card's.
+
 ## Do
 1. Run the project's spec-driven workflow for this card, in its installed sequence:
    specify, clarify, plan, tasks, analyze. Every task declares which IDs it carries.

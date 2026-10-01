@@ -123,3 +123,89 @@ def test_the_prompts_and_the_governed_list_name_the_same_documents():
                 assert document in governed, (
                     "%s tells a worker about %s and the governed list does not carry it"
                     % (name, document))
+
+
+# --- a hand's task, and Buddy's translating ---------------------------------------
+
+# The substance, in the words all three share. Buddy's copy says "A hand's task in that
+# file is not a card task", because the file is named on the line above it; the workers'
+# copy names the file itself. Same rule, each prompt's own sentence.
+HAND_TASK_CLAUSES = (
+    "is not a card task",
+    "carry no promise",
+    "No registry ID is theirs",
+)
+
+TRANSLATE_CLAUSES = (
+    "The person speaks in sentences; you do the translating.",
+    "Quote the promise before you cite the ID it has",
+    "Never ask a hand to write, update or create an ID",
+    "hand them the sentence to put in `PRD.md` and the row it replaces",
+    "the whole registry line ready to paste",
+)
+
+MERGE_CLAUSES = (
+    "Merging the default branch into the card's branch is not authoring",
+    "you may do it in Review when a hand asks",
+    "Report\n  what came in, by name",
+    "leave the branch as you found it",
+)
+
+
+def test_a_hands_task_is_not_a_card_task_in_all_three_prompts():
+    """The rule has to reach the two workers and the reader's agent.
+
+    A SURFACE row nobody can write from a card branch, and a document owed at promotion,
+    are both work for a person. Written as card tasks they look like promises a card
+    failed to keep, and a worker that treats one as its own either does it, which it may
+    not, or blocks on it, which stops a card for somebody else's work.
+    """
+    for name in ("build.md", "spec.md", "ticket-qa.md"):
+        prompt = _flat((AGENTS / name).read_text(encoding="utf-8"))
+        for clause in HAND_TASK_CLAUSES:
+            assert _flat(clause) in prompt, (
+                "%s does not say: %s" % (name, clause))
+
+    # The two workers read the same paragraph, word for word, because the rule is about
+    # what they must not pick up and a difference between them is a difference in what
+    # one of them will do.
+    opening = "**A hand's task is not a card task.**"
+    paragraphs = {}
+    for name in ("build.md", "spec.md"):
+        text = (AGENTS / name).read_text(encoding="utf-8")
+        assert opening in text, "%s has no hand's-task paragraph" % name
+        paragraphs[name] = _flat(opening + re.split(
+            r"\n\s*\n", text.split(opening, 1)[1], maxsplit=1)[0])
+    assert paragraphs["build.md"] == paragraphs["spec.md"], (
+        "the two workers' copies have drifted:\n%s\n%s"
+        % (paragraphs["build.md"], paragraphs["spec.md"]))
+
+
+def test_buddy_translates_rather_than_handing_a_person_an_id():
+    """The sentence is the person's; the ID is the registry's.
+
+    A reply that names an ID and stops has given a person homework in a vocabulary they
+    did not ask to learn. The whole line, ready to paste, is a decision they can take.
+    """
+    buddy = _flat((AGENTS / "ticket-qa.md").read_text(encoding="utf-8"))
+    for clause in TRANSLATE_CLAUSES:
+        assert _flat(clause) in buddy, "ticket-qa.md does not say: %s" % clause
+
+
+def test_buddy_may_bring_the_card_up_to_the_default_branch_when_asked():
+    """Not authoring, and in the fence with the rest of what Buddy may do.
+
+    A card that has sat in Review is judged against the project as it was. Merging the
+    default branch in writes no promise, so it is not a change to what is promised, and
+    it is the one write Buddy can make that nobody authored.
+    """
+    buddy = _flat((AGENTS / "ticket-qa.md").read_text(encoding="utf-8"))
+    for clause in MERGE_CLAUSES:
+        assert _flat(clause) in buddy, "ticket-qa.md does not say: %s" % clause
+
+    # In the fence, not loose in the prose: the fence is the list a reader checks when
+    # they want to know what Buddy may do.
+    fence = (AGENTS / "ticket-qa.md").read_text(encoding="utf-8").split(
+        "### The fence, when you make it", 1)[1]
+    assert "Merging the default branch" in fence, (
+        "the merge permission is outside the fence")
