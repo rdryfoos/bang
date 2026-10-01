@@ -52,11 +52,11 @@ the screens are, and what a build reads from them, is said.
   - FR-UI-10 — A local web app serves the four screens in design/ and reads and writes the same records file the command line does; nothing leaves the machine. **Authorship**: design
     - AC-UI-10 — Opening the app shows the outstanding list, oldest first with days out, or says in words that nothing is out when nothing is. **Authorship**: design
     - AC-UI-20 — Lend something takes what, to whom, and a date out defaulting to today; a missing borrower is refused in place and nothing is saved. **Authorship**: design
-    - AC-UI-30 — Mark returned takes a date back defaulting to today; the item leaves the list at once and the record survives a restart. **Authorship**: design
-    - AC-UI-50 — Every item in the outstanding list carries its own Mark returned control. **Authorship**: design
+    - AC-UI-30 — Returned takes a date back defaulting to today; the item leaves the list at once and the record survives a restart. **Authorship**: design
+    - AC-UI-50 — Every item in the outstanding list carries its own Returned control. **Authorship**: design
     - AC-UI-60 — The outstanding list and the nothing-out screen each offer a way to lend something. **Authorship**: design
-    - AC-UI-70 — From Lend something and from Mark returned there is a way back to the outstanding list that records nothing. **Authorship**: design
-    - AC-UI-80 — The Mark returned screen names the item, who has it and when it went out, before anything is recorded. **Authorship**: design
+    - AC-UI-70 — From Lend something and from Returned there is a way back to the outstanding list that records nothing. **Authorship**: design
+    - AC-UI-80 — The Returned screen names the item, who has it and when it went out, before anything is recorded. **Authorship**: design
 - US-UI-20 — As the owner, when I lend something I see what I have lent that person before and whether it came back, so I decide with the history in front of me. **Authorship**: design
   - AC-UI-40 — On the Lend screen, once a borrower is named, the app lists what that person has had before, showing what came back and what is still out; a borrower with no history shows nothing extra. **Authorship**: design
 
