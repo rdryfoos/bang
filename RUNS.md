@@ -19,6 +19,19 @@ stumbled, in your own words. Add yours and open a pull request; that is the whol
   measured the card against a local `main` that a fetch had left behind. Linux support
   itself is a branch, not this line.
 
+  What Linux needed that the Mac text did not have:
+
+  - Step 3: uv's `install.sh` appends to shell rc files unless told
+    `UV_NO_MODIFY_PATH=1`, and writes `~/.config/uv/uv-receipt.json` either way.
+  - Step 7: `pip install pytest` wrote `~/.cache/pip`. Not Linux's alone: a Mac's pip
+    does the same in `~/Library/Caches/pip`. `PIP_CACHE_DIR` now moves it.
+  - Step 8: node-pty has no linux-x64 prebuild, so it compiles, which needs a C++
+    toolchain (Omarchy has `base-devel`) and wrote `~/.cache/node-gyp` until
+    `npm_config_devdir` moved it. better-sqlite3 has a prebuild and did not compile.
+  - Step 9: the script knew no Linux. It now writes a systemd user unit that runs the
+    same `cannon-daemon.sh` as Windows, with `Restart=always`; Omarchy has no `lsof`,
+    so the port owner comes from `ss` and `ps`.
+
 - 2026-09-29, KoalaKid, fresh user, Bang at `1c13f6f`: **the eighth Mac user, and the
   first to prove the pen and the resume together.** Buddy wrote on the card's branch in
   Review and answered a second message in the same conversation rather than starting a

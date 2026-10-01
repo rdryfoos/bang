@@ -26,6 +26,7 @@ STEPS = steps(BANG)
 # paragraph around it does not fail this. The right side is what the step is about.
 EXPECTED = [
     ("start again from step 1", "Confirm where we are"),
+    ("this file's, then start again from step 1", "Confirm where we are"),
     ("Step 2 works out which", "Which machine this is"),
     ("which step 2's receipt", "Which machine this is"),
     ("If step 2 said uv was present", "Which machine this is"),
@@ -42,6 +43,8 @@ EXPECTED = [
     ("the pytest step 8 put in it", "The project's own Python"),
     ("stop\n   you at step 9", "Potato Cannon"),
     ("whichever of the two step 10 said it used", "The daemon"),
+    ("with systemd, which step 10 needs", "The daemon"),
+    ("step 4 names\n   the build for it", "Node and pnpm"),
     ("Step 7 says why at", "SpecAssay"),
     ("step 11 below installs that", "Register the project"),
     ("the project id came back from step 11", "Register the project"),

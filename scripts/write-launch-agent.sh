@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # write-launch-agent: install the thing that keeps the Cannon daemon running, on
-# whichever of the two machines this is.
+# whichever of the three machines this is.
 #
 # This used to be a plist printed in BANG.md for the reader to copy. It could not be
 # copied. The daemon's command is one long shell line, and a plist typeset to fit a
@@ -15,7 +15,10 @@
 # On Windows, ~/.potato-cannon/cannon-daemon.sh and nothing else, checked with
 # `bash -n` before anything is registered, and then a Task Scheduler task at logon
 # named "Bang Potato Cannon" that runs it. The task is the one thing either branch
-# leaves outside the home folder, and BANG.md's Undo removes it by name.
+# leaves outside the home folder, and BANG.md's Undo removes it by name. On Linux,
+# the same ~/.potato-cannon/cannon-daemon.sh, checked with `bash -n`, and a systemd
+# user unit, ~/.config/systemd/user/bang-potato-cannon.service, that runs it; the unit
+# is checked with `systemd-analyze --user verify` before it is enabled.
 #
 # Two things the reader could not have got right by hand, and the reasons:
 #
@@ -47,7 +50,13 @@
 # What the two branches do not share, and a reader should know it before leaning on
 # the Windows one: launchd's KeepAlive starts the daemon again when it dies, and a
 # logon task has nothing like it. On Windows a daemon that dies stays dead until the
-# next logon or until somebody runs `schtasks /Run` by hand.
+# next logon or until somebody runs `schtasks /Run` by hand. Linux has it back:
+# Restart=always in the unit is systemd's KeepAlive, with the same thirty seconds.
+#
+# Why the unit runs a file rather than carrying the command itself. systemd expands
+# $VAR and %x in ExecStart before any shell sees the line, and the daemon's command is
+# full of both. Escaping them would make a third spelling of one command; a file that
+# holds it is the defence Windows already uses, so Linux uses the same file.
 #
 # Before it writes anything it checks the port. A daemon that is already listening is
 # somebody else's, and every receipt after step 8 would be about their board rather than
@@ -67,6 +76,9 @@ DAEMON_SH="$HOME/.potato-cannon/cannon-daemon.sh"
 # The Startup-folder fallback's launcher, named so Undo can find it without guessing.
 STARTUP_CMD="bang-potato-cannon.cmd"
 STARTUP_CMD_TMP="$HOME/.potato-cannon/$STARTUP_CMD.new"
+# Linux's systemd user unit, named the way the Windows pair is so Undo can find it.
+UNIT="bang-potato-cannon.service"
+UNIT_FILE="$HOME/.config/systemd/user/$UNIT"
 PORT="3131"
 HEALTH="http://127.0.0.1:$PORT/health"
 DRY_RUN=0
@@ -84,7 +96,8 @@ stop() { printf 'write-launch-agent: STOPPED. %s\n' "$*" >&2; exit 1; }
 case "$(uname -s)" in
   Darwin)            MACHINE=mac ;;
   MINGW*|MSYS*)      MACHINE=windows ;;
-  *)                 stop "this script knows a Mac and Windows, and \`uname -s\` said $(uname -s)." ;;
+  Linux)             MACHINE=linux ;;
+  *)                 stop "this script knows a Mac, Windows and Linux, and \`uname -s\` said $(uname -s)." ;;
 esac
 
 # Who is listening on the daemon's port, if anybody. One line per listener, with the
@@ -109,6 +122,22 @@ listener_on_3131() {
     lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | tail -n +2
     return
   fi
+  # Linux asks ss, because lsof is not installed everywhere (Omarchy has none) and
+  # ss comes with iproute2, which is. ss names the process and its id but not its
+  # user, so the id goes to ps for that. A listener owned by another account shows
+  # no process at all to a plain user, and that is said rather than left blank: an
+  # empty line here would read as "nothing is listening", which is the opposite.
+  if [ "$MACHINE" = linux ]; then
+    ss -ltnpH "sport = :$PORT" 2>/dev/null | while read -r _ _ _ local _ procs; do
+      pid="$(printf '%s' "$procs" | sed -n 's/.*pid=\([0-9]*\).*/\1/p')"
+      if [ -n "$pid" ]; then
+        printf '%s  pid %s  owner %s\n' "$(ps -o comm= -p "$pid")" "$pid" "$(ps -o user= -p "$pid")"
+      else
+        printf '%s  (a process this account cannot see: another user'"'"'s)\n' "$local"
+      fi
+    done
+    return
+  fi
   POTATO_PORT="$PORT" powershell -NoProfile -ExecutionPolicy ByPass -c '
     Get-NetTCPConnection -LocalPort ([int]$env:POTATO_PORT) -State Listen -ErrorAction SilentlyContinue |
       ForEach-Object {
@@ -130,7 +159,15 @@ EXEC_LINE='cd "$HOME/.potato-cannon/app" &amp;&amp; exec env -i HOME="$HOME" USE
 # because this one goes into a shell script rather than into XML.
 EXEC_LINE_WIN='cd "$HOME/.potato-cannon/app" && export PATH="$HOME/.potato-cannon/node:$HOME/.local/bin:$PATH" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache" UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python" UV_TOOL_BIN_DIR="$HOME/.local/bin" UV_PYTHON_PREFERENCE="only-managed" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" && exec node ./apps/daemon/dist/server/server.js'
 
-for line in "$EXEC_LINE" "$EXEC_LINE_WIN"; do
+# The same command for Linux. It is the Mac's, `env -i` and all, with real ampersands
+# because it goes into a script, and with no /opt/homebrew on the path. ~/.local/bin
+# stays: it is where claude's installer puts the command the workers are started with,
+# and on Omarchy where its claude wrapper lives. npm_config_devdir is Linux's alone:
+# node-pty ships no linux-x64 binary, so anything that rebuilds it runs node-gyp, and
+# node-gyp keeps Node's headers in ~/.cache/node-gyp unless it is told otherwise.
+EXEC_LINE_LINUX='cd "$HOME/.potato-cannon/app" && exec env -i HOME="$HOME" USER="$USER" LOGNAME="$USER" SHELL="$SHELL" TMPDIR="${TMPDIR:-/tmp}" LANG="en_US.UTF-8" PATH="$HOME/.potato-cannon/node/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin" COREPACK_HOME="$HOME/.potato-cannon/corepack" PNPM_HOME="$HOME/.potato-cannon/pnpm" npm_config_cache="$HOME/.potato-cannon/npm-cache" npm_config_devdir="$HOME/.potato-cannon/node-gyp" UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache" UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python" UV_TOOL_BIN_DIR="$HOME/.local/bin" UV_PYTHON_PREFERENCE="only-managed" GIT_AUTHOR_NAME="Bang Worker" GIT_AUTHOR_EMAIL="bang-worker@localhost" GIT_COMMITTER_NAME="Bang Worker" GIT_COMMITTER_EMAIL="bang-worker@localhost" POTATO_DAEMON_HOST="127.0.0.1" POTATO_DAEMON_PORT="3131" node ./apps/daemon/dist/server/server.js'
+
+for line in "$EXEC_LINE" "$EXEC_LINE_WIN" "$EXEC_LINE_LINUX"; do
   case "$line" in
     *$'\n'*) stop "the daemon's command has a newline in it. That is the bug this file exists to prevent." ;;
   esac
@@ -163,7 +200,12 @@ PLIST
 # typed into schtasks. schtasks takes the command as one /TR string and re-parses the
 # quotes inside it, and the daemon's command is a long line full of quotes. A file
 # holding the line is the same defence as the plist: what is written is what runs.
+#
+# Linux runs the same file from its unit, for the reason at the top: systemd would
+# expand the command's $ and % before bash ever read it.
 daemon_sh() {
+  local exec_line="$EXEC_LINE_WIN"
+  [ "$MACHINE" = linux ] && exec_line="$EXEC_LINE_LINUX"
   cat <<SH
 #!/usr/bin/env bash
 # Written by scripts/write-launch-agent.sh. Edit that, not this.
@@ -172,8 +214,27 @@ daemon_sh() {
 # has no StandardOutPath, so the daemon sends its own output to the same daemon.log
 # the Mac's launch agent writes, which is where step 8's receipt looks for it.
 exec >> "\$HOME/.potato-cannon/daemon.log" 2>&1
-$EXEC_LINE_WIN
+$exec_line
 SH
+}
+
+# The unit. %h is systemd's own word for the home folder, and the only specifier in
+# it. default.target is the user's session, so it starts at login and stops at logout,
+# which is what the Mac's launch agent does.
+unit() {
+  cat <<UNIT
+# Written by scripts/write-launch-agent.sh. Edit that, not this.
+[Unit]
+Description=Bang Potato Cannon daemon on 127.0.0.1:$PORT
+
+[Service]
+ExecStart=/bin/bash %h/.potato-cannon/cannon-daemon.sh
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target
+UNIT
 }
 
 if [ "$DRY_RUN" = 1 ]; then
@@ -183,6 +244,13 @@ if [ "$DRY_RUN" = 1 ]; then
     echo "and nothing else would be written or loaded."
     echo
     plist
+  elif [ "$MACHINE" = linux ]; then
+    echo "$DAEMON_SH and $UNIT_FILE"
+    echo "and nothing else would be written; the unit would not be enabled."
+    echo
+    daemon_sh
+    echo
+    unit
   else
     echo "$DAEMON_SH"
     echo "and nothing else would be written; the task \"$TASK\" would not be registered."
@@ -239,6 +307,53 @@ if [ "$MACHINE" = mac ]; then
   launchctl bootstrap "gui/$(id -u)" "$PLIST" \
     || stop "launchctl bootstrap refused. The plist is at $PLIST and parses; the reason is launchd's."
   say "bootstrapped $LABEL"
+elif [ "$MACHINE" = linux ]; then
+  # A user unit needs a user manager to hand it to. Most desktops have one; WSL
+  # without systemd and most containers do not, and there the honest answer is to
+  # stop rather than write a unit nothing will ever read.
+  systemctl --user show-environment >/dev/null 2>&1 \
+    || stop "systemctl --user does not answer, so there is no systemd user manager to run the daemon. Nothing was written."
+
+  # The script first, the same file and the same check as Windows.
+  daemon_sh > "$DAEMON_SH.new" || stop "could not write $DAEMON_SH.new"
+  if ! bash -n "$DAEMON_SH.new" 2>/dev/null; then
+    bash -n "$DAEMON_SH.new" >&2
+    rm -f "$DAEMON_SH.new"
+    stop "the daemon script does not parse; nothing was installed"
+  fi
+  mv "$DAEMON_SH.new" "$DAEMON_SH" || stop "could not move the daemon script into place"
+  chmod +x "$DAEMON_SH"
+  say "wrote $DAEMON_SH"
+  say "bash -n: OK"
+
+  # Then the unit, beside its target and moved in once systemd has read it. The
+  # check reads a file named for the unit, so the candidate is written into a
+  # folder of its own under ~/.potato-cannon rather than as $UNIT_FILE.new, which
+  # systemd-analyze would refuse for its suffix before it read a line of it.
+  mkdir -p "$HOME/.config/systemd/user" || stop "could not make $HOME/.config/systemd/user"
+  CANDIDATE_DIR="$HOME/.potato-cannon/unit-check"
+  mkdir -p "$CANDIDATE_DIR" || stop "could not make $CANDIDATE_DIR"
+  unit > "$CANDIDATE_DIR/$UNIT" || stop "could not write $CANDIDATE_DIR/$UNIT"
+  if ! systemd-analyze --user verify "$CANDIDATE_DIR/$UNIT" >/dev/null 2>&1; then
+    systemd-analyze --user verify "$CANDIDATE_DIR/$UNIT" >&2
+    rm -rf "$CANDIDATE_DIR"
+    stop "the unit does not verify; nothing was enabled"
+  fi
+  mv "$CANDIDATE_DIR/$UNIT" "$UNIT_FILE" || stop "could not move the unit into place"
+  rm -rf "$CANDIDATE_DIR"
+  say "wrote $UNIT_FILE"
+  say "systemd-analyze --user verify: OK"
+
+  # Running it twice is the ordinary case, as it is on the Mac. enable --now starts
+  # a stopped unit and leaves a running one alone, so a re-run would keep the old
+  # daemon on the old script; restart is what makes the one just written the one
+  # that runs.
+  systemctl --user daemon-reload || stop "systemctl --user daemon-reload refused"
+  systemctl --user enable "$UNIT" >/dev/null 2>&1 \
+    || stop "systemctl --user enable $UNIT refused. The unit is at $UNIT_FILE and verifies; the reason is systemd's."
+  systemctl --user restart "$UNIT" \
+    || stop "$UNIT is enabled but would not start. \`journalctl --user -u $UNIT\` has the reason."
+  say "enabled and started $UNIT"
 else
   # Beside the target, then moved in, for the same reason the plist is: a script that
   # does not parse must never be the one the task runs. `bash -n` is the Windows

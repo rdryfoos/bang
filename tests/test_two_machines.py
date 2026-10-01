@@ -189,15 +189,81 @@ def test_the_windows_node_path_has_no_bin_in_either_place():
 
 
 def test_the_windows_daemon_command_is_still_one_line():
-    """The whole reason this script exists, now twice over.
+    """The whole reason this script exists, now three times over.
 
-    A plist keeps every newline in a <string>, and a task runs a file: both of them
-    take a broken command and start nothing, with no message that says why.
+    A plist keeps every newline in a <string>, and a task and a unit run a file: all
+    of them take a broken command and start nothing, with no message that says why.
     """
-    for name in ("EXEC_LINE", "EXEC_LINE_WIN"):
+    for name in ("EXEC_LINE", "EXEC_LINE_WIN", "EXEC_LINE_LINUX"):
         found = re.search(r"^%s='(.*)'$" % name, SCRIPT, re.M)
         assert found, "%s is no longer one quoted line in the script" % name
         assert "\n" not in found.group(1)
+
+
+def test_the_linux_daemon_command_is_the_macs_without_the_mac():
+    """Linux's line is the Mac's shape: env -i, node/bin first, and no Homebrew.
+
+    It goes into a script, not a plist, so it carries real ampersands; an &amp; there
+    is a command named `amp` and a daemon that never starts.
+    """
+    found = re.search(r"^EXEC_LINE_LINUX='(.*)'$", SCRIPT, re.M)
+    assert found, "write-launch-agent.sh no longer has an EXEC_LINE_LINUX"
+    line = found.group(1)
+    assert 'PATH="$HOME/.potato-cannon/node/bin:' in line, (
+        "the Linux daemon command does not put ~/.potato-cannon/node/bin first")
+    assert "/opt/homebrew" not in line, "the Linux daemon command carries Homebrew"
+    assert "&amp;" not in line, "the Linux daemon command is XML-escaped, and it is not XML"
+    assert "exec env -i " in line, "the Linux daemon command no longer starts clean"
+    assert 'npm_config_devdir="$HOME/.potato-cannon/node-gyp"' in line, (
+        "the Linux daemon command lets node-gyp write into ~/.cache")
+
+
+def test_undo_removes_the_unit_the_script_writes_by_the_name_it_writes_it_under():
+    """The Linux pair, and the same quiet failure as the Windows ones.
+
+    If the name drifts, Undo's systemctl says the unit does not exist, the rm says
+    the file is not there, and a daemon goes on starting at every login.
+    """
+    written = re.search(r'^UNIT="([^"]+)"', SCRIPT, re.M)
+    assert written, "write-launch-agent.sh no longer has a UNIT= line"
+    name = written.group(1)
+    assert 'UNIT_FILE="$HOME/.config/systemd/user/$UNIT"' in SCRIPT, (
+        "the script no longer writes the unit under $UNIT")
+    undo = BANG.split("## Undo, in full", 1)[1]
+    assert "systemctl --user disable --now %s" % name in undo, (
+        "Undo does not stop and disable %r" % name)
+    assert "rm ~/.config/systemd/user/%s" % name in undo, "Undo does not remove %r" % name
+    assert "~/.config/systemd/user/%s" % name in BANG.split("## What this fetches", 1)[0], (
+        "the places list does not name the unit, which this file writes")
+
+
+def test_undo_removes_the_linux_uv_receipt_the_places_list_names():
+    """uv's install.sh writes its record to ~/.config/uv on Linux, as it does on Windows."""
+    places = BANG.split("## What this fetches", 1)[0]
+    undo = BANG.split("## Undo, in full", 1)[1]
+    assert "~/.config/uv/uv-receipt.json" in places, "the places list does not name it"
+    assert "rm ~/.config/uv/uv-receipt.json" in undo, "Undo does not remove it"
+
+
+def test_no_install_writes_a_cache_outside_the_places():
+    """pip and node-gyp each keep a cache in the home folder unless they are told.
+
+    The first Linux run found both: ~/.cache/pip from the Python step and
+    ~/.cache/node-gyp from the Potato Cannon step. The exports that move them are the
+    fix, and this keeps them. Each step is found by its opening words, not its number,
+    because the numbers move.
+    """
+    def step(opening):
+        found = re.search(r"^(\d+)\. " + re.escape(opening), BANG, re.M)
+        assert found, "BANG.md has no step opening %r" % opening
+        return BANG.split(found.group(0), 1)[1].split("\n%d. " % (int(found.group(1)) + 1), 1)[0]
+
+    assert 'export PIP_CACHE_DIR="$HOME/.potato-cannon/pip-cache"' in step(
+        "The project's own Python"), (
+        "the Python step lets pip write its cache outside ~/.potato-cannon")
+    assert 'export npm_config_devdir="$HOME/.potato-cannon/node-gyp"' in step(
+        "Potato Cannon."), (
+        "the Potato Cannon step lets node-gyp write Node's headers into ~/.cache on Linux")
 
 
 def test_the_pin_is_the_same_in_both_of_bangs_two_places():
@@ -449,10 +515,17 @@ def test_the_readmes_first_line_and_its_run_it_section_agree_about_the_machines(
     assert "Mac or Windows" in opening, "the first line no longer names the machines"
     assert "### On a Mac" in README and "### On Windows" in README, (
         "Run it no longer has one section per machine")
-    # Linux is named as coming, and nowhere claimed as working.
-    assert "Omarchy Linux soon" in opening
-    assert "Linux is not supported yet" in BANG, (
-        "BANG.md no longer says Linux is not supported, while the page says soon")
+    # Linux is written in BANG.md before the page offers it: the page says "soon" for
+    # as long as Run it has no Linux section, and stops saying it the day it has one.
+    # BANG.md carrying more than the page promises is safe; the reverse is not.
+    has_linux_section = "### On Linux" in README
+    assert ("Omarchy Linux soon" in opening) != has_linux_section, (
+        "the first line and Run it disagree about Linux: 'soon' in the first line is %s, "
+        "a Linux section in Run it is %s" % ("Omarchy Linux soon" in opening, has_linux_section))
+    step_two = BANG.split("\n2. Which machine this is", 1)[1].split("\n3. ", 1)[0]
+    assert "`Linux` is Linux" in step_two, "BANG.md step 2 no longer recognises Linux"
+    assert "is not supported yet" in step_two, (
+        "BANG.md step 2 no longer refuses a machine that is none of the three")
 
 
 def test_run_it_is_pastes_and_beats_and_carries_no_explanation():
@@ -817,8 +890,10 @@ def test_undo_frees_the_port_before_it_deletes_anything():
         "Undo deletes the Cannon's home before it has shown the port is free")
     assert "lsof -ti :3131" in undo, "Undo has no way to find the holder on a Mac"
     assert "taskkill" in undo, "Undo has no way to find the holder on Windows"
-    assert undo.count("port 3131 is free") == 2, (
-        "both machines need the receipt, and there are %d"
+    assert "ss -ltnpH 'sport = :3131'" in undo, (
+        "Undo has no way to find the holder on Linux, where Omarchy has no lsof")
+    assert undo.count("port 3131 is free") == 3, (
+        "all three machines need the receipt, and there are %d"
         % undo.count("port 3131 is free"))
 
 
