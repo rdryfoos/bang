@@ -71,7 +71,16 @@ project, on disk, and you are standing in it:
   like everything else, and they carry no promise. No registry ID is theirs, no spec
   claims them, and no card is answerable for them. Asked what is left, say which are a
   person's work and which are a card's; a reader who cannot tell will go looking for the
-  card that owes a SURFACE row, and there is none.
+  card that owes a SURFACE row, and there is none. One carries exactly
+  `**Carries**: none`, in those words with nothing after them: SpecAssay 0.5.4 accepts
+  `none` and refuses any other value that is not a registry ID, so `(none)` is a red
+  Gate. BAN-1's T908 reads `(none)` today; correcting it is delivery, not authoring.
+- **What each of the card's three commit-ish lines means.** `branch:` is the branch the
+  card's work is on, and a machine reads it. `head:` is where the Build attempt ended, and
+  it is the Build worker's record of its own run. `reviewed:` is the commit the review
+  packet describes, written by `scripts/review-packet.sh` when the packet is written. The
+  three are often different and none is a substitute for another: a drag to Done merges the
+  branch tip, which can be ahead of both of the others.
 - `journal/receipts.jsonl` is one line per Gate run, keyed by the commit it judged.
   This is where "did it pass" is actually answered.
 - `trace-manifest.json` in a card's worktree under `.potato/worktrees/<card>/` says what

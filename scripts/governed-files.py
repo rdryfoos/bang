@@ -79,16 +79,52 @@ def conf(name, default):
     return default
 
 
+def resolve_base(named):
+    """Which main a card is measured against, and why that one.
+
+    Returns (ref, why) or (None, None) when neither exists.
+
+    `origin/<name>` first, when the repository has a remote carrying it. BANG.md has
+    every cold user commit to local main, so on a machine that later fetches, local main
+    is a stale copy of the project's main: a hand's commit that reached origin reads as
+    this card's work, because it is ahead of the local branch. That was found on the
+    ThinkPad on 2026-09-30.
+
+    Local `<name>` otherwise, which is every cold machine, because there is no origin to
+    prefer and nothing changes for the readers BANG.md is written for.
+
+    The reason travels with the answer because a reader meeting a surprising refusal has
+    to know which main it measured against. A check that is right and unexplainable is a
+    check somebody turns off.
+    """
+    remote = f"origin/{named}"
+    if git(["rev-parse", "--verify", "--quiet", f"{remote}^{{commit}}"]) is not None:
+        return remote, (f"{remote}, because this repository has one: a local {named} can "
+                        f"be behind what the project has already agreed")
+    if git(["rev-parse", "--verify", "--quiet", f"{named}^{{commit}}"]) is not None:
+        return named, (f"the local {named}, because this repository has no origin/{named}")
+    return None, None
+
+
 def main():
     p = argparse.ArgumentParser(description="A card may not change the machinery that judges it.")
     p.add_argument("--base", help="the branch a card's work is measured against")
     p.add_argument("--head", default="HEAD", help="the card's head; HEAD by default")
     args = p.parse_args()
 
-    base = args.base or conf("DEFAULT_BRANCH", "main")
-    if git(["rev-parse", "--verify", "--quiet", f"{base}^{{commit}}"]) is None:
-        print(f"governed-files: this checkout has no {base} to compare against", file=sys.stderr)
-        return 2
+    if args.base:
+        # Named outright, by a caller that knows which branch it means.
+        base, why = args.base, f"{args.base}, which was named on the command line"
+        if git(["rev-parse", "--verify", "--quiet", f"{base}^{{commit}}"]) is None:
+            print(f"governed-files: this checkout has no {base} to compare against", file=sys.stderr)
+            return 2
+    else:
+        named = conf("DEFAULT_BRANCH", "main")
+        base, why = resolve_base(named)
+        if base is None:
+            print(f"governed-files: this checkout has no {named} and no origin/{named} "
+                  "to compare against", file=sys.stderr)
+            return 2
 
     merge_base = git(["merge-base", base, args.head])
     if merge_base is None:
@@ -113,6 +149,7 @@ def main():
           "governs, and a card may not change the machinery that judges it:", file=sys.stderr)
     for f in hits:
         print(f"governed-files:   {f}", file=sys.stderr)
+    print(f"governed-files: measured against {why}.", file=sys.stderr)
     print("governed-files: if the change is right, it is project work: take it out of this "
           "branch and do it by hand on its own.", file=sys.stderr)
     return 1

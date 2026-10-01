@@ -73,6 +73,11 @@ them, and no card is answerable for them. A worker that finds one does not do it
 does not block on it; a reader who asks what is left is told about it as a person's
 work, not as the card's.
 
+A hand's task carries exactly `**Carries**: none`, in those words, with nothing after
+them. Not `(none)`, not `none (a hand's task)`, not an empty value: SpecAssay 0.5.4
+accepts `none` and refuses any other value that is not a registry ID, so a parenthesis
+is a red Gate.
+
 ## Do
 1. Run the project's spec-driven workflow for this card, in its installed sequence:
    specify, clarify, plan, tasks, analyze. Every task declares which IDs it carries.

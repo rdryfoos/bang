@@ -736,3 +736,20 @@ def test_the_mac_note_quotes_the_mac_beat_word_for_word():
     assert notes[1] == beats[1], (
         "the Mac note quotes a beat that is not on the page.\n"
         "  note: %r\n  beat: %r" % (notes[1], beats[1]))
+
+
+def test_try_sh_hashes_with_whatever_the_machine_has():
+    """`shasum` is a Mac name. Linux has `sha256sum` and not the other.
+
+    The first Linux run met `shasum: command not found` at the line that keys the Try it
+    state directory. The two commands print different digests of the same input, which
+    does not matter here: this is a directory name, not a checksum anybody compares across
+    machines, and a machine only ever has to agree with itself.
+    """
+    try_sh = (ROOT / "scripts" / "try.sh").read_text(encoding="utf-8")
+    assert "command -v sha256sum" in try_sh, (
+        "try.sh does not look for sha256sum before shasum")
+    assert try_sh.count("cut -c1-12") == 2, (
+        "the two branches must take the same twelve characters")
+    for name in ("sha256sum", "shasum"):
+        assert "| %s | cut -c1-12" % name in try_sh, "try.sh has no %s branch" % name

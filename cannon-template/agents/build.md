@@ -77,6 +77,11 @@ them, and no card is answerable for them. A worker that finds one does not do it
 does not block on it; a reader who asks what is left is told about it as a person's
 work, not as the card's.
 
+A hand's task carries exactly `**Carries**: none`, in those words, with nothing after
+them. Not `(none)`, not `none (a hand's task)`, not an empty value: SpecAssay 0.5.4
+accepts `none` and refuses any other value that is not a registry ID, so a parenthesis
+is a red Gate.
+
 ## Do
 0. An `@covers` mark on a test file carries no promise: the mark goes on the source
    that fulfils the ID, and a test proves an ID by carrying it in the test's name. A
@@ -166,7 +171,12 @@ work, not as the card's.
 4. Commit as you go, on the card branch only. Your identity is set by the daemon; do
    not set one. Every commit carries three trailers: `Card:` with the card id, `Ids:`
    with the card's `ids:` line verbatim, and `Session:` with your Cannon session id,
-   read from the daemon's session list for the active session on this card.
+   which is in your environment as `POTATO_SESSION_ID`. If that variable is not set,
+   write `unavailable` and carry on: there is no other place to read it from, and a
+   plausible value you worked out from somewhere else is worse than the word, because it
+   reads as a record. On the first Linux run this step said to read "the daemon's session
+   list", which is not a thing that exists: no tool returns one, there is no route for
+   it, and the id was in no environment. That worker wrote `unavailable` and was right.
 5. At the end of every attempt, write onto the card, with `update_ticket`, where the
    work is. **Two lines, not one**, in a single call:
 
@@ -191,6 +201,13 @@ work, not as the card's.
    Each line is set or replaced on its own and every other line of the description is
    left as it was found, so you never read the description, rebuild it and write it
    back.
+
+   **What each of the card's three commit-ish lines means.** `branch:` is the branch the
+   card's work is on, and a machine reads it. `head:` is where the Build attempt ended, and
+   it is the Build worker's record of its own run. `reviewed:` is the commit the review
+   packet describes, written by `scripts/review-packet.sh` when the packet is written. The
+   three are often different and none is a substitute for another: a drag to Done merges the
+   branch tip, which can be ahead of both of the others.
 
    **Do not push. Do not open a pull request.** There is an `origin`: the project was
    cloned from one, and every clone from a host has one. It is never used. The
