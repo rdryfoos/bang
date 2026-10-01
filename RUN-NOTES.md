@@ -10,7 +10,7 @@ Bang, by whoever ran it.
 
 ## Before you start
 
-Bang needs a Mac or a Windows PC, an Anthropic account, and two clocks. About ten
+Bang needs a Mac, a Windows PC or an Omarchy Linux machine, an Anthropic account, and two clocks. About ten
 minutes to install, most of it saying yes. Then the first card takes the board about
 twenty-five minutes on its own; you can watch, or come back.
 
@@ -20,7 +20,8 @@ run it, and read its paragraph that begins "Read this one twice" twice.
 
 Windows is new here and nothing on that page claims it works yet. One walk on one Dell
 is what `RUNS.md` has; yours is the next one, and the line you add to `RUNS.md` is
-worth more than the line above it.
+worth more than the line above it. Linux is newer still: one run, on the account the
+Linux text was written from, and no cold account yet.
 
 ## What each paste does
 
@@ -32,7 +33,7 @@ that is Apple's, not ours. Lines two and three put Claude Code on your path, and
 installer prints the same instruction; `source ~/.zshrc` is why there is no window to
 reopen. The last three clone the project to `~/bang`, go in, and start Claude Code there
 with the instruction already in its hands. That last line is the whole of what Bang is
-told to do, and it is the same line on both machines.
+told to do, and it is the same line on every machine.
 
 ### On Windows
 
@@ -70,6 +71,18 @@ like a permissions problem and is a spelling one: git was handed a tilde and mad
 folder named for it. `$HOME` is expanded before git sees it, in either shell, so git
 is handed a real path. The `cd` would have worked either way; it matches the clone so
 that the two lines cannot drift apart.
+
+### On Linux
+
+**1. One paste in a terminal on Omarchy:** It is the Mac's last three lines, and
+nothing installs Claude Code first, because Omarchy already has it: `claude` in
+`~/.local/bin` is Omarchy's own, a small script that fetches the real thing through
+mise the first time it runs, and `~/.local/bin` is on the path from the start. Claude
+Code's installer would write the same file and replace Omarchy's with its own. The
+clone names the `linux` branch, which is where the Linux text lives until it is
+merged; after that the line is the Mac's word for word. Other Linux desktops with
+systemd are what `BANG.md` is written for, but only Omarchy has been run; on one
+without `claude`, install it first and then paste the same three lines.
 
 ## What the prompts mean
 
