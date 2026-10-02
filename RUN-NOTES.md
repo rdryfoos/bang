@@ -103,6 +103,20 @@ installed a moment earlier, because it has no history with it. Zebra met it on a
 on 2026-09-23 and the Dell met it on 2026-09-25, and between the two nothing had been
 written down, so the second reader worked it out again.
 
+**The one it refuses most often is the daemon script.** That is step 10, and the line
+is:
+
+    ! bash scripts/write-launch-agent.sh
+
+The `!` is Claude Code's own way of running a command here and putting the output in
+the conversation, and `BANG.md` names that line in the step itself, so you are not
+improvising: you are typing the line the page already told you to type if this
+happened. The script came with the clone and is first run at step 10, which is far
+enough apart that a session that has not touched it reads it as a stranger.
+
+Run it, let it print its health line, then tell the session to carry on. Do not reword
+it, do not turn the permission check off, and do not switch to auto mode.
+
 ## If it stops
 
 It is meant to. `BANG.md` prints a receipt after every step and stops at the first one
@@ -110,19 +124,37 @@ that does not match, rather than carrying on over it, so a run that stops has to
 where. Read the receipt it printed and the step above it.
 
 **"You have not agreed to the Xcode license agreements", on a Mac with Xcode.** It
-comes up where the page expects git to work, and it is the whole of the stop: nothing
-runs until somebody accepts it. macOS resets it after an upgrade, so a machine that
-was fine last week can ask today. An administrator accepts it once, for the machine,
-with `sudo xcodebuild -license accept`. Then paste the same block again from the top;
-nothing before it needs undoing. It has nothing to do with Python or with anything
-below.
+comes up at the first `git` of the run, which on a Mac is the `git clone` in the paste
+itself, and it is the whole of the stop: nothing runs until somebody accepts it. The
+trigger is an Xcode or a macOS update, not this project. macOS resets the agreement
+each time either one lands, so a machine that was fine last week asks today and asks
+again after the next update.
 
-**`CERTIFICATE_VERIFY_FAILED`, while Spec Kit fetches its catalogs.** A Python already
-on the machine, usually a python.org one, whose certificate store was never installed
-with it. `curl` to the same address works, which is what makes it confusing. The fix
-is to pull this project and run it again: step 3 now tells uv to use a Python it
-fetches itself, which reads the operating system's own trust store. Do not install
-certificates by hand to get past it; nothing here should be changing your Python.
+An administrator accepts it once, for the machine:
+
+    sudo xcodebuild -license accept
+
+Then paste the same block again from the top; nothing before it needs undoing. It has
+nothing to do with Python or with anything below, and a reader without an
+administrator password cannot get past it, which is worth knowing before you borrow
+somebody's laptop for ten minutes.
+
+**`CERTIFICATE_VERIFY_FAILED` at step 3, while Spec Kit fetches its catalogs.** A
+Python already on the machine, usually a python.org one, whose certificate store was
+never installed with it. `curl` to the same address returns 200, which is what makes it
+confusing: the network is fine and one interpreter on the machine cannot see the trust
+store.
+
+Step 3 answers it by not using that interpreter. `UV_PYTHON_PREFERENCE=only-managed`
+tells uv to run `specify` on a Python uv fetched itself, under
+`~/.potato-cannon/uv/python`, and uv's Python is python-build-standalone, which reads
+`/etc/ssl/cert.pem` on a Mac: the operating system's own store rather than one an
+installer was supposed to have set up. So the fix is to pull this project and run it
+again on a version that has that export.
+
+**Do not install certificates by hand to get past it.** Nothing here should be changing
+your Python, and a project that fixes a stranger's `ssl` module to install itself has
+done something it never said it would.
 
 A stop is a result. Write it down.
 

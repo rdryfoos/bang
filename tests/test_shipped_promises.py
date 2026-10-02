@@ -12,6 +12,8 @@ instruction in the other.
 import pathlib
 import re
 
+from bang_steps import step_body
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 AGENTS = ROOT / "cannon-template" / "agents"
 
@@ -182,8 +184,7 @@ def _first_cards(root=ROOT):
 
 def _step_ten_cards():
     """The same three as BANG.md step 10 gives them, with its indentation taken off."""
-    text = (ROOT / "BANG.md").read_text(encoding="utf-8")
-    step = text.split("\n11. First cards.", 1)[1].split("\n12. ", 1)[0]
+    step = step_body("First cards.")
     cards = []
     for chunk in step.split("    Title: ")[1:]:
         lines = chunk.splitlines()

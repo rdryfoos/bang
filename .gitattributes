@@ -1,0 +1,16 @@
+# Line endings, so a Windows clone cannot hand the Gate a script it will not run.
+#
+# `text=auto` lets git normalise text files in the repository and check them out in the
+# platform's own endings, which is what you want for prose. Scripts are the exception:
+# `scripts/python.sh` and the checks are read by bash and by python3 on every platform,
+# Git Bash included, and a CRLF shebang line is a shebang naming an interpreter called
+# "bash\r", which does not exist. The error a reader gets for that names neither the
+# file nor the carriage return.
+#
+# So the scripts are LF everywhere, including in a Windows working tree. Nothing on
+# Windows runs them except bash, which wants LF.
+* text=auto
+
+*.sh text eol=lf
+*.py text eol=lf
+scripts/pre-commit text eol=lf
