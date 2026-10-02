@@ -3,6 +3,44 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-09-30, ThinkPad, Omarchy, **not a cold run**: the first Linux run, on a machine
+  this file does not yet claim to support. The Gate went **GREEN at `7f708e0`**, and
+  Review refused the card three times. Each refusal was a rule rather than a bug.
+  `T614` was written into the card's own `tasks.md` as an open hand's task carrying
+  `FR-UI-10`, which is a promise on a line no card is answerable for. `T908` was moved
+  to the backlog still carrying `FR-UI-10`, which is the same fault one file along. And a
+  Rework that dropped the `Carries` field was refused by SpecAssay with "task missing
+  Carries field", resolved on the day as `(none)`, which 0.5.4 refuses: the word is
+  `none` and nothing after it.
+
+  Three other things turned up and none of them stopped the run: `shasum` is not a Linux
+  command, so `scripts/try.sh` could not key its state directory; the Build worker could
+  not read its own session id, because nothing gave it one; and the governed-files check
+  measured the card against a local `main` that a fetch had left behind. Linux support
+  itself is a branch, not this line.
+
+- 2026-09-29, KoalaKid, fresh user, Bang at `1c13f6f`: **the eighth Mac user, and the
+  first to prove the pen and the resume together.** Buddy wrote on the card's branch in
+  Review and answered a second message in the same conversation rather than starting a
+  new one. Both had shipped on faith until this run: the pen was tested by its author
+  and the resume was a fix for a defect nobody had reproduced on a stranger's machine.
+
+- 2026-09-28, Skully, fresh Mac user: **aborted**, after three stops in a row. The first
+  `git` of the run met the Xcode license prompt, which an administrator has to accept for
+  the machine. Then pytest was absent, because nothing in this file installed it, and
+  Bang #40 followed. Then Undo left an orphan daemon holding 3131 after `launchctl
+  bootout` returned clean.
+
+- 2026-09-28, lion, fresh Mac user: pressed return at the trust prompt, whose default is
+  "No, exit", and the session exited. One keystroke, and the page had said "press return
+  at each prompt". That is why the beat now names the default and says to arrow to Yes
+  first.
+
+- 2026-09-28, the seventh Mac user, pin `e08e291`: **reached Review**, which was the pen's
+  first outing on somebody else's machine. Buddy's first resume failed: the second message
+  on the card started a new conversation instead of continuing the one it had. Fork #30
+  followed.
+
 - 2026-09-25, Dell 7420, 2ndColdWinUser, Bang at `880cc4c`, pin `a5e0a79`: **the first
   Windows run to reach the board.** All eleven steps ran and the browser opened on it.
   Five of them needed a hand from Rik, and every one of the five is a gap in `BANG.md`

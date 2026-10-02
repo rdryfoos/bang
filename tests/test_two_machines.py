@@ -8,6 +8,8 @@ that does not work or by running an Undo that leaves something behind.
 import os
 import pathlib
 import re
+
+from bang_steps import step_body, step_number
 import shutil
 import subprocess
 
@@ -199,22 +201,29 @@ def test_the_windows_daemon_command_is_still_one_line():
 
 
 def test_the_pin_is_the_same_in_both_of_bangs_two_places():
-    """The fork commit, in the fetch list and in step 7's receipt.
+    """The fork commit, in the fetch list and in the Potato Cannon step's receipt.
 
     The receipt's whole job is to say the clone is at the commit this file pinned, and
     it can only say that while the two lines agree. They are forty characters each, for
-    the reason step 7 gives: a seven-character comparison is a weaker claim than the one
-    being made, and forty characters are forty chances to fix one place and not the
+    the reason that step gives: a seven-character comparison is a weaker claim than the
+    one being made, and forty characters are forty chances to fix one place and not the
     other.
+
+    The step is found by its own opening words rather than by its number, because the
+    numbers move: a step was inserted above it on 2026-10-01 and this test would have
+    gone red on a file that was correct.
     """
     pins = re.findall(r"\b[0-9a-f]{40}\b", BANG)
     assert len(pins) == 2, "BANG.md carries %d full SHAs; the pin is two places" % len(pins)
     assert pins[0] == pins[1], "the two pins differ: %s and %s" % tuple(pins)
 
     fetches = BANG.split("## What this fetches from the network", 1)[1].split("\n## ", 1)[0]
-    step_seven = BANG.split("\n8. Potato Cannon.", 1)[1].split("\n9. ", 1)[0]
+    opener = re.search(r"^(\d+)\. Potato Cannon\.", BANG, re.M)
+    assert opener, "BANG.md has no Potato Cannon step"
+    nth = int(opener.group(1))
+    cannon = BANG.split(opener.group(0), 1)[1].split("\n%d. " % (nth + 1), 1)[0]
     assert pins[0] in fetches, "the fetch list does not name the pin"
-    assert pins[0] in step_seven, "step 7's receipt does not name the pin"
+    assert pins[0] in cannon, "the Potato Cannon step's receipt does not name the pin"
 
 
 def test_no_windows_paste_joins_the_path_line_to_another_command():
@@ -603,17 +612,26 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
 
 
 # The two beats that tell a reader when to stop typing, and the line they stop on.
-# The two beats that tell a reader when to stop typing, and the line they stop on.
-PROMPT_BEAT = ('Say yes when it asks whether you trust this folder. Then press return for '
-               '"Yes" at each prompt until it prints Bang.')
+#
+# The trust beat names the default, because the default is "No, exit" and the prompt
+# arrives after a screen that reads like the end of the setup. A reader pressing return
+# at it has declined the folder they cloned thirty seconds earlier, and the run stops
+# with no explanation of what they said no to. Rik's own first run did it.
+PROMPT_BEAT = ('Say yes when it asks whether you trust this folder: the default is '
+               '"No, exit", so arrow to Yes before you press return. Then press return '
+               'for "Yes" at each prompt after that, until it prints Bang.')
 DRAG_BEAT = ('Bang means go to your browser: the board is open there, and you drag '
              'BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.')
 
 
 def _printed_closing_line():
-    """Step 11's closing line, flattened, because BANG.md wraps it."""
+    """The closing line BANG.md prints, flattened, because BANG.md wraps it.
+
+    Found by what it says rather than by which step says it, so a step inserted above
+    does not break this.
+    """
     printed = re.search(r"the line `(Bang[^`]*)`", BANG)
-    assert printed, "BANG.md step 11 no longer prints a closing line beginning Bang"
+    assert printed, "BANG.md no longer prints a closing line beginning Bang"
     return " ".join(printed.group(1).split())
 
 
@@ -753,3 +771,74 @@ def test_try_sh_hashes_with_whatever_the_machine_has():
         "the two branches must take the same twelve characters")
     for name in ("sha256sum", "shasum"):
         assert "| %s | cut -c1-12" % name in try_sh, "try.sh has no %s branch" % name
+
+
+def test_the_hooks_step_is_before_the_first_commit_and_says_what_it_makes_true():
+    """`core.hooksPath` is what makes SURFACE.md LC1 and LC3 true.
+
+    Neither row was ever true on a cold machine. `scripts/pre-commit` says it is
+    "Installed by pointing core.hooksPath at this directory", and until 2026-10-01 no
+    step pointed it: LC3 claimed `no-commit-on-main.py` refuses a commit on main, and on
+    the ThinkPad a hand's merge commit landed on local main with nothing in the way.
+
+    It has to be before the first commit, because the first commit is the first thing
+    either check would have had an opinion about.
+    """
+    hooks = step_number("Point git's hooks")
+    spec_kit = step_number("Spec Kit on this project")
+    assert hooks < spec_kit, (
+        "the hooks step is %d and the first commit is in step %d" % (hooks, spec_kit))
+
+    step = step_body("Point git's hooks")
+    assert "git config core.hooksPath scripts" in step
+    assert "git config --get core.hooksPath" in step, "the step takes no receipt"
+    assert "LC1" in step and "LC3" in step, (
+        "the step does not say which SURFACE rows it makes true")
+    assert "repository-local" in step, (
+        "the step does not say the setting goes with the clone")
+
+    # And Undo says so too, so nobody writes a command to unset it.
+    undo = BANG.split("## Undo, in full", 1)[1]
+    assert "core.hooksPath" in undo or "hooks" in undo, (
+        "Undo says nothing about the hooks path")
+
+
+def test_undo_frees_the_port_before_it_deletes_anything():
+    """A stopped service is not a stopped process.
+
+    On 2026-09-28 a Mac ran `launchctl bootout`, got no error, and still had a daemon
+    listening on 3131. `~/.potato-cannon` was then removed from under it, which left a
+    daemon serving a board whose database was gone.
+    """
+    undo = BANG.split("## Undo, in full", 1)[1]
+    free = undo.index("port 3131 is free")
+    delete = undo.index("rm -rf ~/.potato-cannon")
+    assert free < delete, (
+        "Undo deletes the Cannon's home before it has shown the port is free")
+    assert "lsof -ti :3131" in undo, "Undo has no way to find the holder on a Mac"
+    assert "taskkill" in undo, "Undo has no way to find the holder on Windows"
+    assert undo.count("port 3131 is free") == 2, (
+        "both machines need the receipt, and there are %d"
+        % undo.count("port 3131 is free"))
+
+
+def test_pip_writes_its_cache_where_this_file_says_it_does():
+    """Two places: the export that moves it, and the list that promises it."""
+    assert 'export PIP_CACHE_DIR="$HOME/.potato-cannon/pip-cache"' in BANG, (
+        "the step that installs pytest does not move pip's cache")
+    places = BANG.split("## What this fetches", 1)[0]
+    assert "~/.potato-cannon/pip-cache/" in places, (
+        "the places list does not name pip's cache")
+
+
+def test_the_mac_uv_install_does_not_edit_the_readers_rc_file():
+    """uv appends to ~/.zshrc unless told not to, and ~/.zshrc is not ours.
+
+    The README's paste already puts `~/.local/bin` on the path, so uv's line is a second
+    copy of something true, left behind by Undo because Undo cannot know which of the
+    two was the reader's.
+    """
+    step = step_body("Install uv")
+    assert "UV_NO_MODIFY_PATH=1" in step, "the Mac install line does not pass it"
+    assert "grep -c 'local/bin' ~/.zshrc" in step, (
+        "the step takes no receipt that the rc file is unchanged")

@@ -31,11 +31,16 @@ Everything this file does lands in one of these places, and nowhere else.
    this file would then have to list and Undo would have to reach into;
    here they are one folder that Undo removes whole.
 4. `~/.potato-cannon/venv/`  The project's own Python environment, made
-   by step 7 on the Python uv manages, with pytest in it. The Gate and
+   by step 8 on the Python uv manages, with pytest in it. The Gate and
    every worker run the tests through it. It is inside
    `~/.potato-cannon`, so `rm -rf ~/.potato-cannon` removes it with
    everything else.
-5. On a Mac, `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One
+5. `~/.potato-cannon/pip-cache/`  Where pip keeps the wheels it
+   downloaded, moved here by `PIP_CACHE_DIR` in step 8. Left to itself pip
+   writes `~/Library/Caches/pip` on a Mac and `~/AppData/Local/pip` on
+   Windows, and neither is a place this file names. It is inside
+   `~/.potato-cannon`, so Undo removes it with everything else.
+6. On a Mac, `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One
    launch agent so the Cannon daemon starts when you log in. On Windows,
    the one-line script it runs, `~/.potato-cannon/cannon-daemon.sh`, and
    **one of two** ways of running it at logon: a scheduled task named
@@ -48,13 +53,13 @@ Everything this file does lands in one of these places, and nowhere else.
    another machine. The scheduled task is the one thing this file
    registers outside your home folder; the Startup launcher is a file in
    it like any other.
-6. On Windows only, `~/AppData/Local/uv/uv-receipt.json`  uv's own record
+7. On Windows only, `~/AppData/Local/uv/uv-receipt.json`  uv's own record
    of where it put itself, written by its PowerShell installer. It is not a
    cache and pointing `UV_CACHE_DIR` elsewhere does not move it: uv writes
    it so that a later `uv self update` knows what it is updating. One small
    file, named here because this file names everything it leaves behind,
    and removed by Undo.
-7. `~/.claude/projects/`  One folder per working copy the Cannon runs a
+8. `~/.claude/projects/`  One folder per working copy the Cannon runs a
    worker in, holding that worker's session transcript as a `.jsonl` file.
    Claude Code writes these, not Bang, and it writes them for your own
    sessions too. They can be large: a card that goes round the board once
@@ -76,7 +81,7 @@ interactive Claude Code session, the one reading this file, runs with
 prompts on as usual.
 
 The instructions every worker reads are in `cannon-template/agents/`, one
-file per worker, and they are the only copy: step 9 below installs that
+file per worker, and they are the only copy: step 11 below installs that
 folder as the project's template, and the workflow reads the prompts from
 it. Read them before you paste anything, because they are the whole of
 what a worker with the prompts turned off has been told to do.
@@ -187,8 +192,19 @@ Where a step says nothing about the machine, the one text is both.
    Python yet: the checks ran on Apple's own 3.9.6 on 2026-09-23, so the
    version line is recorded rather than judged.
 
-3. Install uv if missing, into `~/.local/bin`. On a Mac, with the
-   installer named above. On Windows, not that one:
+3. Install uv if missing, into `~/.local/bin`. On a Mac:
+
+       curl -fsSL https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh
+
+   `UV_NO_MODIFY_PATH=1` is the one thing on that line that is about your
+   machine rather than about uv, and it is not optional. Without it the
+   installer appends its own export to `~/.zshrc`, which is a file this
+   project does not own and never said it would edit. The paste in the
+   README already put `~/.local/bin` on your path, so the line uv would
+   add is a second copy of something already true, left behind by Undo
+   because Undo cannot know which of the two lines was yours.
+
+   On Windows, not that installer:
 
        powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
@@ -270,6 +286,16 @@ Where a step says nothing about the machine, the one text is both.
    `specify --version` prints a version at or above 0.14.0, and
    `ls ~/.local/share/uv ~/.cache/uv` says both are missing.
 
+   On a Mac, one more line, and it is about your file rather than about
+   uv:
+
+       grep -c 'local/bin' ~/.zshrc
+
+   It prints `1`: the line the README's paste added, and no second copy
+   from uv's installer. If it prints `2`, `UV_NO_MODIFY_PATH=1` was not
+   passed; the run still works, and you have a duplicate export in a file
+   of yours that Undo will not take out.
+
    The second line prints the interpreter `specify` actually runs on, and
    it must be a path under `~/.potato-cannon/uv`. If it names
    `/Library/Frameworks`, `/opt/homebrew` or `.pyenv`, the preference did
@@ -283,13 +309,13 @@ Where a step says nothing about the machine, the one text is both.
    `uv-receipt.json`, which is uv's record of where it installed itself,
    written by the PowerShell installer so that a later `uv self update`
    knows what it is updating. `UV_CACHE_DIR` does not move it, because it
-   is not a cache. It is the sixth place in the list above, and Undo
-   removes it.
+   is not a cache. It is the Windows-only entry in the list of places
+   above, named there rather than counted, and Undo removes it.
 
 4. Node and pnpm. **Node 22, not the current LTS.** The Cannon's database
    library has no prebuilt binary for newer Node and building it from
    source fails, so a newer Node will get you through this step and stop
-   you at step 8. If `node --version` already starts with `v22.`, skip to
+   you at step 9. If `node --version` already starts with `v22.`, skip to
    pnpm. Otherwise, no administrator password needed. On a Mac:
 
        mkdir -p ~/.potato-cannon/node
@@ -349,7 +375,36 @@ Where a step says nothing about the machine, the one text is both.
    in a new terminal window prints whatever you had before this step, or
    nothing if you had none.
 
-5. Spec Kit on this project. The flag that names Claude Code is
+5. Point git's hooks at this project's own, before the first commit.
+
+       git config core.hooksPath scripts
+
+   This is what makes `SURFACE.md` rows LC1 and LC3 true, and until it is
+   run they are claims about a control nobody installed.
+
+   `scripts/pre-commit` runs two checks before every commit in this
+   checkout and in every worktree cut from it:
+   `scripts/no-records-in-repo.py`, so no value out of your filled CASE
+   can be committed, and `scripts/no-commit-on-main.py`, so no commit
+   lands on `main` unless the promotion is making it. Both are hooks
+   rather than Gate lines on purpose: a check that reads your answers
+   cannot run anywhere but here, and `--no-verify` beats both, which
+   `SURFACE.md` says plainly.
+
+   `core.hooksPath` is repository-local, so this changes nothing outside
+   `~/bang` and needs no undoing: the setting lives in the clone and goes
+   with `rm -rf ~/bang`.
+
+   It is before the first commit because the first commit is the first
+   thing either check would have had an opinion about.
+
+   Receipt:
+
+       git config --get core.hooksPath
+
+   prints `scripts`, and `ls scripts/pre-commit` finds the file.
+
+6. Spec Kit on this project. The flag that names Claude Code is
    `--integration`. Initialise into this folder, which already has files
    in it:
 
@@ -418,13 +473,23 @@ Where a step says nothing about the machine, the one text is both.
    reach the Gate finds no checker and fails on a file that is three
    folders away on the same disk.
 
+   **This clone's `main` is this machine's `main`.** Every commit this
+   file makes lands there and goes nowhere else, which is the point. If
+   you later add a remote and fetch, the two stop being the same thing:
+   `main` is what this machine has agreed and `origin/main` is what the
+   project has, and they diverge from the moment somebody else commits.
+   The Gate knows this. `scripts/governed-files.py` measures a card branch
+   against `origin/main` when the repository has one and against the local
+   `main` when it does not, and its refusal says which it used, because a
+   card measured against a stale `main` reads as carrying a hand's work.
+
    Receipt: `git config user.name` and `git config user.email` each print
    a value; `.specify/` exists, `ls .specify/` is printed,
    `head -1 .specify/memory/constitution.md` prints
    `# Constitution: Who Has My Stuff`, `git status` is clean, and
    `git ls-tree HEAD .specify` prints the folder.
 
-6. SpecAssay. Read the SpecAssay README from the network and do not save
+7. SpecAssay. Read the SpecAssay README from the network and do not save
    it anywhere: it is reference, and a copy of it written into a scratch
    folder is a file this project put on your machine outside the places
    listed above. Then add the three SpecAssay catalogs and install the
@@ -469,7 +534,7 @@ Where a step says nothing about the machine, the one text is both.
        git add -A && git commit -m "Bang: SpecAssay installed"
 
    This covers `.specify/` and the `.claude/skills/speckit-specassay-*`
-   folders. It is here for the same reason step 5's commit is, and the
+   folders. It is here for the same reason step 6's commit is, and the
    fourth cold run proved it the expensive way: a card's worktree is cut
    from a commit and carries only what is committed, so BAN-1's first Build
    iteration reported MISSING TOOL because the checker was three folders
@@ -480,7 +545,7 @@ Where a step says nothing about the machine, the one text is both.
    `git ls-tree HEAD .specify/extensions/specassay-check` prints the
    folder.
 
-7. The project's own Python, with its test runner in it.
+8. The project's own Python, with its test runner in it.
 
    The Gate runs this project's tests, and `scripts/gate.conf` runs them
    as `$PYTHON -m pytest`. Nothing above installs pytest. Make an
@@ -489,12 +554,21 @@ Where a step says nothing about the machine, the one text is both.
 
        export UV_PYTHON_INSTALL_DIR="$HOME/.potato-cannon/uv/python"
        export UV_PYTHON_PREFERENCE="only-managed"
+       export PIP_CACHE_DIR="$HOME/.potato-cannon/pip-cache"
        uv venv --python 3.12 ~/.potato-cannon/venv
        ~/.potato-cannon/venv/bin/python -m ensurepip --upgrade
        ~/.potato-cannon/venv/bin/python -m pip install pytest
 
    On Windows the last two are
    `~/.potato-cannon/venv/Scripts/python.exe` instead.
+
+   `PIP_CACHE_DIR` is there for the same reason the five uv variables
+   are. Left to itself pip writes `~/Library/Caches/pip` on a Mac and
+   `~/AppData/Local/pip` on Windows, neither of which is in the list of
+   places above, and both of which survive `rm -rf ~/.potato-cannon`.
+   One wheel is not much; a directory this file never mentioned is the
+   problem, because the list above is the whole of what this project
+   claims to leave behind.
 
    It goes in `~/.potato-cannon` rather than in `~/bang/.venv` because a
    card's worktree is cut from a commit and a virtual environment is not
@@ -524,7 +598,7 @@ Where a step says nothing about the machine, the one text is both.
    step makes: stop, because everything after this runs the tests on
    whatever the machine has.
 
-8. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
+9. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
    and commit above. Then, in the same terminal as step 4, where the first
    line is step 4's path again and on Windows is
    `$HOME/.potato-cannon/node` without the `bin`:
@@ -559,9 +633,21 @@ Where a step says nothing about the machine, the one text is both.
    the clone is at the commit this file pinned, and a seven-character
    comparison is a weaker claim than the one being made.
 
-9. The daemon. Run the script this repository ships:
+10. The daemon. Run the script this repository ships:
 
        bash scripts/write-launch-agent.sh
+
+   **This is the line Claude Code refuses most often**, as untrusted. The
+   script came with the clone and is first run here, which is far enough
+   apart that a session which has not touched it reads it as a stranger.
+   If it is refused, run it yourself, exactly this and nothing reworded:
+
+       ! bash scripts/write-launch-agent.sh
+
+   The `!` runs it in this session and puts its output in the
+   conversation; then tell the session to carry on. Do not turn the
+   permission check off and do not switch to auto mode. Step 7 says why at
+   length, and this step says it again because this is where it happens.
 
    It reads `uname -s` and does the same job twice over.
 
@@ -626,7 +712,7 @@ Where a step says nothing about the machine, the one text is both.
    half hours of uptime on a daemon installed minutes earlier. The other two
    lines are what tell those apart.
 
-10. Register the project. The daemon can only name a template that lives in
+11. Register the project. The daemon can only name a template that lives in
    its own templates folder, so copy this project's template there first,
    then register. The first line is step 4's path again, and on Windows it
    is `$HOME/.potato-cannon/node` without the `bin`:
@@ -665,9 +751,9 @@ Where a step says nothing about the machine, the one text is both.
    template. Receipt: `curl -s http://127.0.0.1:3131/api/projects` lists
    one project named bang.
 
-11. First cards. Create these three in the Ideas column, in this order and
+12. First cards. Create these three in the Ideas column, in this order and
     no others. Each is created with `POST /api/tickets/<project id>` and a
-    title and a description; the project id came back from step 9. A
+    title and a description; the project id came back from step 11. A
     description is the text under its title exactly as written here,
     newlines and all, with the four spaces of indentation removed and
     nothing added.
@@ -697,7 +783,7 @@ Where a step says nothing about the machine, the one text is both.
 
     Receipt: the card ids, one per line.
 
-12. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
+13. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
     the line `Bang. Your board is open in your browser; drag BAN-1 to Spec
     there by hand.`, and only then open the URL
     in the default browser: `open` on a Mac, `start` on Windows. The done
@@ -723,7 +809,7 @@ On a Mac:
     launchctl bootout gui/$(id -u)/com.dryfoos.bang.cannon
     rm ~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist
 
-On Windows, whichever of the two step 8 said it used. The scheduled task,
+On Windows, whichever of the two step 10 said it used. The scheduled task,
 where the two slashes are not a typo (Git Bash turns a leading `/Delete`
 into a path before `schtasks` ever sees it, and `//Delete` is how you say
 you meant a switch):
@@ -736,6 +822,29 @@ or the Startup launcher:
 
 Running both is safe: each says it found nothing if it was not the one.
 
+Then, on either, before anything is deleted: find whatever is still
+holding the daemon's port and stop it.
+
+    lsof -ti :3131 | xargs -r kill
+    sleep 2
+    lsof -ti :3131 || echo "port 3131 is free"
+
+On Windows, where there is no `lsof`, Git Bash has the same answer
+through Windows' own tools:
+
+    netstat -ano | grep ':3131 .*LISTENING' | awk '{print $NF}' | sort -u | xargs -r -I{} taskkill //PID {} //F
+    sleep 2
+    netstat -ano | grep -q ':3131 .*LISTENING' || echo "port 3131 is free"
+
+**Receipt: the last line of each pair prints that the port is free.** Do
+not delete anything until it does. The stop above tells the operating
+system not to start the daemon again; it does not promise that the one
+already running has gone. On 2026-09-28 a Mac ran `launchctl bootout`,
+got no error, and had a daemon still listening on 3131 afterwards:
+`~/.potato-cannon` was then removed from under a live process, which left
+a daemon serving a board whose database had been deleted. Nothing said so
+until the next run could not start.
+
 Then, on either:
 
     UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" uv tool uninstall specify-cli
@@ -743,8 +852,18 @@ Then, on either:
     rm -rf ~/.potato-cannon
     rm -rf ~/bang
 
+`rm -rf ~/.potato-cannon` is what takes the project's Python environment and
+pip's cache with it: both are inside it on purpose, so neither needs a
+command of its own here and neither is left behind.
+
+There is nothing to unset for the git hooks. `core.hooksPath` was set with
+`git config` and not `git config --global`, so it lives in
+`~/bang/.git/config` and goes with `rm -rf ~/bang`. No setting of yours
+outside this folder was changed, which is why the step that set it needs no
+line here.
+
 The project's own environment, `~/.potato-cannon/venv`, goes with
-`rm -rf ~/.potato-cannon` too, and with it the pytest step 7 put in it. Nothing was
+`rm -rf ~/.potato-cannon` too, and with it the pytest step 8 put in it. Nothing was
 installed into a Python of yours.
 
 The Python uv fetched for `specify` goes with `rm -rf ~/.potato-cannon`: it is under

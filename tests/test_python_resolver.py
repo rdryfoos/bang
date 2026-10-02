@@ -21,6 +21,8 @@ import subprocess
 
 import pytest
 
+from bang_steps import step_body
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RESOLVER = ROOT / "scripts" / "python.sh"
 
@@ -336,8 +338,7 @@ def test_python_sh_still_falls_back_when_there_is_no_project_interpreter():
 
 
 def test_the_step_that_makes_it_has_a_receipt_that_reads_the_interpreter():
-    bang = (ROOT / "BANG.md").read_text(encoding="utf-8")
-    step = bang.split("\n7. The project's own Python", 1)[1].split("\n8. ", 1)[0]
+    step = step_body("The project's own Python")
     assert 'uv venv --python 3.12 ~/.potato-cannon/venv' in step
     assert "-m pip install pytest" in step
     assert '. scripts/python.sh && echo "$PYTHON"' in step, (

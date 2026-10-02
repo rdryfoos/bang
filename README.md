@@ -28,7 +28,7 @@ cd ~/bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-2. Say yes when it asks whether you trust this folder. Then press return for "Yes" at each prompt until it prints Bang.
+2. Say yes when it asks whether you trust this folder: the default is "No, exit", so arrow to Yes before you press return. Then press return for "Yes" at each prompt after that, until it prints Bang.
 
 3. Bang means go to your browser: the board is open there, and you drag BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.
 
@@ -66,7 +66,7 @@ cd $HOME\bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-6. Say yes when it asks whether you trust this folder. Then press return for "Yes" at each prompt until it prints Bang.
+6. Say yes when it asks whether you trust this folder: the default is "No, exit", so arrow to Yes before you press return. Then press return for "Yes" at each prompt after that, until it prints Bang.
 
 7. Bang means go to your browser: the board is open there, and you drag BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.
 

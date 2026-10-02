@@ -8,5 +8,9 @@ test-results.xml
 # every card branch conflict with main on a machine-written file. The receipt in
 # journal/receipts.jsonl is the record that a Gate ran and what it said; these are its
 # scratch output, regenerated wherever the Gate runs. Ruled 2026-09-20.
-trace-manifest.json
-trace-manifest.v5beta.json
+#
+# A pattern rather than two names, because the Gate writes whichever manifests its
+# version writes: 0.5.1 wrote one, the version after it added `trace-manifest.v5beta`
+# beside it, and the next one is not this file's business to predict. Two names meant a
+# machine-written file appeared untracked on a machine with a newer bundle.
+trace-manifest*.json
