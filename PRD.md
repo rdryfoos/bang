@@ -191,3 +191,7 @@ a row the reader did not write. That is not wrong, and it is worth knowing.
 `NFR-ENG-10`. Neither clause is this row's own promise, and this row is marked `design`
 for the part that is: a local web app serving the four screens. A reader checking
 `FR-UI-10` is checking three rows without being told so.
+
+## Record: Mark returned renamed to Returned, 2026-10-01
+
+The control and the screen named Mark returned in AC-UI-30, AC-UI-50, AC-UI-70 and AC-UI-80 are now named Returned (563de92). Reason: in a list that holds people's names, "Mark returned" reads as a person named Mark returning something. Four design-authored rows, text only; no ID moved. The sketches in design/ still draw the old label; the registry's word wins.
