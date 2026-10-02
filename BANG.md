@@ -1,8 +1,8 @@
 # BANG.md
 
 This file is what your Claude Code session is told to carry out when you
-paste the last command in README.md's "Run it": beat 1 on a Mac, beat 2 on
-Linux, beat 5 on Windows, the one that ends by starting Claude Code. Read it before you
+paste the last command in README.md's "Run it": beat 1 on a Mac or Linux,
+beat 5 on Windows, the one that ends by starting Claude Code. Read it before you
 paste. The agent reads the
 same file, in this order, and does nothing that is not written here.
 
@@ -416,36 +416,7 @@ all three.
    in a new terminal window prints whatever you had before this step, or
    nothing if you had none.
 
-5. Point git's hooks at this project's own, before the first commit.
-
-       git config core.hooksPath scripts
-
-   This is what makes `SURFACE.md` rows LC1 and LC3 true, and until it is
-   run they are claims about a control nobody installed.
-
-   `scripts/pre-commit` runs two checks before every commit in this
-   checkout and in every worktree cut from it:
-   `scripts/no-records-in-repo.py`, so no value out of your filled CASE
-   can be committed, and `scripts/no-commit-on-main.py`, so no commit
-   lands on `main` unless the promotion is making it. Both are hooks
-   rather than Gate lines on purpose: a check that reads your answers
-   cannot run anywhere but here, and `--no-verify` beats both, which
-   `SURFACE.md` says plainly.
-
-   `core.hooksPath` is repository-local, so this changes nothing outside
-   `~/bang` and needs no undoing: the setting lives in the clone and goes
-   with `rm -rf ~/bang`.
-
-   It is before the first commit because the first commit is the first
-   thing either check would have had an opinion about.
-
-   Receipt:
-
-       git config --get core.hooksPath
-
-   prints `scripts`, and `ls scripts/pre-commit` finds the file.
-
-6. Spec Kit on this project. The flag that names Claude Code is
+5. Spec Kit on this project. The flag that names Claude Code is
    `--integration`. Initialise into this folder, which already has files
    in it:
 
@@ -530,7 +501,7 @@ all three.
    `# Constitution: Who Has My Stuff`, `git status` is clean, and
    `git ls-tree HEAD .specify` prints the folder.
 
-7. SpecAssay. Read the SpecAssay README from the network and do not save
+6. SpecAssay. Read the SpecAssay README from the network and do not save
    it anywhere: it is reference, and a copy of it written into a scratch
    folder is a file this project put on your machine outside the places
    listed above. Then add the three SpecAssay catalogs and install the
@@ -575,7 +546,7 @@ all three.
        git add -A && git commit -m "Bang: SpecAssay installed"
 
    This covers `.specify/` and the `.claude/skills/speckit-specassay-*`
-   folders. It is here for the same reason step 6's commit is, and the
+   folders. It is here for the same reason step 5's commit is, and the
    fourth cold run proved it the expensive way: a card's worktree is cut
    from a commit and carries only what is committed, so BAN-1's first Build
    iteration reported MISSING TOOL because the checker was three folders
@@ -585,6 +556,43 @@ all three.
    Receipt adds: `git status` is clean, and
    `git ls-tree HEAD .specify/extensions/specassay-check` prints the
    folder.
+
+7. Point git's hooks at this project's own, now that the setup's commits are in.
+
+       git config core.hooksPath scripts
+
+   This is what makes `SURFACE.md` rows LC1 and LC3 true, and until it is
+   run they are claims about a control nobody installed.
+
+   `scripts/pre-commit` runs two checks before every commit in this
+   checkout and in every worktree cut from it:
+   `scripts/no-records-in-repo.py`, so no value out of your filled CASE
+   can be committed, and `scripts/no-commit-on-main.py`, so no commit
+   lands on `main` unless the promotion is making it. Both are hooks
+   rather than Gate lines on purpose: a check that reads your answers
+   cannot run anywhere but here, and `--no-verify` beats both, which
+   `SURFACE.md` says plainly.
+
+   `core.hooksPath` is repository-local, so this changes nothing outside
+   `~/bang` and needs no undoing: the setting lives in the clone and goes
+   with `rm -rf ~/bang`.
+
+   It comes after steps 5 and 6 on purpose. Those two commits are the
+   setup's own, and they go on `main` because a card's worktree is cut
+   from `main` and has to carry them; `no-commit-on-main.py` would refuse
+   both. So the setup's own commits go in first, and from here on `main`
+   takes commits only through the promotion: a card commits on its own
+   branch, and the drag from Review to Done is the one way back. Neither
+   setup commit carries anything from your CASE, so
+   `no-records-in-repo.py` has nothing to say about them either. It is
+   before the first card, which is the first commit either check has an
+   opinion about.
+
+   Receipt:
+
+       git config --get core.hooksPath
+
+   prints `scripts`, and `ls scripts/pre-commit` finds the file.
 
 8. The project's own Python, with its test runner in it.
 
@@ -707,7 +715,7 @@ all three.
 
    The `!` runs it in this session and puts its output in the
    conversation; then tell the session to carry on. Do not turn the
-   permission check off and do not switch to auto mode. Step 7 says why at
+   permission check off and do not switch to auto mode. Step 6 says why at
    length, and this step says it again because this is where it happens.
 
    It reads `uname -s` and does the same job three times over.

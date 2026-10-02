@@ -37,7 +37,7 @@ EXPECTED = [
     ("in the same terminal as step 4", "Node and pnpm"),
     ("line is step 4's path again, and on Windows it", "Node and pnpm"),
     ("The first line is step 4's path again", "Node and pnpm"),
-    ("the same reason step 6's commit is", "Spec Kit on this project"),
+    ("the same reason step 5's commit is", "Spec Kit on this project"),
     ("by step 8 on the Python uv manages", "The project's own Python"),
     ("moved here by `PIP_CACHE_DIR` in step 8", "The project's own Python"),
     ("the pytest step 8 put in it", "The project's own Python"),
@@ -45,7 +45,7 @@ EXPECTED = [
     ("whichever of the two step 10 said it used", "The daemon"),
     ("with systemd, which step 10 needs", "The daemon"),
     ("step 4 names\n   the build for it", "Node and pnpm"),
-    ("Step 7 says why at", "SpecAssay"),
+    ("Step 6 says why at", "SpecAssay"),
     ("step 11 below installs that", "Register the project"),
     ("the project id came back from step 11", "Register the project"),
 ]

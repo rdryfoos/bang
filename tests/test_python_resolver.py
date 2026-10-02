@@ -132,7 +132,7 @@ def _resolve_with(tmp_path, names):
         script.chmod(0o755)
     # HOME is isolated, and that is not tidiness.
     #
-    # python.sh prefers `$HOME/.potato-cannon/venv`, which BANG.md step 7 makes. On a
+    # python.sh prefers `$HOME/.potato-cannon/venv`, which BANG.md step 8 makes. On a
     # machine that has run Bang, that interpreter is real and it shadows every stub
     # below: the resolver answers with it before it ever looks at PATH, and these
     # tests then measure the machine rather than the resolver. On the first Build of a
@@ -240,7 +240,7 @@ def test_every_place_that_carries_the_uv_set_carries_the_preference():
 
     # Every block that sets UV_TOOL_DIR is a block that runs a uv tool, and every one
     # of those needs the preference. The reverse does not hold: a block may set the
-    # preference without the tool set, which is what step 7 does when it asks uv for a
+    # preference without the tool set, which is what step 8 does when it asks uv for a
     # Python to make the project's environment on and never touches a tool.
     for name, text in (("BANG.md", bang), ("write-launch-agent.sh", script)):
         # The assignment, not the word: the prose explains `UV_TOOL_DIR` in backticks
@@ -331,7 +331,7 @@ def test_python_sh_prefers_the_projects_own_interpreter():
 
 
 def test_python_sh_still_falls_back_when_there_is_no_project_interpreter():
-    """A checkout somebody is poking at by hand, before step 7 or after Undo."""
+    """A checkout somebody is poking at by hand, before step 8 or after Undo."""
     resolver = RESOLVER.read_text(encoding="utf-8")
     assert "for candidate in python3 python; do" in resolver, (
         "the fallback search is gone, so a bare checkout resolves nothing")
@@ -349,7 +349,7 @@ def test_the_step_that_makes_it_has_a_receipt_that_reads_the_interpreter():
 
 
 def test_the_test_tier_names_no_interpreter_but_the_resolved_one():
-    """`$PYTHON` and nothing else, so the environment step 7 makes is the one used."""
+    """`$PYTHON` and nothing else, so the environment step 8 makes is the one used."""
     conf = (ROOT / "scripts" / "gate.conf").read_text(encoding="utf-8")
     command = [l for l in conf.splitlines() if l.startswith("TEST_COMMAND=")]
     assert len(command) == 1, "gate.conf has %d TEST_COMMAND lines" % len(command)
