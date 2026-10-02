@@ -271,14 +271,23 @@ def test_the_windows_reopens_sit_on_the_beat_after_what_they_are_for():
     windows = _run_it_sections()["Windows"]
     reopens = [line for line in windows.splitlines()
                if re.match(r"^\d+\. Close that window and open a new PowerShell", line)]
-    assert len(reopens) == 2, (
-        "Windows should reopen twice, after git and after the path line: %s" % reopens)
+    assert len(reopens) == 1, (
+        "Windows should reopen once, after the path line: %s" % reopens)
 
-    # The second one is on the beat that clones, and comes after the path line it is for.
-    assert windows.index("SetEnvironmentVariable") < windows.index(reopens[1]), (
+    # It is on the beat that clones, and it comes after the path line it exists for.
+    # This is the reopen that is load-bearing: `git clone` is in the beat under it, and
+    # the window above it cannot see Claude Code's path entry yet.
+    assert windows.index("SetEnvironmentVariable") < windows.index(reopens[0]), (
         "the reopen comes before the path line it exists for")
-    assert "get the rest" in reopens[1], (
-        "the second reopen is not the beat that gets the rest: %r" % reopens[1])
+    assert "get the rest" in reopens[0], (
+        "the reopen is not the beat that gets the rest: %r" % reopens[0])
+
+    # The one that went sat between git and Python, on the grounds that the window could
+    # not see git yet. True, and not a reason: nothing in the Python line uses git, and
+    # both are winget, which is already on the path. They are one beat now.
+    first_beat = windows.split("\n2. ", 1)[0]
+    assert "Git.Git" in first_beat and "Python.Python.3.12" in first_beat, (
+        "git and Python are no longer the same beat")
 
     mac = _run_it_sections()["Mac"]
     assert not any(re.match(r"^\d+\. Close ", line) for line in mac.splitlines()), (
@@ -594,11 +603,13 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
     """
     opening = _flat(BANG.split("## What this writes", 1)[0])
     assert "block 2" not in opening, "BANG.md still sends the reader to a block"
-    assert "beat 1 on a Mac, beat 5 on Windows" in opening, (
+    assert "beat 1 on a Mac, beat 4 on Windows" in opening, (
         "BANG.md does not name the beat that starts it")
 
-    # And those two beats are the ones that actually start Claude Code.
-    for name, beat in (("Mac", 1), ("Windows", 5)):
+    # And those two beats are the ones that actually start Claude Code. Windows was 5
+    # while Run it had seven beats; a number in prose and a number on a page are two
+    # places, and this is what keeps them one.
+    for name, beat in (("Mac", 1), ("Windows", 4)):
         lines = _run_it_sections()[name].splitlines()
         where = next(i for i, l in enumerate(lines) if l.startswith("%d. " % beat))
         # To the end of that beat's paste, however long it is: the Mac's is six lines

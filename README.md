@@ -34,31 +34,26 @@ claude --permission-mode manual "Read BANG.md in this folder from top to bottom.
 
 ### On Windows
 
-1. In PowerShell, get git.
+1. In PowerShell, which Windows already has. Get git and Python.
 
 ```
 winget install --id Git.Git -e --source winget
-```
-
-2. Close that window and open a new PowerShell. Get Python.
-
-```
 winget install --id Python.Python.3.12 -e --source winget
 ```
 
-3. Get Claude Code.
+2. Get Claude Code, and let it finish before you paste anything else.
 
 ```
 irm https://claude.ai/install.ps1 | iex
 ```
 
-4. Wait for it to finish. Put Claude Code on your path.
+3. Put Claude Code on your path.
 
 ```
 [Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.local\bin", 'User')
 ```
 
-5. Close that window and open a new PowerShell, and get the rest.
+4. Close that window and open a new PowerShell, and get the rest.
 
 ```
 git clone https://github.com/rdryfoos/bang.git $HOME\bang
@@ -66,9 +61,9 @@ cd $HOME\bang
 claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
 ```
 
-6. Say yes when it asks whether you trust this folder: the default is "No, exit", so arrow to Yes before you press return. Then press return for "Yes" at each prompt after that, until it prints Bang.
+5. Say yes when it asks whether you trust this folder: the default is "No, exit", so arrow to Yes before you press return. Then press return for "Yes" at each prompt after that, until it prints Bang.
 
-7. Bang means go to your browser: the board is open there, and you drag BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.
+6. Bang means go to your browser: the board is open there, and you drag BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.
 
 ## What you were handed
 

@@ -36,40 +36,43 @@ told to do, and it is the same line on both machines.
 
 ### On Windows
 
-Each paste on its own, and each one finished before the next means anything. That is
-why they are seven beats rather than two blocks: a line pasted into a window that is
-still busy goes to whatever is running there, not to the shell.
+Each paste on its own, and each one finished before the next means anything. That is why
+these are beats rather than one block: a line pasted into a window that is still busy
+goes to whatever is running there, not to the shell. On the second Windows walk that is
+how the path line was swallowed and never ran.
 
-**1. Get git,** in PowerShell, which Windows already has.
+**1. Get git and Python,** in PowerShell, which Windows already has. Both are `winget`,
+which is already on the path, so neither one needs the other and neither needs a new
+window. `BANG.md` needs Python from step 2 and the project's own scripts need it
+throughout, and a fresh Windows has none.
 
-**2. Reopen, then get Python.** Windows reads the user path when a window opens and
-never again, so the window you typed beat 1 into cannot see git yet. `BANG.md` needs
-Python from step 2 and the project's own scripts need it throughout, and a fresh
-Windows has none.
+Until 2026-10-01 these were two beats with a window reopen between them, on the grounds
+that the window could not see git yet. True, and nothing in the Python line uses git.
+The reopen that matters is the one before the clone, which is beat 4.
 
-**3. Get Claude Code.** It is an installer, and a line pasted while it is still
-running goes to the installer rather than to PowerShell. On the second Windows walk
-that is how the path line below was swallowed and never ran.
+**2. Get Claude Code.** It is an installer, and a line pasted while it is still running
+goes to the installer rather than to PowerShell. Wait for your prompt back.
 
-**4. Wait for it to finish, then put Claude Code on your path.** It writes your own
-path setting and not the machine's, so it needs no administrator and touches nothing
-another user of this PC would see.
+**3. Put Claude Code on your path.** It writes your own path setting and not the
+machine's, so it needs no administrator and touches nothing another user of this PC
+would see.
 
-**5. Reopen, and get the rest.** For the path again: the window you typed beat 4 into
-cannot see it. A new PowerShell, and not Git Bash. Claude Code's own shell on Windows
-is Git Bash whatever window launched it, so every command in `BANG.md` runs in bash
-regardless, and the window you start it from only has to be one that can see the path.
-Every Windows run so far has done this paste in PowerShell and it worked. In the new
-window `claude --version` should answer; if it does not, beat 4 is what to look at,
-and nothing below will work until it does.
+**4. Reopen, and get the rest.** For the path: the window you typed beat 3 into cannot
+see it, because Windows reads the user path when a window opens and never again. A new
+PowerShell, and not Git Bash. Claude Code's own shell on Windows is Git Bash whatever
+window launched it, so every command in `BANG.md` runs in bash regardless, and the
+window you start it from only has to be one that can see the path. Every Windows run so
+far has done this paste in PowerShell and it worked. In the new window
+`claude --version` should answer; if it does not, beat 3 is what to look at, and nothing
+below will work until it does.
 
-  `$HOME\bang` and not `~/bang`, which is the only line in this
-paste that differs from the Mac's. On the Dell, `git clone` with `~/bang` stopped with
-"could not create leading directories of '~/bang': Permission denied", which reads
-like a permissions problem and is a spelling one: git was handed a tilde and made a
-folder named for it. `$HOME` is expanded before git sees it, in either shell, so git
-is handed a real path. The `cd` would have worked either way; it matches the clone so
-that the two lines cannot drift apart.
+`$HOME\bang` and not `~/bang`, which is the only line in this paste that differs from
+the Mac's. On the Dell, `git clone` with `~/bang` stopped with "could not create leading
+directories of '~/bang': Permission denied", which reads like a permissions problem and
+is a spelling one: git was handed a tilde and made a folder named for it. `$HOME` is
+expanded before git sees it, in either shell, so git is handed a real path. The `cd`
+would have worked either way; it matches the clone so that the two lines cannot drift
+apart.
 
 ## What the prompts mean
 
