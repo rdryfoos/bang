@@ -73,30 +73,27 @@ def test_both_machines_start_claude_code_with_the_same_line():
             % (name, lines["Mac"], name, lines[name]))
 
 
-def test_linux_installs_claude_code_then_pastes_the_macs_tail():
-    """A fresh Omarchy account has no claude, so Linux gets it first, then the Mac's tail.
+def test_the_linux_paste_is_the_macs_without_the_path_lines():
+    """One paste, the Mac's shape: install Claude Code, clone, cd, start it.
 
-    The cold run on 2026-10-02 (account bangtest) found git and python3 and nothing
-    else, and Claude Code's installer put claude in ~/.local/bin, which Omarchy already
-    has on the path. So Linux's first block is the Mac's installer line alone, with no
-    path line after it, and its paste is the Mac's last three lines exactly: the clone
-    is main, because #51 merges before any cold user runs it.
+    A fresh Omarchy account has no claude (the cold run of 2026-10-02, account
+    bangtest), and the installer puts it in ~/.local/bin, which Omarchy already has on
+    the path. So Linux needs neither of the Mac's two path lines, and the second cold
+    run that day (bangtest2) ran the four lines as one paste. The clone is main.
     """
     sections = _run_it_sections()
     blocks = lambda name: [b.strip().splitlines()
                            for b in re.findall(r"\n```\n(.*?)\n```", sections[name], re.S)]
     linux, mac = blocks("Linux"), blocks("Mac")[-1]
-    assert len(linux) == 2, "Linux should be two blocks, the install and the paste: %r" % linux
-    install, paste = linux
-    assert install == mac[:1], (
-        "Linux's install is not the Mac's installer line.\nMac: %s\nLinux: %s"
-        % (mac[:1], install))
-    assert not any("PATH" in line for line in install + paste), (
-        "the Linux section edits the path, and Omarchy already has ~/.local/bin on it")
-    assert paste == mac[-len(paste):], (
-        "the Linux paste is not the Mac's tail.\nMac tail: %s\nLinux:    %s"
-        % (mac[-len(paste):], paste))
-    assert not any("-b linux" in line for line in paste), "the Linux paste still clones linux"
+    assert len(linux) == 1, "Linux should be one paste, as the Mac is: %r" % linux
+    paste = linux[0]
+    without_path = [line for line in mac if "PATH" not in line and "source ~/" not in line]
+    assert paste == without_path, (
+        "the Linux paste is not the Mac's without its path lines.\nMac:   %s\nLinux: %s"
+        % (without_path, paste))
+    assert paste[0].startswith("curl -fsSL https://claude.ai/install.sh"), (
+        "the Linux paste does not get Claude Code first")
+    assert not any("-b linux" in line for line in paste), "the Linux paste clones linux"
 
 
 def test_the_trust_prompt_is_a_beat_on_both_machines_and_explained_once():
@@ -698,11 +695,11 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
     """
     opening = _flat(BANG.split("## What this writes", 1)[0])
     assert "block 2" not in opening, "BANG.md still sends the reader to a block"
-    assert "beat 1 on a Mac, beat 2 on Linux, beat 5 on Windows" in opening, (
+    assert "beat 1 on a Mac or Linux, beat 5 on Windows" in opening, (
         "BANG.md does not name the beat that starts it")
 
     # And those beats are the ones that actually start Claude Code.
-    for name, beat in (("Mac", 1), ("Linux", 2), ("Windows", 5)):
+    for name, beat in (("Mac", 1), ("Linux", 1), ("Windows", 5)):
         lines = _run_it_sections()[name].splitlines()
         where = next(i for i, l in enumerate(lines) if l.startswith("%d. " % beat))
         # To the end of that beat's paste, however long it is: the Mac's is six lines
@@ -857,8 +854,7 @@ def test_the_mac_note_quotes_the_mac_beat_word_for_word():
     It pins agreement, not wording. Reword both and it passes; reword one and it does
     not.
     """
-    # Linux has two pastes since the cold run of 2026-10-02: Claude Code, then the rest.
-    for name, pastes in (("Mac", {1}), ("Linux", {1, 2})):
+    for name, pastes in (("Mac", {1}), ("Linux", {1})):
         beats, notes = _run_it_beats(name), _note_headings(name)
         assert set(notes) == pastes, (
             "%s has notes for beats %s; its pastes are beats %s"
@@ -886,7 +882,7 @@ def test_try_sh_hashes_with_whatever_the_machine_has():
         assert "| %s | cut -c1-12" % name in try_sh, "try.sh has no %s branch" % name
 
 
-def test_the_hooks_step_is_before_the_first_commit_and_says_what_it_makes_true():
+def test_the_hooks_step_follows_the_setup_commits_and_says_what_it_makes_true():
     """`core.hooksPath` is what makes SURFACE.md LC1 and LC3 true.
 
     Neither row was ever true on a cold machine. `scripts/pre-commit` says it is
@@ -894,13 +890,32 @@ def test_the_hooks_step_is_before_the_first_commit_and_says_what_it_makes_true()
     step pointed it: LC3 claimed `no-commit-on-main.py` refuses a commit on main, and on
     the ThinkPad a hand's merge commit landed on local main with nothing in the way.
 
-    It has to be before the first commit, because the first commit is the first thing
-    either check would have had an opinion about.
+    It went in before the first commit, and the second cold Omarchy run on 2026-10-02
+    showed what that cost: the Spec Kit and SpecAssay steps commit on main, the hook
+    refused both, and the reader had to commit them by hand with BANG_PROMOTION=1. So
+    the hooks come after the two setup commits and before the first card, and BANG.md
+    never hands a reader either way past them.
     """
     hooks = step_number("Point git's hooks")
     spec_kit = step_number("Spec Kit on this project")
-    assert hooks < spec_kit, (
-        "the hooks step is %d and the first commit is in step %d" % (hooks, spec_kit))
+    specassay = step_number("SpecAssay.")
+    first_cards = step_number("First cards.")
+    assert spec_kit < hooks and specassay < hooks, (
+        "the hooks step is %d and the setup commits are in steps %d and %d: the hook "
+        "refuses them" % (hooks, spec_kit, specassay))
+    assert hooks < first_cards, (
+        "the hooks step is %d and the first card is step %d" % (hooks, first_cards))
+
+    flat = _flat(step_body("Point git's hooks"))
+    assert "the setup's own commits go in first" in flat, (
+        "the hooks step does not say why it comes after the setup commits")
+    assert "only through the promotion" in flat, (
+        "the hooks step does not say that main takes commits only through the promotion")
+
+    assert "BANG_PROMOTION" not in BANG, "BANG.md teaches a reader the promotion's flag"
+    commands = [line for line in BANG.splitlines() if line.startswith("       ")]
+    assert not any("--no-verify" in line for line in commands), (
+        "BANG.md gives a reader a command that skips the hooks")
 
     step = step_body("Point git's hooks")
     assert "git config core.hooksPath scripts" in step

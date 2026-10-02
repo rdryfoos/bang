@@ -160,7 +160,7 @@ is a red Gate.
    On 2026-09-28 a worker met `No module named pytest` and declined to install it.
    That was right, and the Gate going red was the page's fault rather than the
    worker's: twelve green runs before it had leaned on workers installing pytest
-   themselves. Step 7 of `BANG.md` installs it now.
+   themselves. Step 8 of `BANG.md` installs it now.
 
    **If the checker is missing from the worktree, stop and say so; do not copy it in.**
    On 2026-09-24 a worker met MISSING TOOL, found the checker three folders away in the

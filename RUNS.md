@@ -33,6 +33,27 @@ stumbled, in your own words. Add yours and open a pull request; that is the whol
   to be stopped, because the script refuses a busy 3131; and the session went to
   auto mode after step 1, so the prompt beats went unobserved.
 
+  **A second cold run the same day:** fresh account `bangtest2`, a real login session
+  through `machinectl shell`, Bang at `5f62419`. Step numbers here are as they were at
+  `5f62419`, when the hooks were step 5, Spec Kit 6 and SpecAssay 7.
+
+  - The README's four Linux lines (install, clone, cd, claude) work as one paste, so the
+    Linux section now has the Mac's one-block shape.
+  - Claude Code refused step 5, step 7 (the install, then the config copy and Gate run)
+    and step 10, and each was run by hand with `!`. This morning's run had step 5
+    allowed, so the classifier varies from run to run.
+  - **`BANG.md` contradicted itself.** Step 5 switched on `no-commit-on-main.py`, and
+    steps 6 and 7 then commit on `main`, so the hook refused both: "no-commit-on-main:
+    commit refused. This checkout is on main, and the promotion path is the only way
+    onto it (constitution IV)." The reader committed them by hand with
+    `BANG_PROMOTION=1` (`c41c8f2`, `ceca8bf` on that account). This morning's run missed
+    it only because it committed on `linux`, and the Sep 30 run predates the hooks step.
+    The hooks step now comes after both setup commits and before the first card.
+  - The worker ran step 6's `specify init` in step 5's batch, and said so.
+
+  Deviations: auto mode from the first permission prompt, so the prompt beats went
+  unobserved; and the board opened in Rik's browser.
+
 - 2026-09-30, ThinkPad, Omarchy, **not a cold run**: the first Linux run, on a machine
   this file does not yet claim to support. The Gate went **GREEN at `7f708e0`**, and
   Review refused the card three times. Each refusal was a rule rather than a bug.

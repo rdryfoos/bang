@@ -20,7 +20,7 @@
 # Written by the born-threaded practice; MIT.
 
 # The first name on the path that says it is Python 3. Prints it, or nothing.
-# The project's own interpreter, if step 7 made one. Prints it, or nothing.
+# The project's own interpreter, if step 8 made one. Prints it, or nothing.
 #
 # It is preferred over anything on the path because it is the one with pytest in it.
 # Apple ships python3 and does not ship pytest, and until 2026-09-28 the way that gap
@@ -29,7 +29,7 @@
 # keeping its own promise instead.
 #
 # Absent, this returns nothing and the search below runs as it always did: a checkout
-# somebody is poking at by hand, before step 7 or after Undo, still resolves a Python.
+# somebody is poking at by hand, before step 8 or after Undo, still resolves a Python.
 project_python() {
   local venv="$HOME/.potato-cannon/venv"
   for candidate in "$venv/bin/python" "$venv/Scripts/python.exe"; do
