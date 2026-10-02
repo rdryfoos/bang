@@ -73,23 +73,30 @@ def test_both_machines_start_claude_code_with_the_same_line():
             % (name, lines["Mac"], name, lines[name]))
 
 
-def test_the_linux_paste_is_the_macs_tail_and_clones_the_branch_it_is_on():
-    """Omarchy ships claude, so the Linux paste is the Mac's last three lines.
+def test_linux_installs_claude_code_then_pastes_the_macs_tail():
+    """A fresh Omarchy account has no claude, so Linux gets it first, then the Mac's tail.
 
-    Claude Code's installer writes ~/.local/bin/claude, which on Omarchy is Omarchy's
-    own stub; running it would replace that. So no installer and no path line, and the
-    one allowed difference is the clone naming the linux branch until it merges. The
-    day it merges, `-b linux` goes and this asserts the lines are the Mac's exactly.
+    The cold run on 2026-10-02 (account bangtest) found git and python3 and nothing
+    else, and Claude Code's installer put claude in ~/.local/bin, which Omarchy already
+    has on the path. So Linux's first block is the Mac's installer line alone, with no
+    path line after it, and its paste is the Mac's last three lines exactly: the clone
+    is main, because #51 merges before any cold user runs it.
     """
     sections = _run_it_sections()
-    block = lambda name: re.findall(r"\n```\n(.*?)\n```", sections[name], re.S)[-1].strip().splitlines()
-    linux, mac = block("Linux"), block("Mac")
-    assert not any("install.sh" in line for line in linux), (
-        "the Linux paste runs Claude Code's installer over Omarchy's own claude")
-    tail = mac[-len(linux):]
-    normalised = [line.replace("git clone -b linux ", "git clone ") for line in linux]
-    assert normalised == tail, (
-        "the Linux paste is not the Mac's tail.\nMac tail: %s\nLinux:    %s" % (tail, linux))
+    blocks = lambda name: [b.strip().splitlines()
+                           for b in re.findall(r"\n```\n(.*?)\n```", sections[name], re.S)]
+    linux, mac = blocks("Linux"), blocks("Mac")[-1]
+    assert len(linux) == 2, "Linux should be two blocks, the install and the paste: %r" % linux
+    install, paste = linux
+    assert install == mac[:1], (
+        "Linux's install is not the Mac's installer line.\nMac: %s\nLinux: %s"
+        % (mac[:1], install))
+    assert not any("PATH" in line for line in install + paste), (
+        "the Linux section edits the path, and Omarchy already has ~/.local/bin on it")
+    assert paste == mac[-len(paste):], (
+        "the Linux paste is not the Mac's tail.\nMac tail: %s\nLinux:    %s"
+        % (mac[-len(paste):], paste))
+    assert not any("-b linux" in line for line in paste), "the Linux paste still clones linux"
 
 
 def test_the_trust_prompt_is_a_beat_on_both_machines_and_explained_once():
@@ -691,11 +698,11 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
     """
     opening = _flat(BANG.split("## What this writes", 1)[0])
     assert "block 2" not in opening, "BANG.md still sends the reader to a block"
-    assert "beat 1 on a Mac or Linux, beat 5 on Windows" in opening, (
+    assert "beat 1 on a Mac, beat 2 on Linux, beat 5 on Windows" in opening, (
         "BANG.md does not name the beat that starts it")
 
     # And those beats are the ones that actually start Claude Code.
-    for name, beat in (("Mac", 1), ("Linux", 1), ("Windows", 5)):
+    for name, beat in (("Mac", 1), ("Linux", 2), ("Windows", 5)):
         lines = _run_it_sections()[name].splitlines()
         where = next(i for i, l in enumerate(lines) if l.startswith("%d. " % beat))
         # To the end of that beat's paste, however long it is: the Mac's is six lines
@@ -850,12 +857,16 @@ def test_the_mac_note_quotes_the_mac_beat_word_for_word():
     It pins agreement, not wording. Reword both and it passes; reword one and it does
     not.
     """
-    for name in ("Mac", "Linux"):
+    # Linux has two pastes since the cold run of 2026-10-02: Claude Code, then the rest.
+    for name, pastes in (("Mac", {1}), ("Linux", {1, 2})):
         beats, notes = _run_it_beats(name), _note_headings(name)
-        assert set(notes) == {1}, "%s has %d notes; it has one paste" % (name, len(notes))
-        assert notes[1] == beats[1], (
-            "the %s note quotes a beat that is not on the page.\n"
-            "  note: %r\n  beat: %r" % (name, notes[1], beats[1]))
+        assert set(notes) == pastes, (
+            "%s has notes for beats %s; its pastes are beats %s"
+            % (name, sorted(notes), sorted(pastes)))
+        for n in pastes:
+            assert notes[n] == beats[n], (
+                "the %s note quotes a beat that is not on the page.\n"
+                "  note: %r\n  beat: %r" % (name, notes[n], beats[n]))
 
 
 def test_try_sh_hashes_with_whatever_the_machine_has():

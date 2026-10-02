@@ -74,15 +74,16 @@ that the two lines cannot drift apart.
 
 ### On Linux
 
-**1. One paste in a terminal on Omarchy:** It is the Mac's last three lines, and
-nothing installs Claude Code first, because Omarchy already has it: `claude` in
-`~/.local/bin` is Omarchy's own, a small script that fetches the real thing through
-mise the first time it runs, and `~/.local/bin` is on the path from the start. Claude
-Code's installer would write the same file and replace Omarchy's with its own. The
-clone names the `linux` branch, which is where the Linux text lives until it is
-merged; after that the line is the Mac's word for word. Other Linux desktops with
-systemd are what `BANG.md` is written for, but only Omarchy has been run; on one
-without `claude`, install it first and then paste the same three lines.
+**1. A fresh Omarchy account has no Claude Code. In a terminal, get it:** The cold
+run on 2026-10-02 found git and python3 on a new account and nothing else. The
+installer is the Mac's first line, and nothing follows it: it puts `claude` in
+`~/.local/bin`, which Omarchy has on the path from the start. The first time Claude
+Code runs it asks you to sign in. On a text console, where no browser can open, copy
+the address it prints into a browser on any machine and paste the code back.
+
+**2. Then one paste in the same terminal:** It is the Mac's last three lines, word for
+word. Other Linux desktops with systemd are what `BANG.md` is written for, but only
+Omarchy has been run.
 
 ## What the prompts mean
 
