@@ -3,6 +3,36 @@
 One line per run of Bang, newest first: date, machine, how long, where you stopped or
 stumbled, in your own words. Add yours and open a pull request; that is the whole report.
 
+- 2026-10-02, Omarchy x86_64, fresh account `bangtest`, Bang at `23f5950`, pin
+  `9fb9cb9`: **the first cold Linux run.** BAN-1 went through Spec and into Build, and
+  the Gate ran green on SpecAssay. The card then went red on main's own debt:
+  `tests/test_screens_are_a_sketch.py` expected three bullets where `design/README.md`
+  had four, red on main since `6113590`. The worker refused to touch either and
+  reopened T612 with the reason. Review and Done were proven on this machine on Sep 30.
+
+  - A fresh Omarchy account has git and python3 and nothing else: no `claude`, no uv,
+    no node. `~/.local/bin` is already on the path, and Claude Code's installer put
+    2.1.287 there with no path change. The README now installs it first.
+  - The paste's `-b linux` failed step 1's receipt, which wants `main`, and the run
+    accepted `linux`. So steps 6 and 7 committed on `linux`, the Cannon cut BAN-1 from
+    `main`, the worktree had no `.specify`, and Build met MISSING TOOL three times
+    until the two commits were cherry-picked onto local `main`. A run on `main` cannot
+    meet this, and the paste now clones `main`.
+  - Claude Code asked to sign in. On a text console no browser opens, so the address
+    went to a browser elsewhere and the code came back by paste.
+  - Claude Code refused step 7 as Untrusted Code Integration and step 10 as
+    Unauthorized Persistence. Both were run by hand with `!`, as this file says.
+  - The daemon dropped a drag to Build made while a Spec worker was still running,
+    with only a `daemon.log` line ("already has an active session, skipping spawn")
+    and nothing on the board. That one is the Cannon's, not Bang's.
+
+  Deviations of this run, not things a cold user meets: the console font was
+  unreadable, so the run moved to `su - bangtest` in a terminal, which needed
+  `sudo loginctl enable-linger bangtest` and exports of `XDG_RUNTIME_DIR` and
+  `DBUS_SESSION_BUS_ADDRESS` before `systemctl --user` worked; Rik's own daemon had
+  to be stopped, because the script refuses a busy 3131; and the session went to
+  auto mode after step 1, so the prompt beats went unobserved.
+
 - 2026-09-30, ThinkPad, Omarchy, **not a cold run**: the first Linux run, on a machine
   this file does not yet claim to support. The Gate went **GREEN at `7f708e0`**, and
   Review refused the card three times. Each refusal was a rule rather than a bug.
@@ -18,6 +48,19 @@ stumbled, in your own words. Add yours and open a pull request; that is the whol
   not read its own session id, because nothing gave it one; and the governed-files check
   measured the card against a local `main` that a fetch had left behind. Linux support
   itself is a branch, not this line.
+
+  What Linux needed that the Mac text did not have:
+
+  - Step 3: uv's `install.sh` appends to shell rc files unless told
+    `UV_NO_MODIFY_PATH=1`, and writes `~/.config/uv/uv-receipt.json` either way.
+  - Step 7: `pip install pytest` wrote `~/.cache/pip`. Not Linux's alone: a Mac's pip
+    does the same in `~/Library/Caches/pip`. `PIP_CACHE_DIR` now moves it.
+  - Step 8: node-pty has no linux-x64 prebuild, so it compiles, which needs a C++
+    toolchain (Omarchy has `base-devel`) and wrote `~/.cache/node-gyp` until
+    `npm_config_devdir` moved it. better-sqlite3 has a prebuild and did not compile.
+  - Step 9: the script knew no Linux. It now writes a systemd user unit that runs the
+    same `cannon-daemon.sh` as Windows, with `Restart=always`; Omarchy has no `lsof`,
+    so the port owner comes from `ss` and `ps`.
 
 - 2026-09-29, KoalaKid, fresh user, Bang at `1c13f6f`: **the eighth Mac user, and the
   first to prove the pen and the resume together.** Buddy wrote on the card's branch in

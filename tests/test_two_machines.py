@@ -33,11 +33,15 @@ def _flat(text):
 
 
 def _run_it_sections():
-    """The Run it section split into its two machines: {"Mac": text, "Windows": text}."""
+    """The Run it section split into its machines: {"Mac": text, "Windows": text, ...}.
+
+    It matched "a Mac" and "Windows" by name, so a Linux section added under them was
+    invisible to every test here, which passed on it without reading a word.
+    """
     run_it = README.split("\n## Run it\n", 1)[1].split("\n## ", 1)[0]
     out = {}
-    for name, body in re.findall(r"\n### On (a Mac|Windows)\n(.*?)(?=\n### |\Z)", run_it, re.S):
-        out["Mac" if name == "a Mac" else "Windows"] = body
+    for name, body in re.findall(r"\n### On (a Mac|Windows|Linux)\n(.*?)(?=\n### |\Z)", run_it, re.S):
+        out["Mac" if name == "a Mac" else name] = body
     return out
 
 
@@ -57,15 +61,42 @@ def test_both_machines_start_claude_code_with_the_same_line():
     nobody decided to write.
     """
     sections = _run_it_sections()
-    assert set(sections) == {"Mac", "Windows"}, (
+    assert set(sections) == {"Mac", "Windows", "Linux"}, (
         "README's Run it no longer has one section per machine: %s" % sorted(sections))
     lines = {name: _last_line_of_block_two(body) for name, body in sections.items()}
     for name, line in lines.items():
         assert line.startswith("claude --permission-mode manual "), (
             "%s's block 2 does not end by starting Claude Code: %r" % (name, line))
-    assert lines["Mac"] == lines["Windows"], (
-        "the two blocks start Claude Code differently.\nMac:     %s\nWindows: %s"
-        % (lines["Mac"], lines["Windows"]))
+    for name in ("Windows", "Linux"):
+        assert lines[name] == lines["Mac"], (
+            "%s starts Claude Code differently from the Mac.\nMac: %s\n%s: %s"
+            % (name, lines["Mac"], name, lines[name]))
+
+
+def test_linux_installs_claude_code_then_pastes_the_macs_tail():
+    """A fresh Omarchy account has no claude, so Linux gets it first, then the Mac's tail.
+
+    The cold run on 2026-10-02 (account bangtest) found git and python3 and nothing
+    else, and Claude Code's installer put claude in ~/.local/bin, which Omarchy already
+    has on the path. So Linux's first block is the Mac's installer line alone, with no
+    path line after it, and its paste is the Mac's last three lines exactly: the clone
+    is main, because #51 merges before any cold user runs it.
+    """
+    sections = _run_it_sections()
+    blocks = lambda name: [b.strip().splitlines()
+                           for b in re.findall(r"\n```\n(.*?)\n```", sections[name], re.S)]
+    linux, mac = blocks("Linux"), blocks("Mac")[-1]
+    assert len(linux) == 2, "Linux should be two blocks, the install and the paste: %r" % linux
+    install, paste = linux
+    assert install == mac[:1], (
+        "Linux's install is not the Mac's installer line.\nMac: %s\nLinux: %s"
+        % (mac[:1], install))
+    assert not any("PATH" in line for line in install + paste), (
+        "the Linux section edits the path, and Omarchy already has ~/.local/bin on it")
+    assert paste == mac[-len(paste):], (
+        "the Linux paste is not the Mac's tail.\nMac tail: %s\nLinux:    %s"
+        % (mac[-len(paste):], paste))
+    assert not any("-b linux" in line for line in paste), "the Linux paste still clones linux"
 
 
 def test_the_trust_prompt_is_a_beat_on_both_machines_and_explained_once():
@@ -189,15 +220,81 @@ def test_the_windows_node_path_has_no_bin_in_either_place():
 
 
 def test_the_windows_daemon_command_is_still_one_line():
-    """The whole reason this script exists, now twice over.
+    """The whole reason this script exists, now three times over.
 
-    A plist keeps every newline in a <string>, and a task runs a file: both of them
-    take a broken command and start nothing, with no message that says why.
+    A plist keeps every newline in a <string>, and a task and a unit run a file: all
+    of them take a broken command and start nothing, with no message that says why.
     """
-    for name in ("EXEC_LINE", "EXEC_LINE_WIN"):
+    for name in ("EXEC_LINE", "EXEC_LINE_WIN", "EXEC_LINE_LINUX"):
         found = re.search(r"^%s='(.*)'$" % name, SCRIPT, re.M)
         assert found, "%s is no longer one quoted line in the script" % name
         assert "\n" not in found.group(1)
+
+
+def test_the_linux_daemon_command_is_the_macs_without_the_mac():
+    """Linux's line is the Mac's shape: env -i, node/bin first, and no Homebrew.
+
+    It goes into a script, not a plist, so it carries real ampersands; an &amp; there
+    is a command named `amp` and a daemon that never starts.
+    """
+    found = re.search(r"^EXEC_LINE_LINUX='(.*)'$", SCRIPT, re.M)
+    assert found, "write-launch-agent.sh no longer has an EXEC_LINE_LINUX"
+    line = found.group(1)
+    assert 'PATH="$HOME/.potato-cannon/node/bin:' in line, (
+        "the Linux daemon command does not put ~/.potato-cannon/node/bin first")
+    assert "/opt/homebrew" not in line, "the Linux daemon command carries Homebrew"
+    assert "&amp;" not in line, "the Linux daemon command is XML-escaped, and it is not XML"
+    assert "exec env -i " in line, "the Linux daemon command no longer starts clean"
+    assert 'npm_config_devdir="$HOME/.potato-cannon/node-gyp"' in line, (
+        "the Linux daemon command lets node-gyp write into ~/.cache")
+
+
+def test_undo_removes_the_unit_the_script_writes_by_the_name_it_writes_it_under():
+    """The Linux pair, and the same quiet failure as the Windows ones.
+
+    If the name drifts, Undo's systemctl says the unit does not exist, the rm says
+    the file is not there, and a daemon goes on starting at every login.
+    """
+    written = re.search(r'^UNIT="([^"]+)"', SCRIPT, re.M)
+    assert written, "write-launch-agent.sh no longer has a UNIT= line"
+    name = written.group(1)
+    assert 'UNIT_FILE="$HOME/.config/systemd/user/$UNIT"' in SCRIPT, (
+        "the script no longer writes the unit under $UNIT")
+    undo = BANG.split("## Undo, in full", 1)[1]
+    assert "systemctl --user disable --now %s" % name in undo, (
+        "Undo does not stop and disable %r" % name)
+    assert "rm ~/.config/systemd/user/%s" % name in undo, "Undo does not remove %r" % name
+    assert "~/.config/systemd/user/%s" % name in BANG.split("## What this fetches", 1)[0], (
+        "the places list does not name the unit, which this file writes")
+
+
+def test_undo_removes_the_linux_uv_receipt_the_places_list_names():
+    """uv's install.sh writes its record to ~/.config/uv on Linux, as it does on Windows."""
+    places = BANG.split("## What this fetches", 1)[0]
+    undo = BANG.split("## Undo, in full", 1)[1]
+    assert "~/.config/uv/uv-receipt.json" in places, "the places list does not name it"
+    assert "rm ~/.config/uv/uv-receipt.json" in undo, "Undo does not remove it"
+
+
+def test_no_install_writes_a_cache_outside_the_places():
+    """pip and node-gyp each keep a cache in the home folder unless they are told.
+
+    The first Linux run found both: ~/.cache/pip from the Python step and
+    ~/.cache/node-gyp from the Potato Cannon step. The exports that move them are the
+    fix, and this keeps them. Each step is found by its opening words, not its number,
+    because the numbers move.
+    """
+    def step(opening):
+        found = re.search(r"^(\d+)\. " + re.escape(opening), BANG, re.M)
+        assert found, "BANG.md has no step opening %r" % opening
+        return BANG.split(found.group(0), 1)[1].split("\n%d. " % (int(found.group(1)) + 1), 1)[0]
+
+    assert 'export PIP_CACHE_DIR="$HOME/.potato-cannon/pip-cache"' in step(
+        "The project's own Python"), (
+        "the Python step lets pip write its cache outside ~/.potato-cannon")
+    assert 'export npm_config_devdir="$HOME/.potato-cannon/node-gyp"' in step(
+        "Potato Cannon."), (
+        "the Potato Cannon step lets node-gyp write Node's headers into ~/.cache on Linux")
 
 
 def test_the_pin_is_the_same_in_both_of_bangs_two_places():
@@ -449,10 +546,17 @@ def test_the_readmes_first_line_and_its_run_it_section_agree_about_the_machines(
     assert "Mac or Windows" in opening, "the first line no longer names the machines"
     assert "### On a Mac" in README and "### On Windows" in README, (
         "Run it no longer has one section per machine")
-    # Linux is named as coming, and nowhere claimed as working.
-    assert "Omarchy Linux soon" in opening
-    assert "Linux is not supported yet" in BANG, (
-        "BANG.md no longer says Linux is not supported, while the page says soon")
+    # Linux is written in BANG.md before the page offers it: the page says "soon" for
+    # as long as Run it has no Linux section, and stops saying it the day it has one.
+    # BANG.md carrying more than the page promises is safe; the reverse is not.
+    has_linux_section = "### On Linux" in README
+    assert ("Omarchy Linux soon" in opening) != has_linux_section, (
+        "the first line and Run it disagree about Linux: 'soon' in the first line is %s, "
+        "a Linux section in Run it is %s" % ("Omarchy Linux soon" in opening, has_linux_section))
+    step_two = BANG.split("\n2. Which machine this is", 1)[1].split("\n3. ", 1)[0]
+    assert "`Linux` is Linux" in step_two, "BANG.md step 2 no longer recognises Linux"
+    assert "is not supported yet" in step_two, (
+        "BANG.md step 2 no longer refuses a machine that is none of the three")
 
 
 def test_run_it_is_pastes_and_beats_and_carries_no_explanation():
@@ -594,11 +698,11 @@ def test_bang_names_the_paste_that_starts_it_the_way_the_page_numbers_it():
     """
     opening = _flat(BANG.split("## What this writes", 1)[0])
     assert "block 2" not in opening, "BANG.md still sends the reader to a block"
-    assert "beat 1 on a Mac, beat 5 on Windows" in opening, (
+    assert "beat 1 on a Mac, beat 2 on Linux, beat 5 on Windows" in opening, (
         "BANG.md does not name the beat that starts it")
 
-    # And those two beats are the ones that actually start Claude Code.
-    for name, beat in (("Mac", 1), ("Windows", 5)):
+    # And those beats are the ones that actually start Claude Code.
+    for name, beat in (("Mac", 1), ("Linux", 2), ("Windows", 5)):
         lines = _run_it_sections()[name].splitlines()
         where = next(i for i, l in enumerate(lines) if l.startswith("%d. " % beat))
         # To the end of that beat's paste, however long it is: the Mac's is six lines
@@ -711,9 +815,13 @@ def _run_it_beats(name):
 
 
 def _note_headings(name):
-    """{number: heading} for one machine's notes in RUN-NOTES.md."""
-    under = NOTES.split("### On a Mac", 1)[1]
-    body = under.split("### On Windows", 1)[0] if name == "Mac" else under.split("### On Windows", 1)[1]
+    """{number: heading} for one machine's notes in RUN-NOTES.md.
+
+    Each machine's notes run to the next heading. They used to run from "On Windows" to
+    the end of the file, so a Linux note under them was read as a Windows one.
+    """
+    heading = "### On a Mac" if name == "Mac" else "### On %s" % name
+    body = re.split(r"\n#{2,3} ", NOTES.split(heading + "\n", 1)[1], 1)[0]
     return {int(m.group(1)): m.group(2).strip()
             for m in re.finditer(r"^\*\*(\d+)\.\s*(.*?)\*\*", body, re.M)}
 
@@ -728,7 +836,7 @@ def test_every_note_is_numbered_for_a_beat_that_exists():
     numbers it can: they were renumbered once already when the beats were, and a note
     numbered for a beat that is not there is a note a reader cannot find.
     """
-    for name in ("Mac", "Windows"):
+    for name in ("Mac", "Windows", "Linux"):
         beats, notes = _run_it_beats(name), _note_headings(name)
         assert notes, "RUN-NOTES.md has no notes for %s" % name
         stray = sorted(n for n in notes if n not in beats)
@@ -749,11 +857,16 @@ def test_the_mac_note_quotes_the_mac_beat_word_for_word():
     It pins agreement, not wording. Reword both and it passes; reword one and it does
     not.
     """
-    beats, notes = _run_it_beats("Mac"), _note_headings("Mac")
-    assert set(notes) == {1}, "the Mac has %d notes; it has one paste" % len(notes)
-    assert notes[1] == beats[1], (
-        "the Mac note quotes a beat that is not on the page.\n"
-        "  note: %r\n  beat: %r" % (notes[1], beats[1]))
+    # Linux has two pastes since the cold run of 2026-10-02: Claude Code, then the rest.
+    for name, pastes in (("Mac", {1}), ("Linux", {1, 2})):
+        beats, notes = _run_it_beats(name), _note_headings(name)
+        assert set(notes) == pastes, (
+            "%s has notes for beats %s; its pastes are beats %s"
+            % (name, sorted(notes), sorted(pastes)))
+        for n in pastes:
+            assert notes[n] == beats[n], (
+                "the %s note quotes a beat that is not on the page.\n"
+                "  note: %r\n  beat: %r" % (name, notes[n], beats[n]))
 
 
 def test_try_sh_hashes_with_whatever_the_machine_has():
@@ -817,8 +930,10 @@ def test_undo_frees_the_port_before_it_deletes_anything():
         "Undo deletes the Cannon's home before it has shown the port is free")
     assert "lsof -ti :3131" in undo, "Undo has no way to find the holder on a Mac"
     assert "taskkill" in undo, "Undo has no way to find the holder on Windows"
-    assert undo.count("port 3131 is free") == 2, (
-        "both machines need the receipt, and there are %d"
+    assert "ss -ltnpH 'sport = :3131'" in undo, (
+        "Undo has no way to find the holder on Linux, where Omarchy has no lsof")
+    assert undo.count("port 3131 is free") == 3, (
+        "all three machines need the receipt, and there are %d"
         % undo.count("port 3131 is free"))
 
 

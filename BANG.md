@@ -1,8 +1,8 @@
 # BANG.md
 
 This file is what your Claude Code session is told to carry out when you
-paste the last command in README.md's "Run it": beat 1 on a Mac, beat 5 on
-Windows, the one that ends by starting Claude Code. Read it before you
+paste the last command in README.md's "Run it": beat 1 on a Mac, beat 2 on
+Linux, beat 5 on Windows, the one that ends by starting Claude Code. Read it before you
 paste. The agent reads the
 same file, in this order, and does nothing that is not written here.
 
@@ -25,7 +25,8 @@ Everything this file does lands in one of these places, and nowhere else.
    under `app/`, its settings file, its database, the registration of
    ~/bang as a project, and a copy of the workflow template it runs. Node
    22 goes in here too, under `node/`, and so does every package cache the
-   build fills: corepack's, pnpm's store and cache, and npm's prebuilds.
+   build fills: corepack's, pnpm's store and cache, npm's prebuilds, pip's
+   cache, and on Linux the Node headers node-gyp compiles against.
    They are pointed here on purpose. Left to themselves they write about a
    gigabyte into `~/.cache`, `~/Library/pnpm` and `~/.npm`, three places
    this file would then have to list and Undo would have to reach into;
@@ -37,9 +38,10 @@ Everything this file does lands in one of these places, and nowhere else.
    everything else.
 5. `~/.potato-cannon/pip-cache/`  Where pip keeps the wheels it
    downloaded, moved here by `PIP_CACHE_DIR` in step 8. Left to itself pip
-   writes `~/Library/Caches/pip` on a Mac and `~/AppData/Local/pip` on
-   Windows, and neither is a place this file names. It is inside
-   `~/.potato-cannon`, so Undo removes it with everything else.
+   writes `~/Library/Caches/pip` on a Mac, `~/AppData/Local/pip` on
+   Windows and `~/.cache/pip` on Linux, and none is a place this file
+   names. It is inside `~/.potato-cannon`, so Undo removes it with
+   everything else.
 6. On a Mac, `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`  One
    launch agent so the Cannon daemon starts when you log in. On Windows,
    the one-line script it runs, `~/.potato-cannon/cannon-daemon.sh`, and
@@ -48,7 +50,11 @@ Everything this file does lands in one of these places, and nowhere else.
    refuses that, a launcher called `bang-potato-cannon.cmd` in this
    account's own Startup folder,
    `~/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup`. The
-   script says which one it used and Undo removes that one. Either way the
+   script says which one it used and Undo removes that one. On Linux, the
+   same `~/.potato-cannon/cannon-daemon.sh` and a systemd user unit that
+   runs it, `~/.config/systemd/user/bang-potato-cannon.service`, with the
+   link `systemctl --user enable` makes to it in
+   `~/.config/systemd/user/default.target.wants/`. Every way, the
    daemon listens on 127.0.0.1:3131 only and is never reachable from
    another machine. The scheduled task is the one thing this file
    registers outside your home folder; the Startup launcher is a file in
@@ -58,7 +64,9 @@ Everything this file does lands in one of these places, and nowhere else.
    cache and pointing `UV_CACHE_DIR` elsewhere does not move it: uv writes
    it so that a later `uv self update` knows what it is updating. One small
    file, named here because this file names everything it leaves behind,
-   and removed by Undo.
+   and removed by Undo. On Linux uv's `install.sh` writes the same record
+   to `~/.config/uv/uv-receipt.json`, for the same reason, and Undo removes
+   that one.
 8. `~/.claude/projects/`  One folder per working copy the Cannon runs a
    worker in, holding that worker's session transcript as a `.jsonl` file.
    Claude Code writes these, not Bang, and it writes them for your own
@@ -94,7 +102,7 @@ unproven.
 
 ## What this fetches from the network
 
-1. `https://astral.sh/uv/install.sh` on a Mac, or
+1. `https://astral.sh/uv/install.sh` on a Mac or Linux, or
    `https://astral.sh/uv/install.ps1` on Windows  The uv installer, run as
    your user. Step 3 says why Windows needs the other one.
 2. `specify-cli` from PyPI, via uv.
@@ -107,7 +115,7 @@ unproven.
    `9fb9cb9156c39bd267c71ef14e6b841a6b156c36`, and the npm packages its
    build needs, fetched by pnpm from the public npm registry.
 6. If Node is missing, the Node 22 build for this machine from
-   `nodejs.org`: a tarball on a Mac, a zip on Windows.
+   `nodejs.org`: a tarball on a Mac or Linux, a zip on Windows.
 7. Nothing else. No telemetry, no account, no message to anyone.
 
 Potato Cannon is by crathgeb (github.com/crathgeb/potato-cannon), under the
@@ -136,9 +144,10 @@ The agent carries these out in order. Before each step it prints the step
 number and the one-line summary; after each it prints the receipt line
 given. If a receipt does not match, it stops and prints what it saw.
 
-Some steps are not the same on a Mac as on Windows. Step 2 works out which
-machine this is, and every step that differs says which part is which.
-Where a step says nothing about the machine, the one text is both.
+Some steps are not the same on a Mac, on Windows and on Linux.
+Step 2 works out which machine this is, and every step that differs says
+which part is which. Where a step says nothing about the machine, the one text is
+all three.
 
 1. Confirm where we are. `pwd` must be `~/bang` and `git rev-parse HEAD`
    and `git branch --show-current`. Receipt: the commit hash and the word
@@ -150,10 +159,14 @@ Where a step says nothing about the machine, the one text is both.
 
    `Darwin` is a Mac. `MINGW64_NT-...` or `MSYS_NT-...` is Windows, seen
    from the Git Bash window that Git for Windows installs, which is where
-   every command in this file is pasted on that machine. `Linux` is
-   neither: print `Linux is not supported yet` and stop there, because no
-   step below has been written for it and a step written for a Mac that
-   half works on Linux is worse than a refusal.
+   every command in this file is pasted on that machine. `Linux` is Linux,
+   written against Omarchy on 2026-09-30 and meant for any desktop Linux
+   with systemd, which step 10 needs. Anything else is none of the three:
+   print `<what uname said> is not supported yet` and stop there, because
+   no step below has been written for it and a step written for a Mac that
+   half works somewhere else is worse than a refusal. The same is true of
+   Linux on an ARM machine until somebody has run it on one: step 4 names
+   the build for it, and nothing else here has been tried there.
 
    Then print the version of each of: `uv`, `specify`, `node`, `pnpm`,
    `claude`, and Python. For each that is missing, say so. Do not install
@@ -169,6 +182,8 @@ Where a step says nothing about the machine, the one text is both.
    What it does is ask, rather than assume: the first of `python3` then
    `python` that prints a line beginning `Python 3` is the interpreter,
    and anything else is missing. A Mac has `python3` and no `python`.
+   Omarchy has both, and they are the same Python; other Linux desktops
+   have at least `python3`.
    Windows has `python` and no `python3`, and will not grow one: the
    python.org installer lays down `python.exe` and `py.exe` and no
    `python3.exe`, while the name `python3` is held by an App Execution
@@ -185,7 +200,10 @@ Where a step says nothing about the machine, the one text is both.
    window reads the path when it opens and will not see an install made
    after that; then start again from step 1. Name PowerShell rather than
    saying "a new window": this message is read inside Git Bash, and a
-   reader told to open a new window opens another of the same one.
+   reader told to open a new window opens another of the same one. On
+   Linux, say to install `python3` with the machine's own package manager,
+   which asks for a password and is therefore the reader's act and not
+   this file's, then start again from step 1.
 
    Receipt: the `uname -s` line, then six lines, present or missing, with
    the Python line naming which name answered. There is no minimum for
@@ -229,7 +247,19 @@ Where a step says nothing about the machine, the one text is both.
    in the same place: `%USERPROFILE%\.local\bin`, which is `~/.local/bin`
    as Git Bash spells it, and which is one of the places above.
 
-   Then, in this terminal, on either machine:
+   On Linux, the Mac's installer, told to leave your shell alone:
+
+       curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh
+
+   Left to itself it appends a line to `~/.bashrc`, `~/.profile` and
+   whichever other shell files it finds, so that `~/.local/bin` is on the
+   path. Those are files of yours this file never said it would touch, and
+   that Undo would have to edit back. Every desktop Linux this was tried
+   on has `~/.local/bin` on the path already. It may warn that `uv` is
+   "shadowed by other commands in your PATH" when nothing shadows it;
+   `which -a uv` naming only `~/.local/bin/uv` says the warning was wrong.
+
+   Then, in this terminal, on every machine:
 
        export UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools"
        export UV_CACHE_DIR="$HOME/.potato-cannon/uv/cache"
@@ -298,7 +328,7 @@ Where a step says nothing about the machine, the one text is both.
 
    The second line prints the interpreter `specify` actually runs on, and
    it must be a path under `~/.potato-cannon/uv`. If it names
-   `/Library/Frameworks`, `/opt/homebrew` or `.pyenv`, the preference did
+   `/Library/Frameworks`, `/opt/homebrew`, `/usr/bin` or `.pyenv`, the preference did
    not take: stop, because the next step that fetches anything will stop
    for you, several minutes later, with a certificate error that says
    nothing about this.
@@ -311,6 +341,9 @@ Where a step says nothing about the machine, the one text is both.
    knows what it is updating. `UV_CACHE_DIR` does not move it, because it
    is not a cache. It is the Windows-only entry in the list of places
    above, named there rather than counted, and Undo removes it.
+
+   On Linux it is the same shape in a different folder: `ls ~/.config/uv`
+   shows one file, `uv-receipt.json`, and nothing else.
 
 4. Node and pnpm. **Node 22, not the current LTS.** The Cannon's database
    library has no prebuilt binary for newer Node and building it from
@@ -327,6 +360,14 @@ Where a step says nothing about the machine, the one text is both.
        export COREPACK_HOME="$HOME/.potato-cannon/corepack"
 
    On an Intel Mac, use `node-v22.23.2-darwin-x64.tar.xz` instead.
+
+   On Linux, the same six lines with the Linux build in the second:
+   `node-v22.23.2-linux-x64.tar.xz`, or `node-v22.23.2-linux-arm64.tar.xz`
+   on an ARM machine. The Linux build has a `bin` the way the Mac's does,
+   so every other line, and every later path line, is the Mac's. A Node
+   you already have from a version manager such as mise or nvm stays
+   yours: its shims come after this path line in this terminal and before
+   it in every other.
 
    On Windows, the same release, the build nodejs.org publishes for it:
 
@@ -352,7 +393,7 @@ Where a step says nothing about the machine, the one text is both.
    build puts `node.exe` at the top of the folder, where the Mac build has
    a `bin`.
 
-   Then, on either machine, enable pnpm through Node's own corepack:
+   Then, on every machine, enable pnpm through Node's own corepack:
 
        corepack enable pnpm
 
@@ -369,7 +410,7 @@ Where a step says nothing about the machine, the one text is both.
    writes is inside one of the places listed above, and it is deleted as
    soon as it is unpacked.
 
-   Receipt: `~/.potato-cannon/node/bin/node --version` on a Mac, or
+   Receipt: `~/.potato-cannon/node/bin/node --version` on a Mac or Linux, or
    `~/.potato-cannon/node/node.exe --version` on Windows, prints a version
    beginning `v22.`; `pnpm --version` prints a version; and `node --version`
    in a new terminal window prints whatever you had before this step, or
@@ -563,12 +604,13 @@ Where a step says nothing about the machine, the one text is both.
    `~/.potato-cannon/venv/Scripts/python.exe` instead.
 
    `PIP_CACHE_DIR` is there for the same reason the five uv variables
-   are. Left to itself pip writes `~/Library/Caches/pip` on a Mac and
-   `~/AppData/Local/pip` on Windows, neither of which is in the list of
-   places above, and both of which survive `rm -rf ~/.potato-cannon`.
-   One wheel is not much; a directory this file never mentioned is the
-   problem, because the list above is the whole of what this project
-   claims to leave behind.
+   are. Left to itself pip writes `~/Library/Caches/pip` on a Mac,
+   `~/AppData/Local/pip` on Windows and `~/.cache/pip` on Linux, none of
+   which is in the list of places above, and all of which survive
+   `rm -rf ~/.potato-cannon`. The first Linux run found two megabytes there
+   that this file had never mentioned. One wheel is not much; a directory
+   this file never mentioned is the problem, because the list above is the
+   whole of what this project claims to leave behind.
 
    It goes in `~/.potato-cannon` rather than in `~/bang/.venv` because a
    card's worktree is cut from a commit and a virtual environment is not
@@ -601,7 +643,8 @@ Where a step says nothing about the machine, the one text is both.
 9. Potato Cannon. Clone the fork into `~/.potato-cannon/app` at the branch
    and commit above. Then, in the same terminal as step 4, where the first
    line is step 4's path again and on Windows is
-   `$HOME/.potato-cannon/node` without the `bin`:
+   `$HOME/.potato-cannon/node` without the `bin`, and where Linux adds the
+   one export given below:
 
        export PATH="$HOME/.potato-cannon/node/bin:$PATH"
        export COREPACK_HOME="$HOME/.potato-cannon/corepack"
@@ -626,6 +669,24 @@ Where a step says nothing about the machine, the one text is both.
    `~/.npm`, which is about a gigabyte in three places this file never
    told you about and Undo does not remove.
 
+   On Linux there is a fifth, before the `cd`:
+
+       export npm_config_devdir="$HOME/.potato-cannon/node-gyp"
+
+   The terminal library the Cannon uses, node-pty, ships prebuilt binaries
+   for a Mac and for Windows and none for Linux, so on Linux `pnpm install`
+   compiles it. The compiler fetches Node's headers to build against and
+   keeps them in `~/.cache/node-gyp` unless this line says otherwise. The
+   database library does have a Linux build and is not compiled.
+
+   Compiling needs a C++ compiler, `make` and Python, which a Mac and
+   Windows never needed here. Omarchy has all three, because it ships
+   `base-devel`. Elsewhere, if `pnpm install` stops on `gyp ERR!` with
+   `not found: make` or a missing `g++`, stop: installing a compiler asks
+   for a password, so it is the reader's to do with their package manager
+   (`base-devel` on Arch, `build-essential` on Debian and Ubuntu,
+   `gcc-c++ make` on Fedora), and then this step runs again.
+
    Receipt: `git -C ~/.potato-cannon/app rev-parse HEAD` prints
    `9fb9cb9156c39bd267c71ef14e6b841a6b156c36`, the commit named above,
    character for character, and `pnpm build` ended with no error. The full
@@ -649,7 +710,7 @@ Where a step says nothing about the machine, the one text is both.
    permission check off and do not switch to auto mode. Step 7 says why at
    length, and this step says it again because this is where it happens.
 
-   It reads `uname -s` and does the same job twice over.
+   It reads `uname -s` and does the same job three times over.
 
    On a Mac it writes `~/Library/LaunchAgents/com.dryfoos.bang.cannon.plist`
    and nothing else, checks it with `plutil -lint` before installing it,
@@ -659,6 +720,19 @@ Where a step says nothing about the machine, the one text is both.
    else, checks it with `bash -n` before registering anything, then finds
    a way to run it at logon, starts it once because you have already
    logged in, and prints the same health line.
+
+   On Linux it writes the same `~/.potato-cannon/cannon-daemon.sh`, checked
+   the same way, and a systemd user unit,
+   `~/.config/systemd/user/bang-potato-cannon.service`, which runs it. It
+   checks the unit with `systemd-analyze --user verify` before installing
+   it, enables it with `systemctl --user`, starts it, and prints the same
+   health line. A user unit is the launch agent's equivalent: it belongs
+   to your account, starts when you log in and stops when you log out,
+   and needs no administrator. The unit runs the script rather than
+   carrying the command itself, because systemd would expand every `$` in
+   the command before bash saw it. If `systemctl --user` does not answer,
+   which is WSL without systemd and most containers, the script stops
+   before writing anything.
 
    There are two ways because the obvious one is refused. `schtasks
    /Create /SC ONLOGON` writes a task that fires for whoever logs on,
@@ -683,7 +757,8 @@ Where a step says nothing about the machine, the one text is both.
    carries `KeepAlive`, so launchd starts the daemon again if it dies. A
    logon task has no equivalent. On Windows a daemon that dies stays dead
    until you log in again or run `schtasks /run` yourself, and that is a
-   thing the Dell run is there to find out the size of.
+   thing the Dell run is there to find out the size of. Linux has it back:
+   the unit carries `Restart=always`, thirty seconds apart, as launchd does.
 
    This used to be a plist printed here for you to copy, and it could not
    be copied: the daemon's command is one long shell line, a plist typeset
@@ -695,12 +770,14 @@ Where a step says nothing about the machine, the one text is both.
    **If it refuses because something already listens on 3131, stop.** Another
    Cannon is running, and it is not yours: everything after this step would be
    judged against somebody else's board. The script prints which process holds
-   the port and which user owns it, from `lsof` on a Mac and from
-   `Get-NetTCPConnection` on Windows. Stop that daemon, or log in as
+   the port and which user owns it, from `lsof` on a Mac, from
+   `Get-NetTCPConnection` on Windows, and from `ss` on Linux, where a
+   daemon another account owns is named as that and not by name, because
+   a plain user cannot see another's processes. Stop that daemon, or log in as
    that user and stop it there, before running this again. Nothing was
    written.
 
-   Receipt, all three, and the same three on both machines:
+   Receipt, all three, and the same three on every machine:
    `curl -s http://127.0.0.1:3131/health` returns a response whose status is
    ok; the listener the script prints is a `node` process, `node.exe` on
    Windows, owned by the user you are logged in as; and the count of
@@ -724,7 +801,7 @@ Where a step says nothing about the machine, the one text is both.
          -H 'Content-Type: application/json' \
          -d "{\"path\":\"$(project_path)\",\"displayName\":\"bang\",\"template\":\"bang\"}"
 
-   where `project_path` is `$HOME/bang` on a Mac and
+   where `project_path` is `$HOME/bang` on a Mac and on Linux, and
    `cygpath -m "$HOME/bang"` on Windows:
 
        project_path() {
@@ -786,7 +863,8 @@ Where a step says nothing about the machine, the one text is both.
 13. Open the board. Print `http://127.0.0.1:3131`, then print, on its own,
     the line `Bang. Your board is open in your browser; drag BAN-1 to Spec
     there by hand.`, and only then open the URL
-    in the default browser: `open` on a Mac, `start` on Windows. The done
+    in the default browser: `open` on a Mac, `start` on Windows,
+    `xdg-open` on Linux. The done
     line goes before the open command so that it is the last thing written
     to the terminal: opening the browser takes the reader's attention away,
     and a line printed after it is a line nobody reads. Receipt: the URL
@@ -802,7 +880,7 @@ Light: the first card, dragged through.
 ## Undo, in full
 
 Run these in order to remove everything this file did. The first block is
-the machine's; everything after it is the same on both.
+the machine's; everything after it is the same on every machine.
 
 On a Mac:
 
@@ -822,7 +900,15 @@ or the Startup launcher:
 
 Running both is safe: each says it found nothing if it was not the one.
 
-Then, on either, before anything is deleted: find whatever is still
+On Linux, the unit. `disable --now` stops the daemon and removes the link
+in `default.target.wants/`; the file itself goes after, and the reload
+tells systemd it is gone:
+
+    systemctl --user disable --now bang-potato-cannon.service
+    rm ~/.config/systemd/user/bang-potato-cannon.service
+    systemctl --user daemon-reload
+
+Then, on any of them, before anything is deleted: find whatever is still
 holding the daemon's port and stop it.
 
     lsof -ti :3131 | xargs -r kill
@@ -836,7 +922,15 @@ through Windows' own tools:
     sleep 2
     netstat -ano | grep -q ':3131 .*LISTENING' || echo "port 3131 is free"
 
-**Receipt: the last line of each pair prints that the port is free.** Do
+On Linux, where Omarchy has no `lsof` either, `ss` gives the same answer.
+It names the process holding the port only when that process is yours,
+which the daemon is:
+
+    ss -ltnpH 'sport = :3131' | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u | xargs -r kill
+    sleep 2
+    ss -ltnH 'sport = :3131' | grep -q . || echo "port 3131 is free"
+
+**Receipt: the last line of each block prints that the port is free.** Do
 not delete anything until it does. The stop above tells the operating
 system not to start the daemon again; it does not promise that the one
 already running has gone. On 2026-09-28 a Mac ran `launchctl bootout`,
@@ -845,7 +939,7 @@ got no error, and had a daemon still listening on 3131 afterwards:
 a daemon serving a board whose database had been deleted. Nothing said so
 until the next run could not start.
 
-Then, on either:
+Then, on every machine:
 
     UV_TOOL_DIR="$HOME/.potato-cannon/uv/tools" uv tool uninstall specify-cli
     rm ~/.local/bin/specify
@@ -891,9 +985,15 @@ record of where it put itself goes too, and only if uv is going:
 
     rm ~/AppData/Local/uv/uv-receipt.json
 
+On Linux the record is in `~/.config`, and its folder goes with it if it is
+left empty; `rmdir` refuses a folder that still holds something of yours:
+
+    rm ~/.config/uv/uv-receipt.json
+    rmdir ~/.config/uv
+
 Node, if this file installed it, is under `~/.potato-cannon/node` and goes
 with `rm -rf ~/.potato-cannon`, along with every package cache the build
-filled and, on Windows, `cannon-daemon.sh`. Your
+filled and, on Windows and Linux, `cannon-daemon.sh`. Your
 own Node, if you had one, is untouched: this file never put anything on the
 path outside the terminal it was working in. The session
 transcripts under `~/.claude/projects/` are Claude Code's, not Bang's, and

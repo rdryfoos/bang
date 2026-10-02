@@ -1,4 +1,4 @@
-Bang takes a bare Mac or Windows machine (Omarchy Linux soon) to a working,
+Bang takes a bare Mac or Windows machine, or Omarchy Linux, to a working,
 "born-threaded" project with a board in your browser: a couple of pastes, about ten
 minutes, then your first card. What you are left with is a small lending tracker, its
 specification with durable IDs, the checks that refuse unfinished work, and the first
@@ -69,6 +69,26 @@ claude --permission-mode manual "Read BANG.md in this folder from top to bottom.
 6. Say yes when it asks whether you trust this folder: the default is "No, exit", so arrow to Yes before you press return. Then press return for "Yes" at each prompt after that, until it prints Bang.
 
 7. Bang means go to your browser: the board is open there, and you drag BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.
+
+### On Linux
+
+1. A fresh Omarchy account has no Claude Code. In a terminal, get it:
+
+```
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+2. Then one paste in the same terminal:
+
+```
+git clone https://github.com/rdryfoos/bang.git ~/bang
+cd ~/bang
+claude --permission-mode manual "Read BANG.md in this folder from top to bottom. Then carry out its Steps in order, printing the step summary before each and the receipt after. If a receipt does not match, stop and print what you saw. Do nothing that BANG.md does not say."
+```
+
+3. Say yes when it asks whether you trust this folder: the default is "No, exit", so arrow to Yes before you press return. Then press return for "Yes" at each prompt after that, until it prints Bang.
+
+4. Bang means go to your browser: the board is open there, and you drag BAN-1 to Spec by hand. Ignore anything Claude Code suggests typing next.
 
 ## What you were handed
 
