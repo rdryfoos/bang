@@ -19,7 +19,8 @@ The Lend screen may show the borrower's history below the form; design/lend.html
 
 ## What a build reads from this
 
-- The screens are a low-fidelity sketch, for reference.
+- The screens are a low-fidelity sketch, for reference, and the layout is a guide, not a pixel contract. Type, spacing and color may differ; controls, order, states and words may not.
+- The sketch is where the design started and it is expected to diverge from the build. When a word in a sketch differs from the registry, the registry's word holds: since 2026-10-01 the control the sketches call Mark returned is named Returned (AC-UI-30, 50, 70, 80).
 - What a build must satisfy is the registry, and the controls, order, states and words that matter are named there in acceptance criteria.
 - Anything not named is the build's to choose and the reviewer's to judge in Review.
 
