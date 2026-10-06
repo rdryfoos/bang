@@ -23,6 +23,28 @@ is what `RUNS.md` has; yours is the next one, and the line you add to `RUNS.md` 
 worth more than the line above it. Linux is newer still: one run, on the account the
 Linux text was written from, and no cold account yet.
 
+## What the pinned board can do
+
+`BANG.md` installs the Cannon at one commit, named twice in that file, so every run gets
+the same board. What that commit carries is worth knowing before you use it, because the
+board is where you spend the twenty-five minutes after the install.
+
+At `1699e47`, since 2026-10-05:
+
+- **A worker that cannot start says so.** The daemon resolves `claude` on PATH and then
+  in `~/.local/bin`, and raises with the PATH it looked along if neither has it. Before
+  this it handed an empty command to the shell, which answered with its own usage text
+  into a log nobody reads, and every worker died in under half a second.
+- **A move made while a card is busy queues its worker rather than dropping it.** The
+  card still changes column, and a `queued-worker:` line on it says which worker is
+  waiting and what for. It starts when the running session ends.
+- **A hand's turn to a worker is kept** in the card's feed, the way a turn to the
+  Thinking Buddy already was, so it is still there after a reload.
+- **An unsaved Details edit survives** a tab switch and a drag, and the heading says
+  "unsaved" while it differs from what the card holds.
+- **A worker knows its own session id**, as `POTATO_SESSION_ID`, which is what the
+  `Session:` trailer on its commits is read from.
+
 ## What each paste does
 
 ### On a Mac

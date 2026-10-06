@@ -112,7 +112,7 @@ unproven.
    `github.com/rdryfoos/specassay` (MIT).
 5. Potato Cannon from `github.com/rdryfoos/potato-cannon`, branch
    `estate/cannon`, commit
-   `9fb9cb9156c39bd267c71ef14e6b841a6b156c36`, and the npm packages its
+   `1699e47db8531e9646c736cec8fdfaca440d8094`, and the npm packages its
    build needs, fetched by pnpm from the public npm registry.
 6. If Node is missing, the Node 22 build for this machine from
    `nodejs.org`: a tarball on a Mac or Linux, a zip on Windows.
@@ -696,7 +696,7 @@ all three.
    `gcc-c++ make` on Fedora), and then this step runs again.
 
    Receipt: `git -C ~/.potato-cannon/app rev-parse HEAD` prints
-   `9fb9cb9156c39bd267c71ef14e6b841a6b156c36`, the commit named above,
+   `1699e47db8531e9646c736cec8fdfaca440d8094`, the commit named above,
    character for character, and `pnpm build` ended with no error. The full
    SHA rather than the short one, because the receipt's whole job is to say
    the clone is at the commit this file pinned, and a seven-character
