@@ -29,7 +29,32 @@ Linux text was written from, and no cold account yet.
 the same board. What that commit carries is worth knowing before you use it, because the
 board is where you spend the twenty-five minutes after the install.
 
-At `1699e47`, since 2026-10-05:
+At `a95c096`, since 2026-10-06:
+
+- **Promote and Demote are arrows, and they are only on a card in Review.** They used to
+  be on every card in every column, which reads as an invitation to drag a card forward
+  out of Spec or back out of Build; those are the Cannon's moves to make. Hovering an
+  arrow says where it goes. The column is found by what it is for, so a board that calls
+  it Align keeps them.
+- **A card cannot be created naming a promise the registry does not have.** The `ids:`
+  line is checked against `PRD.md` when the card is made, and the refusal lists what it
+  could not find. A card with no `ids:` line, or `ids: none`, is fine: that is a card
+  nobody has decided the promises for yet.
+- **A card takes one move at a time.** An entry check can run for minutes, and a second
+  drag in that window used to run its own check alongside the first, with the card
+  ending wherever the slower one finished. The second is refused now, and the reason
+  goes on the card.
+- **Details shows the story first.** What a person wrote is at the top; the `ids:`,
+  `branch:`, `head:` and `reviewed:` lines and the column history fold under one
+  control, shut to begin with. Nothing moved out of the card, only down the page.
+- **A refused card says so at the top of Details**, in a red block, with the column it
+  was refused entry to and what the check said. Only while it is the latest thing that
+  happened: a refusal the card has moved past is history.
+- **The tab you chose stays chosen** when you move to another card.
+- **A card's age is a date and a time**, not "13d ago", which was computed once and
+  never again and so went stale on a board left open.
+
+Before that, at `1699e47`, since 2026-10-05:
 
 - **A worker that cannot start says so.** The daemon resolves `claude` on PATH and then
   in `~/.local/bin`, and raises with the PATH it looked along if neither has it. Before
